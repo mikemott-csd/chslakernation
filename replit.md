@@ -1,95 +1,143 @@
-# Colchester High School Sports Schedule
+# Colchester High School Lakers Athletics Schedule
 
 ## Overview
+A single-page sports schedule application for Colchester High School Lakers athletics. The app displays upcoming games for Football, Soccer, Basketball, and Volleyball with an interactive calendar and sport filtering capabilities.
 
-This is a web application for displaying the Colchester High School Lakers athletics schedule. The application provides a calendar-based interface for viewing upcoming games across multiple sports (Football, Soccer, Basketball, Volleyball). Users can filter by sport and navigate through months to see game schedules with details like opponent, location, and time.
+**Live URL**: The application runs on port 5000 and can be published for public access.
 
-The application follows a modern sports website design approach inspired by ESPN, TeamSnap, and college athletics sites, featuring the school's Lakers brand colors (blue and green) with sport-specific color coding for visual distinction.
+## Project Status
+✅ **MVP Complete** - All core features implemented and tested
+- Branded header with CHS Lakers logo
+- Sport filtering (Football, Soccer, Basketball, Volleyball, All Sports)
+- Interactive monthly calendar with game indicators
+- Upcoming games list with detailed information
+- Responsive design with Lakers blue and green color scheme
 
-## User Preferences
+## Recent Changes (October 15, 2025)
+- Initial implementation completed with all MVP features
+- Data schema created for games with support for 4 sports
+- In-memory storage seeded with games from October 2025 through January 2026
+- Frontend components built with exceptional visual quality following design guidelines
+- Backend API endpoint implemented for fetching games
+- End-to-end testing completed successfully - all features working
 
-Preferred communication style: Simple, everyday language.
+## Architecture
 
-## System Architecture
+### Tech Stack
+- **Frontend**: React with TypeScript, TanStack Query, Wouter routing
+- **Backend**: Express.js with in-memory storage
+- **UI**: Shadcn components with Tailwind CSS
+- **Date Handling**: date-fns library
 
-### Frontend Architecture
+### Project Structure
+```
+client/src/
+  pages/home.tsx          - Main sports schedule page
+  App.tsx                 - App routing configuration
+shared/schema.ts          - Data models and types
+server/
+  storage.ts             - In-memory storage with game data
+  routes.ts              - API endpoints
+design_guidelines.md     - Visual design specifications
+```
 
-**Framework**: React with TypeScript
-- **Routing**: Wouter for lightweight client-side routing
-- **State Management**: TanStack Query (React Query) for server state management
-- **UI Components**: Shadcn/ui component library built on Radix UI primitives
-- **Styling**: Tailwind CSS with custom design system based on Lakers branding
+### Data Model
+```typescript
+type Game = {
+  id: string;
+  sport: "Football" | "Soccer" | "Basketball" | "Volleyball";
+  opponent: string;
+  date: Date;
+  time: string;
+  location: string;
+  isHome: "home" | "away";
+}
+```
 
-**Design System**:
-- Custom color palette derived from school colors (Lakers Blue: `210 85% 35%`, Lakers Green: `150 60% 45%`)
-- Sport-specific color coding for visual categorization
-- Consistent spacing using Tailwind's 4/6/8/12 unit system
-- Inter font family for typography
-- Component variants using class-variance-authority
+### API Endpoints
+- `GET /api/games` - Returns all games sorted by date
 
-**Key Components**:
-- Calendar view with month navigation
-- Sport filter tabs
-- Game card display with home/away indicators
-- Responsive layout supporting mobile and desktop
+## Key Features
 
-### Backend Architecture
+### 1. Branded Header
+- Full-width gradient background (Lakers Blue to Navy)
+- CHS Lakers logo on left
+- "Colchester Lakers Athletics Schedule" title in white
+- Responsive height (h-20 mobile, h-24 desktop)
 
-**Server Framework**: Express.js with TypeScript
-- **Runtime**: Node.js with ESM modules
-- **Development**: tsx for TypeScript execution
-- **Production Build**: esbuild for server bundling, Vite for client bundling
+### 2. Sport Filter Buttons
+- Pill-shaped buttons with rounded-full styling
+- Options: All Sports, Football, Soccer, Basketball, Volleyball
+- Active state: Filled with sport color, white text, shadow-md
+- Inactive state: White background, colored border and text
 
-**API Design**:
-- RESTful endpoints under `/api` prefix
-- Simple JSON response format
-- Error handling middleware with status code normalization
+### 3. Interactive Calendar
+- Card-based design with shadow-md
+- Lakers Blue header with month/year and navigation arrows
+- 7-column grid for days of week
+- Game indicators: Colored dots (1.5px) below date numbers
+- Selected date: Ring outline in Lakers Blue
+- Current day: Light blue background tint
+- Click to filter games by date
 
-**Current Endpoints**:
-- `GET /api/games` - Retrieve all games sorted by date
+### 4. Upcoming Games List
+- Scrollable container (max-h-96 on desktop)
+- Game cards display:
+  - Sport badge with color and icon
+  - Date & time in bold Lakers Navy
+  - VS/@ label for home/away
+  - Opponent name
+  - Location with map pin icon
+- Empty state messages
+- Loading state
+- Error state with helpful message
 
-**Storage Layer**:
-- In-memory storage implementation (`MemStorage` class)
-- Seeded with sample game data
-- Interface-based design (`IStorage`) allows for easy database migration
-- Game data includes: sport, opponent, date, time, location, home/away status
+## Color Scheme (Lakers Branding)
+- **Lakers Blue** (Primary): `210 85% 35%` - Headers, active states, Football
+- **Lakers Green** (Accent): `150 60% 45%` - Accents, Soccer
+- **Basketball**: `25 75% 50%` (Orange)
+- **Volleyball**: `340 70% 55%` (Burgundy)
+- **Background**: `210 20% 98%` (Light blue-gray tint)
+- **Text Primary**: `215 25% 20%` (Navy)
+- **Text Secondary**: `215 15% 45%`
 
-### Data Schema
+## User Interaction Flow
+1. User lands on home page and sees upcoming games for all sports
+2. User can click sport filter buttons to view specific sport schedules
+3. User navigates calendar months using arrow buttons
+4. User clicks calendar day to see games on that specific date
+5. Calendar dots indicate which days have games and which sports
+6. User can deselect date to return to full upcoming games view
 
-**Database ORM**: Drizzle ORM configured for PostgreSQL
-- Schema validation with Zod
-- Type-safe queries and inserts
+## Design Principles
+1. **Information First**: Quick scanning of schedule data
+2. **School Spirit**: Lakers blue/green throughout
+3. **Touch-Friendly**: Large tap targets (min 44px)
+4. **Clear Hierarchy**: Filters → Calendar → Games list
+5. **Responsive**: Single column mobile, two-column desktop
 
-**Core Tables**:
-1. **users** - User authentication (id, username, password)
-2. **games** - Sports schedule (id, sport, opponent, date, time, location, isHome)
+## Testing
+- All user interactions tested end-to-end
+- Sport filtering verified for all sports
+- Calendar navigation and date selection working correctly
+- Games list updates properly based on filters and date
+- Responsive behavior confirmed across breakpoints
+- Visual quality and color scheme verified
 
-**Type Safety**:
-- Shared TypeScript types between client and server
-- Zod schemas for runtime validation
-- Drizzle-zod integration for schema-to-type conversion
+## Future Enhancements
+- Admin interface to add/edit games
+- Game results and scores tracking
+- Team roster pages
+- Printable schedule view
+- Notification system for schedule changes
+- Export to calendar (iCal/Google Calendar)
 
-### External Dependencies
+## Running the Project
+```bash
+npm run dev
+```
+Server runs on port 5000 with both frontend and backend.
 
-**Database**: PostgreSQL (via Neon serverless driver)
-- Connection pooling with `@neondatabase/serverless`
-- Session storage with `connect-pg-simple`
-- Environment-based configuration via `DATABASE_URL`
-
-**UI Libraries**:
-- Radix UI primitives for accessible components (dialogs, dropdowns, tooltips, etc.)
-- Embla Carousel for carousel functionality
-- Lucide React for iconography
-- date-fns for date manipulation and formatting
-
-**Development Tools**:
-- Vite with React plugin for fast development
-- TypeScript for type safety
-- Replit-specific plugins for development experience (error overlay, cartographer, dev banner)
-- Drizzle Kit for database migrations
-
-**Build & Deployment**:
-- Vite for client-side bundling
-- esbuild for server-side bundling
-- Environment-based configuration (development vs production)
-- Static file serving in production
+## Assets
+- CHS Lakers logo: `attached_assets/image_1760554231081.png`
+- Logo features green dragon with blue "C" letter
