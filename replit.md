@@ -12,18 +12,16 @@ A single-page sports schedule application for Colchester High School Lakers athl
 - Interactive monthly calendar with game indicators
 - Upcoming games list with detailed information
 - Responsive design with Lakers blue and green color scheme
-- **Automatic Google Drive Excel sync every hour**
-- **Admin panel for configuring sync and manual updates**
+- **Automatic Google Drive Excel sync every hour** (configured via environment variable)
 
 ## Recent Changes (October 29, 2025)
 - Added Google Drive Excel integration with xlsx library
 - Implemented hourly automatic sync using node-cron
-- Created admin panel at /admin for schedule management
+- Configured sync via SYNC_GOOGLE_DRIVE_URL environment variable
 - Fixed critical date parsing bug (Excel serial dates now convert properly)
 - Added comprehensive error tracking for skipped spreadsheet rows
 - Case-insensitive Home/Away validation ("home", "Home", "away", "Away")
-- Enhanced user feedback with detailed sync logs and error messages
-- Added admin button to main page header for easy access
+- Simplified deployment - removed admin panel in favor of environment-based configuration
 - Tested complete integration end-to-end with success
 
 ## Architecture
@@ -38,16 +36,16 @@ A single-page sports schedule application for Colchester High School Lakers athl
 ```
 client/src/
   pages/home.tsx          - Main sports schedule page
-  pages/admin.tsx         - Admin panel for sync configuration
   App.tsx                 - App routing configuration
 shared/schema.ts          - Data models and types
 server/
   storage.ts             - In-memory storage with game data
-  routes.ts              - API endpoints (games + sync)
+  routes.ts              - API endpoints (games only)
   sync-service.ts        - Google Drive Excel sync logic
   cron.ts                - Hourly automatic sync scheduler
   index.ts               - Server initialization with cron
 design_guidelines.md     - Visual design specifications
+.env                     - Environment configuration (SYNC_GOOGLE_DRIVE_URL)
 ```
 
 ### Data Model
@@ -65,21 +63,30 @@ type Game = {
 
 ### API Endpoints
 - `GET /api/games` - Returns all games sorted by date
-- `GET /api/sync/config` - Returns sync configuration (googleDriveUrl, lastSyncTime, lastSyncStatus)
-- `POST /api/sync/config` - Updates Google Drive URL (expects { googleDriveUrl: string })
-- `POST /api/sync/trigger` - Manually triggers sync from Google Drive
-- `GET /api/sync/logs` - Returns sync history logs
 
 ### Google Drive Integration
-- Accepts public Google Drive sharing URLs for Excel files
-- Converts sharing URLs to export URLs automatically
-- Fetches Excel file and parses with xlsx library
-- Validates all required fields: Sport, Opponent, Date, Time, Location, Home/Away
-- Runs automatic sync every hour via cron job
-- Excel columns required: Sport, Opponent, Date (YYYY-MM-DD or Excel serial), Time, Location, Home/Away (case-insensitive)
-- Valid sports: Football, Soccer, Basketball, Volleyball
-- Skipped rows are tracked and reported in sync logs
+The schedule automatically syncs from a Google Drive Excel file every hour.
+
+**Configuration:**
+- Set the `SYNC_GOOGLE_DRIVE_URL` environment variable with your public Google Drive file URL
+- The file must be publicly accessible (Anyone with the link can view)
+- Sync runs automatically at the top of every hour
+
+**Excel File Format:**
+Required columns:
+- **Sport**: Football, Soccer, Basketball, or Volleyball
+- **Opponent**: Team name
+- **Date**: YYYY-MM-DD format (e.g., 2025-11-15) or Excel date serial
+- **Time**: Game time (e.g., "7:00 PM")
+- **Location**: Venue name
+- **Home/Away**: "home" or "away" (case-insensitive)
+
+**Features:**
+- Converts Google Drive sharing URLs to export URLs automatically
+- Validates all required fields with detailed error tracking
+- Skipped rows are tracked and logged to server console
 - Date parsing handles both Excel serial numbers and YYYY-MM-DD strings
+- Case-insensitive Home/Away validation
 
 ## Key Features
 
@@ -148,28 +155,14 @@ type Game = {
 - Responsive behavior confirmed across breakpoints
 - Visual quality and color scheme verified
 
-## Admin Panel (/admin)
-- Configure Google Drive URL for automatic schedule syncing
-- View last sync status and timestamp
-- Manually trigger sync with "Sync Now" button
-- View sync history logs with timestamps and error messages
-- Excel format instructions displayed for reference
-- Navigation back to main schedule page
-
-## Security Note
-⚠️ **Current Implementation**: Admin endpoints are not protected by authentication. For production use:
-- Add authentication/authorization to /api/sync/* endpoints
-- Consider implementing a simple admin password or token-based auth
-- Restrict access to admin panel in production environments
-
 ## Future Enhancements
-- Authentication for admin panel
 - Game results and scores tracking
 - Team roster pages
 - Printable schedule view
 - Notification system for schedule changes
 - Export to calendar (iCal/Google Calendar)
 - Support for additional sports beyond the current four
+- Admin panel for manual schedule updates
 
 ## Running the Project
 ```bash
