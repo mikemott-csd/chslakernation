@@ -10,6 +10,7 @@ import {
   Trophy
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
+import { Link } from "wouter";
 import type { Game, SportType } from "@shared/schema";
 import logoUrl from "@assets/image_1760554231081.png";
 
@@ -92,16 +93,23 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Branded Header with Gradient */}
       <header className="w-full bg-gradient-to-r from-primary via-primary to-[#1e3a5f] shadow-md">
-        <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center gap-4">
-          <img 
-            src={logoUrl} 
-            alt="Colchester Lakers Logo" 
-            className="h-12 md:h-16 w-auto"
-            data-testid="img-logo"
-          />
-          <h1 className="text-white text-2xl md:text-3xl font-bold">
-            Colchester Lakers Athletics Schedule
-          </h1>
+        <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <img 
+              src={logoUrl} 
+              alt="Colchester Lakers Logo" 
+              className="h-12 md:h-16 w-auto"
+              data-testid="img-logo"
+            />
+            <h1 className="text-white text-2xl md:text-3xl font-bold">
+              Colchester Lakers Athletics Schedule
+            </h1>
+          </div>
+          <Link href="/admin">
+            <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20" data-testid="button-admin">
+              Admin
+            </Button>
+          </Link>
         </div>
       </header>
 

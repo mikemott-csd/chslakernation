@@ -85,7 +85,7 @@ export class GoogleDriveSyncService {
   /**
    * Parse Excel data and convert to Game objects
    */
-  private parseExcelToGames(buffer: Buffer): Game[] {
+  private parseExcelToGames(buffer: Buffer): { games: Game[], skippedRows: number, errors: string[] } {
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
@@ -94,8 +94,13 @@ export class GoogleDriveSyncService {
     const data = XLSX.utils.sheet_to_json(worksheet) as any[];
     
     const games: Game[] = [];
+    let skippedRows = 0;
+    const errors: string[] = [];
     
-    for (const row of data) {
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNum = i + 2; // Excel row number (accounting for header)
+      
       // Skip empty rows
       if (!row.Sport && !row.Opponent && !row.Date) {
         continue;
@@ -103,22 +108,27 @@ export class GoogleDriveSyncService {
       
       // Validate required fields
       if (!row.Sport || !row.Opponent || !row.Date || !row.Time || !row.Location || !row['Home/Away']) {
-        console.warn('Skipping invalid row:', row);
+        skippedRows++;
+        errors.push(`Row ${rowNum}: Missing required fields`);
+        console.warn(`Row ${rowNum}: Missing required fields`, row);
         continue;
       }
       
       // Validate sport type
       const validSports = ['Football', 'Soccer', 'Basketball', 'Volleyball'];
       if (!validSports.includes(row.Sport)) {
-        console.warn(`Invalid sport "${row.Sport}" in row:`, row);
+        skippedRows++;
+        errors.push(`Row ${rowNum}: Invalid sport "${row.Sport}" (must be Football, Soccer, Basketball, or Volleyball)`);
+        console.warn(`Row ${rowNum}: Invalid sport "${row.Sport}"`, row);
         continue;
       }
       
       // Parse date - handle Excel date serial numbers and string dates
       let gameDate: Date;
       if (typeof row.Date === 'number') {
-        // Excel serial date
-        gameDate = XLSX.SSF.parse_date_code(row.Date);
+        // Excel serial date - convert to actual Date object
+        const parsed = XLSX.SSF.parse_date_code(row.Date);
+        gameDate = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H || 0, parsed.M || 0, parsed.S || 0));
       } else if (typeof row.Date === 'string') {
         // String date
         gameDate = new Date(row.Date);
@@ -127,10 +137,20 @@ export class GoogleDriveSyncService {
         continue;
       }
       
-      // Validate home/away
-      const homeAway = String(row['Home/Away']).toLowerCase();
+      // Validate the date is valid
+      if (isNaN(gameDate.getTime())) {
+        skippedRows++;
+        errors.push(`Row ${rowNum}: Invalid date value`);
+        console.warn(`Row ${rowNum}: Invalid date value`, row);
+        continue;
+      }
+      
+      // Validate home/away (case-insensitive)
+      const homeAway = String(row['Home/Away']).toLowerCase().trim();
       if (homeAway !== 'home' && homeAway !== 'away') {
-        console.warn(`Invalid Home/Away value "${row['Home/Away']}" in row:`, row);
+        skippedRows++;
+        errors.push(`Row ${rowNum}: Invalid Home/Away value "${row['Home/Away']}" (must be "home" or "away")`);
+        console.warn(`Row ${rowNum}: Invalid Home/Away value "${row['Home/Away']}"`, row);
         continue;
       }
       
@@ -147,7 +167,7 @@ export class GoogleDriveSyncService {
       games.push(game);
     }
     
-    return games;
+    return { games, skippedRows, errors };
   }
 
   /**
@@ -178,9 +198,12 @@ export class GoogleDriveSyncService {
       const buffer = Buffer.from(arrayBuffer);
       
       // Parse Excel to games
-      const games = this.parseExcelToGames(buffer);
+      const parseResult = this.parseExcelToGames(buffer);
       
-      if (games.length === 0) {
+      if (parseResult.games.length === 0) {
+        if (parseResult.errors.length > 0) {
+          throw new Error(`No valid games found. Errors: ${parseResult.errors.join('; ')}`);
+        }
         throw new Error('No valid games found in Excel file');
       }
       
@@ -189,11 +212,21 @@ export class GoogleDriveSyncService {
       this.config.lastSyncStatus = 'success';
       this.config.lastSyncError = null;
       
-      this.addLog('success', `Successfully imported ${games.length} games`, games.length);
+      let message = `Successfully imported ${parseResult.games.length} games`;
+      if (parseResult.skippedRows > 0) {
+        message += ` (${parseResult.skippedRows} rows skipped)`;
+      }
       
-      console.log(`Successfully synced ${games.length} games from Google Drive`);
+      this.addLog('success', message, parseResult.games.length);
       
-      return games;
+      // Also log errors if any
+      if (parseResult.errors.length > 0) {
+        console.warn('Validation errors during sync:', parseResult.errors);
+      }
+      
+      console.log(`Successfully synced ${parseResult.games.length} games from Google Drive`);
+      
+      return parseResult.games;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       
