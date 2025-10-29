@@ -10,7 +10,6 @@ import {
   Trophy
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
-import { Link } from "wouter";
 import type { Game, SportType } from "@shared/schema";
 import logoUrl from "@assets/image_1760554231081.png";
 
@@ -105,11 +104,6 @@ export default function Home() {
               Colchester Lakers Athletics Schedule
             </h1>
           </div>
-          <Link href="/admin">
-            <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20" data-testid="button-admin">
-              Admin
-            </Button>
-          </Link>
         </div>
       </header>
 
