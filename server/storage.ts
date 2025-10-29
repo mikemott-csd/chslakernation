@@ -10,6 +10,8 @@ export interface IStorage {
   getAllGames(): Promise<Game[]>;
   getGameById(id: string): Promise<Game | undefined>;
   createGame(game: InsertGame): Promise<Game>;
+  replaceAllGames(games: Game[]): Promise<void>;
+  clearGames(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -54,6 +56,17 @@ export class MemStorage implements IStorage {
     const game: Game = { ...insertGame, id };
     this.games.set(id, game);
     return game;
+  }
+
+  async replaceAllGames(games: Game[]): Promise<void> {
+    this.games.clear();
+    for (const game of games) {
+      this.games.set(game.id, game);
+    }
+  }
+
+  async clearGames(): Promise<void> {
+    this.games.clear();
   }
 
   private seedGames() {
