@@ -23,8 +23,15 @@ export class GoogleDriveSyncService {
   private maxLogs = 50;
 
   constructor() {
+    // Read Google Drive URL from environment variable
+    const googleDriveUrl = process.env.SYNC_GOOGLE_DRIVE_URL || '';
+    
+    if (!googleDriveUrl) {
+      console.warn('Warning: SYNC_GOOGLE_DRIVE_URL environment variable not set. Automatic sync will not work.');
+    }
+    
     this.config = {
-      googleDriveUrl: '',
+      googleDriveUrl,
       lastSyncTime: null,
       lastSyncStatus: 'never',
       lastSyncError: null,
@@ -38,10 +45,6 @@ export class GoogleDriveSyncService {
 
   getSyncLogs(): SyncLog[] {
     return [...this.syncLogs].reverse(); // Most recent first
-  }
-
-  setGoogleDriveUrl(url: string): void {
-    this.config.googleDriveUrl = url;
   }
 
   private addLog(status: 'success' | 'error', message: string, gamesImported?: number): void {
