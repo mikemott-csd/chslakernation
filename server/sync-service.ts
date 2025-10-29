@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { type Game, type InsertGame } from "@shared/schema";
+import { type Game, type InsertGame, type SportType } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface SyncConfig {
@@ -114,14 +114,15 @@ export class GoogleDriveSyncService {
         continue;
       }
       
-      // Validate sport type
-      const validSports = ['Football', 'Soccer', 'Basketball', 'Volleyball'];
-      if (!validSports.includes(row.Sport)) {
+      // Validate sport type using shared schema
+      const validSports: SportType[] = ['Football', 'Soccer', 'Basketball', 'Volleyball'];
+      if (!validSports.includes(row.Sport as SportType)) {
         skippedRows++;
-        errors.push(`Row ${rowNum}: Invalid sport "${row.Sport}" (must be Football, Soccer, Basketball, or Volleyball)`);
+        errors.push(`Row ${rowNum}: Invalid sport "${row.Sport}" (must be one of: ${validSports.join(', ')})`);
         console.warn(`Row ${rowNum}: Invalid sport "${row.Sport}"`, row);
         continue;
       }
+      const sport = row.Sport as SportType;
       
       // Parse date - handle Excel date serial numbers and string dates
       let gameDate: Date;
@@ -156,7 +157,7 @@ export class GoogleDriveSyncService {
       
       const game: Game = {
         id: randomUUID(),
-        sport: row.Sport,
+        sport: sport,
         opponent: String(row.Opponent),
         date: gameDate,
         time: String(row.Time),
