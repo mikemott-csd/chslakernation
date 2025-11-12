@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertSubscriptionSchema } from "@shared/schema";
 import { sendWelcomeEmail } from "./email-service";
+import { syncFromGoogleDrive } from "./sync-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all games
@@ -11,6 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const games = await storage.getAllGames();
       res.json(games);
     } catch (error) {
+      console.error('Failed to fetch games:', error);
       res.status(500).json({ message: "Failed to fetch games" });
     }
   });
@@ -77,6 +79,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Successfully unsubscribed" });
     } catch (error) {
       res.status(500).json({ message: "Failed to unsubscribe" });
+    }
+  });
+
+  // Admin endpoint: Manual sync from Google Drive
+  app.post("/api/admin/sync", async (req, res) => {
+    try {
+      // Simple authentication check (for internal admin use)
+      const adminSecret = process.env.ADMIN_SECRET;
+      const providedSecret = req.headers['x-admin-secret'] || req.body.adminSecret;
+      
+      // Return 401 for both missing config and wrong secret (don't leak config status)
+      if (!adminSecret || providedSecret !== adminSecret) {
+        console.warn(`Unauthorized sync attempt from ${req.ip}`);
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      console.log('Manual sync triggered via admin endpoint');
+      
+      // Trigger sync
+      const result = await syncFromGoogleDrive('manual');
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: result.message,
+          gamesAdded: result.gamesAdded,
+          gamesUpdated: result.gamesUpdated,
+          skipped: result.skipped,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: result.message,
+          errors: result.errors,
+        });
+      }
+    } catch (error) {
+      console.error('Admin sync error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Sync failed" 
+      });
+    }
+  });
+
+  // Get recent sync logs
+  app.get("/api/admin/sync-logs", async (req, res) => {
+    try {
+      const adminSecret = process.env.ADMIN_SECRET;
+      const providedSecret = req.headers['x-admin-secret'];
+      
+      if (!adminSecret || providedSecret !== adminSecret) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const limit = parseInt(req.query.limit as string) || 10;
+      const logs = await storage.getRecentSyncLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error('Failed to fetch sync logs:', error);
+      res.status(500).json({ message: "Failed to fetch sync logs" });
     }
   });
 

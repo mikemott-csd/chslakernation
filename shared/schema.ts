@@ -55,3 +55,23 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
 
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
+
+// Sync Logs Schema - tracks Google Drive import history
+export const syncLogs = pgTable("sync_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  syncedAt: timestamp("synced_at", { mode: "date" }).notNull().defaultNow(),
+  gamesAdded: text("games_added").notNull(), // number as text for simplicity
+  gamesUpdated: text("games_updated").notNull(),
+  gamesSkipped: text("games_skipped").notNull(),
+  status: text("status").notNull(), // "success" or "error"
+  errorMessage: text("error_message"),
+  triggeredBy: text("triggered_by").notNull(), // "manual" or "cron"
+});
+
+export const insertSyncLogSchema = createInsertSchema(syncLogs).omit({
+  id: true,
+  syncedAt: true,
+});
+
+export type InsertSyncLog = z.infer<typeof insertSyncLogSchema>;
+export type SyncLog = typeof syncLogs.$inferSelect;

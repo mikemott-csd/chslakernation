@@ -1,6 +1,5 @@
 import cron, { type ScheduledTask } from 'node-cron';
-import { syncService } from './sync-service';
-import { storage } from './storage';
+import { syncFromGoogleDrive } from './sync-service';
 import { notificationService } from './notification-service';
 
 let syncJob: ScheduledTask | null = null;
@@ -12,9 +11,12 @@ let notificationJob: ScheduledTask | null = null;
 async function performSync() {
   try {
     console.log('[Cron] Starting scheduled sync from Google Drive...');
-    const games = await syncService.syncFromGoogleDrive();
-    await storage.replaceAllGames(games);
-    console.log(`[Cron] Successfully synced ${games.length} games`);
+    const result = await syncFromGoogleDrive('cron');
+    if (result.success) {
+      console.log(`[Cron] ${result.message}`);
+    } else {
+      console.error(`[Cron] Sync failed: ${result.message}`);
+    }
   } catch (error) {
     console.error('[Cron] Sync failed:', error);
   }

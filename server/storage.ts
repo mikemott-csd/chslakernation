@@ -1,7 +1,7 @@
-import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, subscriptions } from "@shared/schema";
+import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, subscriptions, games, syncLogs } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -14,6 +14,7 @@ export interface IStorage {
   createGame(game: InsertGame): Promise<Game>;
   replaceAllGames(games: Game[]): Promise<void>;
   clearGames(): Promise<void>;
+  upsertGamesBatch(games: InsertGame[]): Promise<{ added: number; updated: number }>;
   
   // Subscription operations
   getAllSubscriptions(): Promise<Subscription[]>;
@@ -22,16 +23,21 @@ export interface IStorage {
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   updateSubscription(id: string, subscription: Partial<InsertSubscription>): Promise<Subscription | undefined>;
   deleteSubscription(id: string): Promise<boolean>;
+  
+  // Sync log operations
+  createSyncLog(log: InsertSyncLog): Promise<SyncLog>;
+  getRecentSyncLogs(limit: number): Promise<SyncLog[]>;
 }
 
-export class MemStorage implements IStorage {
+export class DbStorage implements IStorage {
   private users: Map<string, User>;
-  private games: Map<string, Game>;
 
   constructor() {
     this.users = new Map();
-    this.games = new Map();
-    this.seedGames();
+  }
+
+  async initialize(): Promise<void> {
+    await this.seedGamesIfEmpty();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -52,36 +58,69 @@ export class MemStorage implements IStorage {
   }
 
   async getAllGames(): Promise<Game[]> {
-    return Array.from(this.games.values()).sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    const result = await db.select().from(games).orderBy(asc(games.date));
+    return result;
   }
 
   async getGameById(id: string): Promise<Game | undefined> {
-    return this.games.get(id);
+    const result = await db.select().from(games).where(eq(games.id, id));
+    return result[0];
   }
 
   async createGame(insertGame: InsertGame): Promise<Game> {
-    const id = randomUUID();
-    const game: Game = { ...insertGame, id };
-    this.games.set(id, game);
-    return game;
+    const result = await db.insert(games).values(insertGame).returning();
+    return result[0];
   }
 
-  async replaceAllGames(games: Game[]): Promise<void> {
-    this.games.clear();
-    for (const game of games) {
-      this.games.set(game.id, game);
+  async replaceAllGames(newGames: Game[]): Promise<void> {
+    await db.delete(games);
+    if (newGames.length > 0) {
+      await db.insert(games).values(newGames);
     }
   }
 
   async clearGames(): Promise<void> {
-    this.games.clear();
+    await db.delete(games);
   }
 
-  private seedGames() {
-    // October 2025 Games
-    const gamesData: Omit<Game, "id">[] = [
+  async upsertGamesBatch(insertGames: InsertGame[]): Promise<{ added: number; updated: number }> {
+    let added = 0;
+    let updated = 0;
+
+    for (const insertGame of insertGames) {
+      const existing = await db.select().from(games).where(
+        and(
+          eq(games.sport, insertGame.sport),
+          eq(games.opponent, insertGame.opponent),
+          eq(games.date, insertGame.date),
+          eq(games.time, insertGame.time)
+        )
+      );
+
+      if (existing.length > 0) {
+        await db.update(games)
+          .set({
+            location: insertGame.location,
+            isHome: insertGame.isHome,
+          })
+          .where(eq(games.id, existing[0].id));
+        updated++;
+      } else {
+        await db.insert(games).values(insertGame);
+        added++;
+      }
+    }
+
+    return { added, updated };
+  }
+
+  private seedGamesIfEmpty = async () => {
+    const existingGames = await db.select().from(games);
+    if (existingGames.length > 0) {
+      return;
+    }
+
+    const gamesData: InsertGame[] = [
       // Football
       {
         sport: "Football",
@@ -332,11 +371,9 @@ export class MemStorage implements IStorage {
       },
     ];
 
-    gamesData.forEach((gameData) => {
-      const id = randomUUID();
-      const game: Game = { ...gameData, id };
-      this.games.set(id, game);
-    });
+    if (gamesData.length > 0) {
+      await db.insert(games).values(gamesData);
+    }
   }
 
   // Subscription operations - using PostgreSQL database
@@ -375,6 +412,17 @@ export class MemStorage implements IStorage {
     const result = await db.delete(subscriptions).where(eq(subscriptions.id, id)).returning();
     return result.length > 0;
   }
+
+  // Sync log operations
+  async createSyncLog(insertLog: InsertSyncLog): Promise<SyncLog> {
+    const result = await db.insert(syncLogs).values(insertLog).returning();
+    return result[0];
+  }
+
+  async getRecentSyncLogs(limit: number): Promise<SyncLog[]> {
+    const result = await db.select().from(syncLogs).orderBy(desc(syncLogs.syncedAt)).limit(limit);
+    return result;
+  }
 }
 
-export const storage = new MemStorage();
+export const storage = new DbStorage();
