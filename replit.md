@@ -6,15 +6,27 @@ A single-page sports schedule application for Colchester High School Lakers athl
 **Live URL**: The application runs on port 5000 and can be published for public access.
 
 ## Project Status
-✅ **Complete with Google Drive Auto-Sync** - All features implemented and tested
+✅ **Complete with Google Drive Auto-Sync and Email Notifications** - All features implemented
 - Branded header with CHS Lakers logo
 - Sport filtering (Football, Soccer, Basketball, Volleyball, All Sports)
 - Interactive monthly calendar with game indicators
 - Upcoming games list with detailed information
 - Responsive design with Lakers blue and green color scheme
 - **Automatic Google Drive Excel sync every hour** (configured via environment variable)
+- **Email notification system with SendGrid integration**
+- **Subscribe/unsubscribe functionality with token-based security**
 
-## Recent Changes (October 29, 2025)
+## Recent Changes (November 12, 2025)
+- Added email notification system using SendGrid
+- Created subscription page with sport selection checkboxes
+- Implemented unsubscribe page with token-based authentication
+- Added notification scheduler that checks for upcoming games every hour
+- Sends emails 24 hours before games and on game day morning (8 AM)
+- Migrated from in-memory storage to PostgreSQL database
+- Added "Get Notifications" button to home page header
+- Created API endpoints for subscription management
+
+## Previous Changes (October 29, 2025)
 - Added Google Drive Excel integration with xlsx library
 - Implemented hourly automatic sync using node-cron
 - Configured sync via SYNC_GOOGLE_DRIVE_URL environment variable
@@ -22,33 +34,41 @@ A single-page sports schedule application for Colchester High School Lakers athl
 - Added comprehensive error tracking for skipped spreadsheet rows
 - Case-insensitive Home/Away validation ("home", "Home", "away", "Away")
 - Simplified deployment - removed admin panel in favor of environment-based configuration
-- Tested complete integration end-to-end with success
 
 ## Architecture
 
 ### Tech Stack
 - **Frontend**: React with TypeScript, TanStack Query, Wouter routing
-- **Backend**: Express.js with in-memory storage
+- **Backend**: Express.js with PostgreSQL database
+- **Database**: PostgreSQL (Replit built-in) with Drizzle ORM
+- **Email**: SendGrid for email notifications
 - **UI**: Shadcn components with Tailwind CSS
 - **Date Handling**: date-fns library
+- **Scheduling**: node-cron for automated tasks
 
 ### Project Structure
 ```
 client/src/
-  pages/home.tsx          - Main sports schedule page
-  App.tsx                 - App routing configuration
-shared/schema.ts          - Data models and types
+  pages/
+    home.tsx           - Main sports schedule page
+    subscribe.tsx      - Email subscription page
+    unsubscribe.tsx    - Unsubscribe confirmation page
+  App.tsx              - App routing configuration
+shared/schema.ts       - Data models and types (games, subscriptions)
 server/
-  storage.ts             - In-memory storage with game data
-  routes.ts              - API endpoints (games only)
-  sync-service.ts        - Google Drive Excel sync logic
-  cron.ts                - Hourly automatic sync scheduler
-  index.ts               - Server initialization with cron
-design_guidelines.md     - Visual design specifications
-.env                     - Environment configuration (SYNC_GOOGLE_DRIVE_URL)
+  db.ts                - Database connection setup
+  storage.ts           - Database storage interface
+  routes.ts            - API endpoints (games, subscriptions)
+  sync-service.ts      - Google Drive Excel sync logic
+  email-service.ts     - SendGrid email service
+  notification-service.ts - Game notification scheduler
+  cron.ts              - Hourly jobs (sync & notifications)
+  index.ts             - Server initialization
+design_guidelines.md   - Visual design specifications
+.env                   - Environment configuration
 ```
 
-### Data Model
+### Data Models
 ```typescript
 type Game = {
   id: string;
@@ -59,10 +79,20 @@ type Game = {
   location: string;
   isHome: "home" | "away";
 }
+
+type Subscription = {
+  id: string;
+  email: string;
+  sports: string[]; // Array of sports to receive notifications for
+  unsubscribeToken: string; // Unique token for unsubscribe links
+  createdAt: Date;
+}
 ```
 
 ### API Endpoints
 - `GET /api/games` - Returns all games sorted by date
+- `POST /api/subscriptions` - Create a new email subscription
+- `POST /api/unsubscribe` - Unsubscribe using token
 
 ### Google Drive Integration
 The schedule automatically syncs from a Google Drive Excel file every hour.
@@ -89,6 +119,38 @@ Required columns:
 - Time parsing handles both Excel time format (decimals) and text strings
 - Column name flexibility: supports both "Home/Away" and "Home / Away"
 - Case-insensitive Home/Away validation
+
+### Email Notification System
+Users can subscribe to receive email notifications for Lakers games.
+
+**Configuration:**
+- Set the `SENDGRID_API_KEY` environment variable with your SendGrid API key
+- Set the `FROM_EMAIL` environment variable (optional, defaults to noreply@colchesterlakers.com)
+- The system uses the built-in PostgreSQL database to store subscriptions
+
+**Features:**
+- Users can subscribe via the /subscribe page
+- Sport-specific subscriptions (users select which sports to follow)
+- Two notifications per game:
+  - **24-hour reminder**: Sent 24 hours before game time
+  - **Game day reminder**: Sent at 8 AM on game day
+- Branded HTML email templates with Lakers colors
+- Secure unsubscribe links with unique tokens
+- Welcome email sent upon subscription
+
+**How it works:**
+1. User visits /subscribe and enters email + selects sports
+2. Subscription is saved to database with unique unsubscribe token
+3. Welcome email is sent immediately
+4. Notification scheduler runs every hour (15 minutes past the hour)
+5. Scheduler checks for games in next 24 hours and games today
+6. Emails are sent to subscribers interested in those sports
+7. Each email includes unsubscribe link
+
+**Notification Timing:**
+- 24-hour reminders: Sent when game is 23-25 hours away
+- Game day reminders: Sent between 8:00 AM - 9:00 AM on game day
+- Hourly check ensures no duplicate emails (once per window)
 
 ## Key Features
 

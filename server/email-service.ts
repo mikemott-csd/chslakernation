@@ -38,8 +38,8 @@ export async function sendGameNotification(
   
   // Determine subject and intro text based on notification type
   const subject = type === '24hour'
-    ? `🏀 Reminder: ${game.sport} game tomorrow!`
-    : `🏀 Game Day: ${game.sport} vs ${game.opponent}`;
+    ? `Reminder: ${game.sport} game tomorrow!`
+    : `Game Day: ${game.sport} vs ${game.opponent}`;
   
   const introText = type === '24hour'
     ? 'This is your 24-hour reminder for an upcoming Lakers game!'
@@ -155,8 +155,8 @@ export async function sendGameNotification(
         
         <p style="margin-top: 20px;">
           ${game.isHome === 'home' 
-            ? 'Come support the Lakers at home! 🏠' 
-            : 'The Lakers are on the road. Let\'s go Lakers! ✈️'}
+            ? 'Come support the Lakers at home!' 
+            : 'The Lakers are on the road. Let\'s go Lakers!'}
         </p>
         
         <div class="footer">
@@ -203,7 +203,7 @@ export async function send24HourReminder(
   const gameDate = format(new Date(game.date), 'EEEE, MMMM d, yyyy');
   const unsubscribeUrl = `${APP_URL}/unsubscribe?token=${unsubscribeToken}`;
   const homeAwayText = game.isHome === 'home' ? 'vs' : '@';
-  const subject = `🏀 Reminder: ${game.sport} game tomorrow!`;
+  const subject = `Reminder: ${game.sport} game tomorrow!`;
   const introText = 'This is your 24-hour reminder for an upcoming Lakers game!';
   
   const htmlContent = `
@@ -314,8 +314,8 @@ export async function send24HourReminder(
         
         <p style="margin-top: 20px;">
           ${game.isHome === 'home' 
-            ? 'Come support the Lakers at home! 🏠' 
-            : 'The Lakers are on the road. Let\'s go Lakers! ✈️'}
+            ? 'Come support the Lakers at home!' 
+            : 'The Lakers are on the road. Let\'s go Lakers!'}
         </p>
         
         <div class="footer">
@@ -362,7 +362,7 @@ export async function sendGameDayReminder(
   const gameDate = format(new Date(game.date), 'EEEE, MMMM d, yyyy');
   const unsubscribeUrl = `${APP_URL}/unsubscribe?token=${unsubscribeToken}`;
   const homeAwayText = game.isHome === 'home' ? 'vs' : '@';
-  const subject = `🏀 Game Day: ${game.sport} vs ${game.opponent}`;
+  const subject = `Game Day: ${game.sport} vs ${game.opponent}`;
   const introText = 'Game day is here! The Lakers take the field/court today.';
   
   const htmlContent = `
@@ -473,8 +473,8 @@ export async function sendGameDayReminder(
         
         <p style="margin-top: 20px;">
           ${game.isHome === 'home' 
-            ? 'Come support the Lakers at home! 🏠' 
-            : 'The Lakers are on the road. Let\'s go Lakers! ✈️'}
+            ? 'Come support the Lakers at home!' 
+            : 'The Lakers are on the road. Let\'s go Lakers!'}
         </p>
         
         <div class="footer">
@@ -602,7 +602,7 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
   const msg = {
     to: subscription.email,
     from: FROM_EMAIL,
-    subject: '🎉 You\'re subscribed to Lakers game notifications!',
+    subject: 'You\'re subscribed to Lakers game notifications!',
     html: htmlContent,
   };
 
