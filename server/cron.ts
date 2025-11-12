@@ -1,8 +1,10 @@
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 import { syncService } from './sync-service';
 import { storage } from './storage';
+import { notificationService } from './notification-service';
 
-let syncJob: cron.ScheduledTask | null = null;
+let syncJob: ScheduledTask | null = null;
+let notificationJob: ScheduledTask | null = null;
 
 /**
  * Perform the sync operation
@@ -15,6 +17,19 @@ async function performSync() {
     console.log(`[Cron] Successfully synced ${games.length} games`);
   } catch (error) {
     console.error('[Cron] Sync failed:', error);
+  }
+}
+
+/**
+ * Check for games and send notifications
+ */
+async function performNotificationCheck() {
+  try {
+    console.log('[Cron] Starting scheduled notification check...');
+    const result = await notificationService.checkAndSendNotifications();
+    console.log(`[Cron] Notification check complete: ${result.emailsSent} emails sent`);
+  } catch (error) {
+    console.error('[Cron] Notification check failed:', error);
   }
 }
 
@@ -37,6 +52,24 @@ export function startSyncJob() {
 }
 
 /**
+ * Start the notification check job
+ */
+export function startNotificationJob() {
+  if (notificationJob) {
+    console.log('[Cron] Notification job already running');
+    return;
+  }
+
+  // Run every hour at minute 15
+  // Format: minute hour day month weekday
+  notificationJob = cron.schedule('15 * * * *', async () => {
+    await performNotificationCheck();
+  });
+
+  console.log('[Cron] Hourly notification job started (runs 15 minutes past every hour)');
+}
+
+/**
  * Stop the sync job
  */
 export function stopSyncJob() {
@@ -48,8 +81,26 @@ export function stopSyncJob() {
 }
 
 /**
+ * Stop the notification job
+ */
+export function stopNotificationJob() {
+  if (notificationJob) {
+    notificationJob.stop();
+    notificationJob = null;
+    console.log('[Cron] Notification job stopped');
+  }
+}
+
+/**
  * Manual sync trigger
  */
 export async function triggerManualSync() {
   await performSync();
+}
+
+/**
+ * Manual notification check trigger
+ */
+export async function triggerManualNotificationCheck() {
+  await performNotificationCheck();
 }
