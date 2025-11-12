@@ -37,3 +37,21 @@ export type Game = typeof games.$inferSelect;
 
 // Type for sport names
 export type SportType = "Football" | "Soccer" | "Basketball" | "Volleyball";
+
+// Email Subscriptions Schema
+export const subscriptions = pgTable("subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  sports: text("sports").array().notNull(), // Array of sports to receive notifications for
+  unsubscribeToken: varchar("unsubscribe_token").notNull().unique(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  unsubscribeToken: true,
+  createdAt: true,
+});
+
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;

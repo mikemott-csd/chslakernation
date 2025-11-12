@@ -1,5 +1,7 @@
-import { type User, type InsertUser, type Game, type InsertGame } from "@shared/schema";
+import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, subscriptions } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -12,6 +14,14 @@ export interface IStorage {
   createGame(game: InsertGame): Promise<Game>;
   replaceAllGames(games: Game[]): Promise<void>;
   clearGames(): Promise<void>;
+  
+  // Subscription operations
+  getAllSubscriptions(): Promise<Subscription[]>;
+  getSubscriptionByEmail(email: string): Promise<Subscription | undefined>;
+  getSubscriptionByToken(token: string): Promise<Subscription | undefined>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateSubscription(id: string, subscription: Partial<InsertSubscription>): Promise<Subscription | undefined>;
+  deleteSubscription(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -327,6 +337,43 @@ export class MemStorage implements IStorage {
       const game: Game = { ...gameData, id };
       this.games.set(id, game);
     });
+  }
+
+  // Subscription operations - using PostgreSQL database
+  async getAllSubscriptions(): Promise<Subscription[]> {
+    return await db.select().from(subscriptions);
+  }
+
+  async getSubscriptionByEmail(email: string): Promise<Subscription | undefined> {
+    const result = await db.select().from(subscriptions).where(eq(subscriptions.email, email));
+    return result[0];
+  }
+
+  async getSubscriptionByToken(token: string): Promise<Subscription | undefined> {
+    const result = await db.select().from(subscriptions).where(eq(subscriptions.unsubscribeToken, token));
+    return result[0];
+  }
+
+  async createSubscription(insertSubscription: InsertSubscription): Promise<Subscription> {
+    const unsubscribeToken = randomUUID();
+    const result = await db.insert(subscriptions).values({
+      ...insertSubscription,
+      unsubscribeToken,
+    }).returning();
+    return result[0];
+  }
+
+  async updateSubscription(id: string, update: Partial<InsertSubscription>): Promise<Subscription | undefined> {
+    const result = await db.update(subscriptions)
+      .set(update)
+      .where(eq(subscriptions.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteSubscription(id: string): Promise<boolean> {
+    const result = await db.delete(subscriptions).where(eq(subscriptions.id, id)).returning();
+    return result.length > 0;
   }
 }
 
