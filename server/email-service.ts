@@ -1,18 +1,25 @@
-import sgMail from '@sendgrid/mail';
+import Mailjet from 'node-mailjet';
 import { type Game, type Subscription } from "@shared/schema";
 import { format } from "date-fns";
 
-// Initialize SendGrid with API key from environment
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
+// Initialize Mailjet with API keys from environment
+const MAILJET_API_KEY = process.env.MAILJET_API_KEY || '';
+const MAILJET_SECRET_KEY = process.env.MAILJET_SECRET_KEY || '';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@colchesterlakers.com';
+const FROM_NAME = process.env.FROM_NAME || 'Colchester Lakers Athletics';
 const APP_URL = process.env.REPLIT_DEV_DOMAIN 
   ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
   : 'http://localhost:5000';
 
-if (SENDGRID_API_KEY) {
-  sgMail.setApiKey(SENDGRID_API_KEY);
+// Initialize Mailjet client
+let mailjet: any = null;
+if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
+  mailjet = new Mailjet({
+    apiKey: MAILJET_API_KEY,
+    apiSecret: MAILJET_SECRET_KEY
+  });
 } else {
-  console.warn('Warning: SENDGRID_API_KEY not set. Email notifications will not work.');
+  console.warn('Warning: MAILJET_API_KEY or MAILJET_SECRET_KEY not set. Email notifications will not work.');
 }
 
 interface GameEmailData {
@@ -27,8 +34,8 @@ export async function sendGameNotification(
   subscription: Subscription,
   emailData: GameEmailData
 ): Promise<boolean> {
-  if (!SENDGRID_API_KEY) {
-    console.warn('Skipping email send - SENDGRID_API_KEY not configured');
+  if (!mailjet) {
+    console.warn('Skipping email send - Mailjet not configured');
     return false;
   }
 
@@ -169,16 +176,30 @@ export async function sendGameNotification(
     </body>
     </html>
   `;
-  
-  const msg = {
-    to: subscription.email,
-    from: FROM_EMAIL,
-    subject: subject,
-    html: htmlContent,
-  };
 
   try {
-    await sgMail.send(msg);
+    const request = mailjet
+      .post('send', { version: 'v3.1' })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: FROM_EMAIL,
+              Name: FROM_NAME
+            },
+            To: [
+              {
+                Email: subscription.email,
+                Name: subscription.email.split('@')[0]
+              }
+            ],
+            Subject: subject,
+            HTMLPart: htmlContent
+          }
+        ]
+      });
+
+    await request;
     console.log(`Email sent to ${subscription.email} for ${game.sport} game (${type})`);
     return true;
   } catch (error) {
@@ -195,8 +216,8 @@ export async function send24HourReminder(
   game: Game,
   unsubscribeToken: string
 ): Promise<boolean> {
-  if (!SENDGRID_API_KEY) {
-    console.warn('Skipping email send - SENDGRID_API_KEY not configured');
+  if (!mailjet) {
+    console.warn('Skipping email send - Mailjet not configured');
     return false;
   }
 
@@ -328,16 +349,30 @@ export async function send24HourReminder(
     </body>
     </html>
   `;
-  
-  const msg = {
-    to: email,
-    from: FROM_EMAIL,
-    subject: subject,
-    html: htmlContent,
-  };
 
   try {
-    await sgMail.send(msg);
+    const request = mailjet
+      .post('send', { version: 'v3.1' })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: FROM_EMAIL,
+              Name: FROM_NAME
+            },
+            To: [
+              {
+                Email: email,
+                Name: email.split('@')[0]
+              }
+            ],
+            Subject: subject,
+            HTMLPart: htmlContent
+          }
+        ]
+      });
+
+    await request;
     console.log(`24-hour reminder email sent to ${email} for ${game.sport} game`);
     return true;
   } catch (error) {
@@ -354,8 +389,8 @@ export async function sendGameDayReminder(
   game: Game,
   unsubscribeToken: string
 ): Promise<boolean> {
-  if (!SENDGRID_API_KEY) {
-    console.warn('Skipping email send - SENDGRID_API_KEY not configured');
+  if (!mailjet) {
+    console.warn('Skipping email send - Mailjet not configured');
     return false;
   }
 
@@ -487,16 +522,30 @@ export async function sendGameDayReminder(
     </body>
     </html>
   `;
-  
-  const msg = {
-    to: email,
-    from: FROM_EMAIL,
-    subject: subject,
-    html: htmlContent,
-  };
 
   try {
-    await sgMail.send(msg);
+    const request = mailjet
+      .post('send', { version: 'v3.1' })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: FROM_EMAIL,
+              Name: FROM_NAME
+            },
+            To: [
+              {
+                Email: email,
+                Name: email.split('@')[0]
+              }
+            ],
+            Subject: subject,
+            HTMLPart: htmlContent
+          }
+        ]
+      });
+
+    await request;
     console.log(`Game day reminder email sent to ${email} for ${game.sport} game`);
     return true;
   } catch (error) {
@@ -509,8 +558,8 @@ export async function sendGameDayReminder(
  * Send welcome email to new subscriber
  */
 export async function sendWelcomeEmail(subscription: Subscription): Promise<boolean> {
-  if (!SENDGRID_API_KEY) {
-    console.warn('Skipping welcome email - SENDGRID_API_KEY not configured');
+  if (!mailjet) {
+    console.warn('Skipping welcome email - Mailjet not configured');
     return false;
   }
 
@@ -598,16 +647,30 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
     </body>
     </html>
   `;
-  
-  const msg = {
-    to: subscription.email,
-    from: FROM_EMAIL,
-    subject: 'You\'re subscribed to Lakers game notifications!',
-    html: htmlContent,
-  };
 
   try {
-    await sgMail.send(msg);
+    const request = mailjet
+      .post('send', { version: 'v3.1' })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: FROM_EMAIL,
+              Name: FROM_NAME
+            },
+            To: [
+              {
+                Email: subscription.email,
+                Name: subscription.email.split('@')[0]
+              }
+            ],
+            Subject: 'You\'re subscribed to Lakers game notifications!',
+            HTMLPart: htmlContent
+          }
+        ]
+      });
+
+    await request;
     console.log(`Welcome email sent to ${subscription.email}`);
     return true;
   } catch (error) {
