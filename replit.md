@@ -6,25 +6,33 @@ A single-page sports schedule application for Colchester High School Lakers athl
 **Live URL**: The application runs on port 5000 and can be published for public access.
 
 ## Project Status
-✅ **Complete with Google Drive Auto-Sync and Email Notifications** - All features implemented
+✅ **Complete with PostgreSQL Database, Google Drive Auto-Sync, and Email Notifications**
 - Branded header with CHS Lakers logo
 - Sport filtering (Football, Soccer, Basketball, Volleyball, All Sports)
 - Interactive monthly calendar with game indicators
 - Upcoming games list with detailed information
 - Responsive design with Lakers blue and green color scheme
+- **PostgreSQL database** for persistent storage of games, subscriptions, and sync logs
 - **Automatic Google Drive Excel sync every hour** (configured via environment variable)
+- **Manual sync via admin API** with authentication and audit logging
 - **Email notification system with SendGrid integration**
 - **Subscribe/unsubscribe functionality with token-based security**
 
-## Recent Changes (November 12, 2025)
-- Added email notification system using SendGrid
-- Created subscription page with sport selection checkboxes
-- Implemented unsubscribe page with token-based authentication
-- Added notification scheduler that checks for upcoming games every hour
+## Recent Changes (November 12, 2025 - Database Migration & Admin API)
+- **Migrated all data to PostgreSQL database** for persistence across restarts
+  - Games table with automatic seeding on first run
+  - Subscriptions table for email notifications
+  - Sync logs table for audit trail and debugging
+- **Created admin sync API endpoints** with ADMIN_SECRET authentication
+  - `POST /api/admin/sync` - Manually trigger Google Drive sync
+  - `GET /api/admin/sync-logs` - View sync history with statistics
+- **Implemented game deduplication** via upsertGamesBatch (matches on sport/date/time/opponent)
+- **Fixed Neon database WebSocket** configuration for reliable connections
+- Added database-backed sync logging with error tracking
+- Email notification system using database-backed subscriptions
+- Subscribe/unsubscribe pages with token-based authentication
+- Notification scheduler checks for upcoming games every hour (15 min past)
 - Sends emails 24 hours before games and on game day morning (8 AM)
-- Migrated from in-memory storage to PostgreSQL database
-- Added "Get Notifications" button to home page header
-- Created API endpoints for subscription management
 
 ## Previous Changes (October 29, 2025)
 - Added Google Drive Excel integration with xlsx library
@@ -90,9 +98,20 @@ type Subscription = {
 ```
 
 ### API Endpoints
+
+**Public Endpoints:**
 - `GET /api/games` - Returns all games sorted by date
 - `POST /api/subscriptions` - Create a new email subscription
 - `POST /api/unsubscribe` - Unsubscribe using token
+
+**Admin Endpoints (require ADMIN_SECRET):**
+- `POST /api/admin/sync` - Manually trigger Google Drive sync
+  - Authentication: Header `x-admin-secret` or body field `adminSecret`
+  - Returns: `{ success: boolean, message: string, stats: { added, updated, skipped } }`
+  - Logs: Creates entry in sync_logs table with audit trail
+- `GET /api/admin/sync-logs` - View sync history
+  - Authentication: Header `x-admin-secret` or query param `adminSecret`
+  - Returns: Array of sync logs with timestamp, status, games counts, errors
 
 ### Google Drive Integration
 The schedule automatically syncs from a Google Drive Excel file every hour.
@@ -151,6 +170,35 @@ Users can subscribe to receive email notifications for Lakers games.
 - 24-hour reminders: Sent when game is 23-25 hours away
 - Game day reminders: Sent between 8:00 AM - 9:00 AM on game day
 - Hourly check ensures no duplicate emails (once per window)
+
+## Environment Variables
+
+The following environment variables can be configured in the Replit Secrets panel:
+
+**Required:**
+- `DATABASE_URL` - PostgreSQL connection string (automatically configured by Replit)
+- `SESSION_SECRET` - Session encryption key (automatically configured by Replit)
+
+**Optional (Features):**
+- `SYNC_GOOGLE_DRIVE_URL` - Public URL to Google Drive Excel file for automatic game imports
+  - Format: `https://drive.google.com/file/d/YOUR_FILE_ID/view?usp=sharing`
+  - Leave unset to disable automatic sync (games can still be manually added to database)
+- `SENDGRID_API_KEY` - SendGrid API key for email notifications
+  - Leave unset to disable email notifications
+- `FROM_EMAIL` - Sender email address for notifications (default: `noreply@colchesterlakers.com`)
+- `ADMIN_SECRET` - Secret token for admin API endpoints
+  - Used to authenticate POST /api/admin/sync and GET /api/admin/sync-logs
+  - Example: Generate a strong random token and store it securely
+
+**Usage Example:**
+```bash
+# Trigger manual sync
+curl -X POST https://your-app.replit.app/api/admin/sync \
+  -H "x-admin-secret: YOUR_ADMIN_SECRET_HERE"
+
+# View sync logs
+curl "https://your-app.replit.app/api/admin/sync-logs?adminSecret=YOUR_ADMIN_SECRET_HERE"
+```
 
 ## Key Features
 
