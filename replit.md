@@ -15,7 +15,7 @@ A single-page sports schedule application for Colchester High School Lakers athl
 - **PostgreSQL database** for persistent storage of games, subscriptions, and sync logs
 - **Automatic Google Drive Excel sync every hour** (configured via environment variable)
 - **Manual sync via admin API** with authentication and audit logging
-- **Email notification system with SendGrid integration**
+- **Email notification system with Mailjet integration**
 - **Subscribe/unsubscribe functionality with token-based security**
 
 ## Recent Changes (November 12, 2025 - Database Migration & Admin API)
@@ -49,7 +49,7 @@ A single-page sports schedule application for Colchester High School Lakers athl
 - **Frontend**: React with TypeScript, TanStack Query, Wouter routing
 - **Backend**: Express.js with PostgreSQL database
 - **Database**: PostgreSQL (Replit built-in) with Drizzle ORM
-- **Email**: SendGrid for email notifications
+- **Email**: Mailjet for email notifications
 - **UI**: Shadcn components with Tailwind CSS
 - **Date Handling**: date-fns library
 - **Scheduling**: node-cron for automated tasks
@@ -68,7 +68,7 @@ server/
   storage.ts           - Database storage interface
   routes.ts            - API endpoints (games, subscriptions)
   sync-service.ts      - Google Drive Excel sync logic
-  email-service.ts     - SendGrid email service
+  email-service.ts     - Mailjet email service
   notification-service.ts - Game notification scheduler
   cron.ts              - Hourly jobs (sync & notifications)
   index.ts             - Server initialization
@@ -143,9 +143,12 @@ Required columns:
 Users can subscribe to receive email notifications for Lakers games.
 
 **Configuration:**
-- Set the `SENDGRID_API_KEY` environment variable with your SendGrid API key
+- Set the `MAILJET_API_KEY` environment variable with your Mailjet API key
+- Set the `MAILJET_SECRET_KEY` environment variable with your Mailjet secret key
 - Set the `FROM_EMAIL` environment variable (optional, defaults to noreply@colchesterlakers.com)
+- Set the `FROM_NAME` environment variable (optional, defaults to "Colchester Lakers Athletics")
 - The system uses the built-in PostgreSQL database to store subscriptions
+- **Free Tier:** Mailjet offers 6,000 free emails per month (200/day)
 
 **Features:**
 - Users can subscribe via the /subscribe page
@@ -183,9 +186,15 @@ The following environment variables can be configured in the Replit Secrets pane
 - `SYNC_GOOGLE_DRIVE_URL` - Public URL to Google Drive Excel file for automatic game imports
   - Format: `https://drive.google.com/file/d/YOUR_FILE_ID/view?usp=sharing`
   - Leave unset to disable automatic sync (games can still be manually added to database)
-- `SENDGRID_API_KEY` - SendGrid API key for email notifications
+- `MAILJET_API_KEY` - Mailjet API key for email notifications
+  - Get from [Mailjet Dashboard](https://app.mailjet.com/account/api_keys)
+  - Free tier: 6,000 emails/month (200/day)
   - Leave unset to disable email notifications
+- `MAILJET_SECRET_KEY` - Mailjet secret key (required with API key)
+  - Get from [Mailjet Dashboard](https://app.mailjet.com/account/api_keys)
 - `FROM_EMAIL` - Sender email address for notifications (default: `noreply@colchesterlakers.com`)
+  - Must be verified in your Mailjet account
+- `FROM_NAME` - Sender name for notifications (default: `Colchester Lakers Athletics`)
 - `ADMIN_SECRET` - Secret token for admin API endpoints
   - Used to authenticate POST /api/admin/sync and GET /api/admin/sync-logs
   - Example: Generate a strong random token and store it securely
