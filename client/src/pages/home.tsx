@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,8 @@ import {
   ChevronLeft, 
   ChevronRight, 
   MapPin, 
-  Trophy
+  Trophy,
+  Bell
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
 import type { Game, SportType } from "@shared/schema";
@@ -104,6 +106,16 @@ export default function Home() {
               Colchester Lakers Athletics Schedule
             </h1>
           </div>
+          <Link href="/subscribe">
+            <Button
+              variant="secondary"
+              className="whitespace-nowrap"
+              data-testid="button-subscribe"
+            >
+              <Bell className="mr-2 h-4 w-4" />
+              Get Notifications
+            </Button>
+          </Link>
         </div>
       </header>
 
