@@ -76,16 +76,18 @@ The schedule automatically syncs from a Google Drive Excel file every hour.
 Required columns:
 - **Sport**: Football, Soccer, Basketball, or Volleyball
 - **Opponent**: Team name
-- **Date**: YYYY-MM-DD format (e.g., 2025-11-15) or Excel date serial
-- **Time**: Game time (e.g., "7:00 PM")
+- **Date**: YYYY-MM-DD format (e.g., 2025-11-15) or Excel date serial number
+- **Time**: Game time string (e.g., "7:00 PM") or Excel time format (decimal)
 - **Location**: Venue name
-- **Home/Away**: "home" or "away" (case-insensitive)
+- **Home/Away** or **Home / Away** (with spaces): "home" or "away" (case-insensitive)
 
 **Features:**
 - Converts Google Drive sharing URLs to export URLs automatically
 - Validates all required fields with detailed error tracking
 - Skipped rows are tracked and logged to server console
 - Date parsing handles both Excel serial numbers and YYYY-MM-DD strings
+- Time parsing handles both Excel time format (decimals) and text strings
+- Column name flexibility: supports both "Home/Away" and "Home / Away"
 - Case-insensitive Home/Away validation
 
 ## Key Features

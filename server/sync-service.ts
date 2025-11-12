@@ -109,8 +109,11 @@ export class GoogleDriveSyncService {
         continue;
       }
       
+      // Get Home/Away value (handle both "Home/Away" and "Home / Away" column names)
+      const homeAwayValue = row['Home/Away'] || row['Home / Away'];
+      
       // Validate required fields
-      if (!row.Sport || !row.Opponent || !row.Date || !row.Time || !row.Location || !row['Home/Away']) {
+      if (!row.Sport || !row.Opponent || !row.Date || !row.Time || !row.Location || !homeAwayValue) {
         skippedRows++;
         errors.push(`Row ${rowNum}: Missing required fields`);
         console.warn(`Row ${rowNum}: Missing required fields`, row);
@@ -131,8 +134,10 @@ export class GoogleDriveSyncService {
       let gameDate: Date;
       if (typeof row.Date === 'number') {
         // Excel serial date - convert to actual Date object
-        const parsed = XLSX.SSF.parse_date_code(row.Date);
-        gameDate = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H || 0, parsed.M || 0, parsed.S || 0));
+        // Excel epoch: Jan 1, 1900; Unix epoch: Jan 1, 1970
+        // 25569 = days between Excel epoch and Unix epoch
+        const unixTimestamp = (row.Date - 25569) * 86400 * 1000;
+        gameDate = new Date(unixTimestamp);
       } else if (typeof row.Date === 'string') {
         // String date
         gameDate = new Date(row.Date);
@@ -149,12 +154,26 @@ export class GoogleDriveSyncService {
         continue;
       }
       
+      // Parse time - handle Excel time format (decimal) or string
+      let gameTime: string;
+      if (typeof row.Time === 'number') {
+        // Excel time format (fraction of day) - convert to HH:MM AM/PM
+        const totalMinutes = Math.round(row.Time * 24 * 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+        gameTime = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+      } else {
+        gameTime = String(row.Time);
+      }
+      
       // Validate home/away (case-insensitive)
-      const homeAway = String(row['Home/Away']).toLowerCase().trim();
+      const homeAway = String(homeAwayValue).toLowerCase().trim();
       if (homeAway !== 'home' && homeAway !== 'away') {
         skippedRows++;
-        errors.push(`Row ${rowNum}: Invalid Home/Away value "${row['Home/Away']}" (must be "home" or "away")`);
-        console.warn(`Row ${rowNum}: Invalid Home/Away value "${row['Home/Away']}"`, row);
+        errors.push(`Row ${rowNum}: Invalid Home/Away value "${homeAwayValue}" (must be "home" or "away")`);
+        console.warn(`Row ${rowNum}: Invalid Home/Away value "${homeAwayValue}"`, row);
         continue;
       }
       
@@ -163,7 +182,7 @@ export class GoogleDriveSyncService {
         sport: sport,
         opponent: String(row.Opponent),
         date: gameDate,
-        time: String(row.Time),
+        time: gameTime,
         location: String(row.Location),
         isHome: homeAway as 'home' | 'away',
       };
