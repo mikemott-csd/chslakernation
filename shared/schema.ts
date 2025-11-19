@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -26,6 +26,9 @@ export const games = pgTable("games", {
   time: text("time").notNull(),
   location: text("location").notNull(),
   isHome: text("is_home").notNull(), // "home" or "away"
+  homeScore: integer("home_score"), // CHS Lakers score (nullable until game is final)
+  awayScore: integer("away_score"), // Opponent score (nullable until game is final)
+  final: boolean("final").default(false).notNull(), // true if game is completed
 });
 
 export const insertGameSchema = createInsertSchema(games).omit({

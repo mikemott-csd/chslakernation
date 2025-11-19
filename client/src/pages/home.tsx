@@ -1,342 +1,275 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  MapPin, 
-  Trophy,
-  Bell
-} from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
-import type { Game, SportType } from "@shared/schema";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Bell, Trophy, Clock } from "lucide-react";
+import { format } from "date-fns";
+import type { Game } from "@shared/schema";
 import logoUrl from "@assets/image_1760554231081.png";
+import basketballImg from "@assets/generated_images/Lakers_basketball_game_action_d0021acb.png";
+import footballImg from "@assets/generated_images/Lakers_football_team_huddle_2dd07c0a.png";
+import soccerImg from "@assets/generated_images/Lakers_soccer_action_shot_12c64d04.png";
+import volleyballImg from "@assets/generated_images/Lakers_volleyball_spike_action_2c2516e6.png";
 
-const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Soccer", "Basketball", "Volleyball"];
+const heroImages = [basketballImg, footballImg, soccerImg, volleyballImg];
 
-const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  "All Sports": { 
-    bg: "bg-primary", 
-    text: "text-primary-foreground", 
-    border: "border-primary",
-    dot: "bg-primary"
-  },
-  "Football": { 
-    bg: "bg-chart-1", 
-    text: "text-white", 
-    border: "border-chart-1",
-    dot: "bg-chart-1"
-  },
-  "Soccer": { 
-    bg: "bg-chart-2", 
-    text: "text-white", 
-    border: "border-chart-2",
-    dot: "bg-chart-2"
-  },
-  "Basketball": { 
-    bg: "bg-chart-3", 
-    text: "text-white", 
-    border: "border-chart-3",
-    dot: "bg-chart-3"
-  },
-  "Volleyball": { 
-    bg: "bg-chart-4", 
-    text: "text-white", 
-    border: "border-chart-4",
-    dot: "bg-chart-4"
-  },
-};
-
-const SPORT_ICONS: Record<string, typeof Trophy> = {
-  "Football": Trophy,
-  "Soccer": Trophy,
-  "Basketball": Trophy,
-  "Volleyball": Trophy,
+const sportColors = {
+  Football: "hsl(210, 85%, 35%)",
+  Soccer: "hsl(150, 60%, 45%)",
+  Basketball: "hsl(25, 75%, 50%)",
+  Volleyball: "hsl(340, 70%, 55%)",
 };
 
 export default function Home() {
-  const [selectedSport, setSelectedSport] = useState<SportType | "All Sports">("All Sports");
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const { data: games = [], isLoading, isError, error } = useQuery<Game[]>({
+  const { data: games = [], isLoading } = useQuery<Game[]>({
     queryKey: ["/api/games"],
   });
 
-  // Filter games by selected sport
-  const filteredGames = selectedSport === "All Sports" 
-    ? games 
-    : games.filter(game => game.sport === selectedSport);
+  // Auto-rotate hero images
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Filter games by selected date if one is selected
-  const displayedGames = selectedDate
-    ? filteredGames.filter(game => isSameDay(new Date(game.date), selectedDate))
-    : filteredGames;
+  const now = new Date();
+  const upcomingGames = games
+    .filter((game) => new Date(game.date) >= now && !game.final)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 5);
 
-  // Get days for the current month
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  // Get games for each day in the current month
-  const getGamesForDay = (day: Date) => {
-    return filteredGames.filter(game => isSameDay(new Date(game.date), day));
-  };
-
-  // Calculate padding days to align with proper weekday
-  const firstDayOfWeek = monthStart.getDay();
-  const paddingDays = Array(firstDayOfWeek).fill(null);
+  const recentGames = games
+    .filter((game) => game.final)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Branded Header with Gradient */}
-      <header className="w-full bg-gradient-to-r from-primary via-primary to-[#1e3a5f] shadow-md">
-        <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <img 
-              src={logoUrl} 
-              alt="Colchester Lakers Logo" 
-              className="h-12 md:h-16 w-auto"
-              data-testid="img-logo"
-            />
-            <h1 className="text-white text-2xl md:text-3xl font-bold">
-              Colchester Lakers Athletics Schedule
-            </h1>
-          </div>
-          <Link href="/subscribe">
-            <Button
-              variant="secondary"
-              className="whitespace-nowrap"
-              data-testid="button-subscribe"
-            >
-              <Bell className="mr-2 h-4 w-4" />
-              Get Notifications
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
+      {/* Header */}
+      <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-4 md:px-8 shadow-md">
+        <div className="flex items-center">
+          <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 mr-4" data-testid="img-logo" />
+          <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
+            Colchester Lakers Athletics
+          </h1>
+        </div>
+        <nav className="flex gap-2 md:gap-4">
+          <Link href="/">
+            <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-home">
+              Home
             </Button>
           </Link>
-        </div>
+          <Link href="/schedule">
+            <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-schedule">
+              Schedule
+            </Button>
+          </Link>
+        </nav>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Sport Filter Buttons */}
-        <div className="flex flex-wrap gap-4 mb-8" role="group" aria-label="Sport filters">
-          {SPORTS.map((sport) => {
-            const isActive = selectedSport === sport;
-            const colors = SPORT_COLORS[sport];
-            
-            return (
-              <Button
-                key={sport}
-                onClick={() => {
-                  setSelectedSport(sport);
-                  setSelectedDate(null);
-                }}
-                variant={isActive ? "default" : "outline"}
-                className={`
-                  rounded-full transition-all duration-200
-                  ${isActive 
-                    ? `${colors.bg} ${colors.text} shadow-md` 
-                    : `bg-white ${colors.border} border-2 text-foreground`
-                  }
-                `}
-                data-testid={`button-filter-${sport.toLowerCase().replace(' ', '-')}`}
-                aria-pressed={isActive}
-              >
-                {sport}
-              </Button>
-            );
-          })}
-        </div>
-
-        {/* Two-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Interactive Calendar - 3 columns */}
-          <div className="lg:col-span-3">
-            <Card className="shadow-md rounded-lg overflow-hidden">
-              {/* Month Header */}
-              <div className="bg-primary text-primary-foreground p-6 flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  className="text-white hover:bg-white/20"
-                  data-testid="button-prev-month"
-                  aria-label="Previous month"
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </Button>
-                
-                <h2 className="text-2xl font-bold" data-testid="text-current-month">
-                  {format(currentMonth, "MMMM yyyy")}
-                </h2>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  className="text-white hover:bg-white/20"
-                  data-testid="button-next-month"
-                  aria-label="Next month"
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </Button>
-              </div>
-
-              {/* Calendar Grid */}
-              <div className="p-6">
-                {/* Day Names */}
-                <div className="grid grid-cols-7 gap-2 mb-4">
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="text-center text-sm font-semibold text-muted-foreground">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar Days */}
-                <div className="grid grid-cols-7 gap-2">
-                  {paddingDays.map((_, index) => (
-                    <div key={`padding-${index}`} className="aspect-square" />
-                  ))}
-                  
-                  {daysInMonth.map((day) => {
-                    const dayGames = getGamesForDay(day);
-                    const hasGames = dayGames.length > 0;
-                    const isSelected = selectedDate && isSameDay(day, selectedDate);
-                    const isCurrentDay = isToday(day);
-                    
-                    return (
-                      <button
-                        key={day.toISOString()}
-                        onClick={() => setSelectedDate(isSelected ? null : day)}
-                        className={`
-                          aspect-square rounded-md flex flex-col items-center justify-center
-                          transition-colors duration-150 relative
-                          ${isCurrentDay ? 'bg-blue-50' : ''}
-                          ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}
-                          ${hasGames ? 'hover:bg-accent/10 cursor-pointer' : 'cursor-default'}
-                          ${!isSameMonth(day, currentMonth) ? 'text-muted-foreground/30' : 'text-foreground'}
-                        `}
-                        data-testid={`button-calendar-day-${format(day, 'yyyy-MM-dd')}`}
-                        aria-label={`${format(day, 'MMMM d, yyyy')}${hasGames ? `, ${dayGames.length} game${dayGames.length > 1 ? 's' : ''}` : ''}`}
-                      >
-                        <span className={`text-base font-medium ${isCurrentDay ? 'font-bold' : ''}`}>
-                          {format(day, "d")}
-                        </span>
-                        
-                        {hasGames && (
-                          <div className="flex gap-1 mt-1">
-                            {Array.from(new Set(dayGames.map(g => g.sport))).map((sport) => (
-                              <div
-                                key={sport}
-                                className={`w-1.5 h-1.5 rounded-full ${SPORT_COLORS[sport]?.dot || 'bg-primary'}`}
-                                aria-hidden="true"
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </Card>
+      {/* Hero Section with Shuffling Images */}
+      <section className="relative h-[400px] md:h-[500px] overflow-hidden">
+        {heroImages.map((img, index) => (
+          <div
+            key={index}
+            className="absolute inset-0 transition-opacity duration-1000"
+            style={{ opacity: currentImageIndex === index ? 1 : 0 }}
+          >
+            <img
+              src={img}
+              alt="Lakers Athletics"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           </div>
+        ))}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
+          <h2 className="text-4xl md:text-6xl font-bold mb-4" data-testid="text-hero-title">
+            Go Lakers!
+          </h2>
+          <p className="text-xl md:text-2xl mb-8 max-w-2xl">
+            Follow Colchester High School athletics and never miss a game
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/schedule">
+              <Button size="lg" variant="default" className="bg-[hsl(210,85%,35%)] hover:bg-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
+                <Calendar className="mr-2 h-5 w-5" />
+                View Full Schedule
+              </Button>
+            </Link>
+            <Link href="/subscribe">
+              <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20" data-testid="button-get-notifications">
+                <Bell className="mr-2 h-5 w-5" />
+                Get Game Notifications
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
-          {/* Upcoming Games List - 2 columns */}
-          <div className="lg:col-span-2">
-            <h2 className="text-2xl font-semibold mb-6 text-foreground">
-              {selectedDate ? `Games on ${format(selectedDate, "MMM d")}` : "Upcoming Games"}
-            </h2>
-            
-            <div className="space-y-4 max-h-[600px] lg:max-h-[700px] overflow-y-auto pr-2">
-              {isLoading ? (
-                <div className="text-center py-12 text-muted-foreground" data-testid="loading-games">
+      <div className="container mx-auto px-4 py-12 max-w-7xl">
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Upcoming Games */}
+          <section>
+            <div className="flex items-center gap-3 mb-6">
+              <Clock className="h-8 w-8 text-[hsl(210,85%,35%)]" />
+              <h3 className="text-2xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-upcoming-header">
+                Upcoming Games
+              </h3>
+            </div>
+            {isLoading ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
                   Loading games...
-                </div>
-              ) : isError ? (
-                <Card className="p-8 text-center shadow-sm border-destructive/50" data-testid="error-games">
-                  <p className="text-destructive font-semibold mb-2">Failed to load games</p>
-                  <p className="text-sm text-muted-foreground">
-                    {error instanceof Error ? error.message : "Please try refreshing the page"}
-                  </p>
-                </Card>
-              ) : displayedGames.length === 0 ? (
-                <Card className="p-8 text-center shadow-sm" data-testid="empty-games">
-                  <p className="text-muted-foreground">
-                    {selectedDate 
-                      ? "No games scheduled for this date." 
-                      : selectedSport === "All Sports"
-                      ? "No games scheduled."
-                      : `No ${selectedSport} games scheduled.`
-                    }
-                  </p>
-                </Card>
-              ) : (
-                displayedGames.map((game) => {
-                  const colors = SPORT_COLORS[game.sport];
-                  const SportIcon = SPORT_ICONS[game.sport] || Trophy;
-                  
+                </CardContent>
+              </Card>
+            ) : upcomingGames.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  No upcoming games scheduled
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {upcomingGames.map((game) => (
+                  <Card key={game.id} className="hover-elevate transition-all" data-testid={`card-upcoming-${game.id}`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div
+                            className="inline-block px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
+                            style={{ backgroundColor: sportColors[game.sport as keyof typeof sportColors] }}
+                            data-testid={`badge-sport-${game.id}`}
+                          >
+                            {game.sport}
+                          </div>
+                          <CardTitle className="text-xl">
+                            {game.isHome === "home" ? "vs" : "@"} {game.opponent}
+                          </CardTitle>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2" data-testid={`text-date-${game.id}`}>
+                          <Calendar className="h-4 w-4" />
+                          {format(new Date(game.date), "EEEE, MMMM d, yyyy")} at {game.time}
+                        </div>
+                        <div className="text-sm">
+                          📍 {game.location}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Recent Games with Scores */}
+          <section>
+            <div className="flex items-center gap-3 mb-6">
+              <Trophy className="h-8 w-8 text-[hsl(150,60%,45%)]" />
+              <h3 className="text-2xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-recent-header">
+                Recent Results
+              </h3>
+            </div>
+            {isLoading ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  Loading results...
+                </CardContent>
+              </Card>
+            ) : recentGames.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  No completed games yet. Check back after the first game!
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {recentGames.map((game) => {
+                  const lakersScore = game.isHome === "home" ? game.homeScore : game.awayScore;
+                  const opponentScore = game.isHome === "home" ? game.awayScore : game.homeScore;
+                  const won = lakersScore !== null && opponentScore !== null && lakersScore > opponentScore;
+
                   return (
-                    <Card 
-                      key={game.id} 
-                      className="p-6 shadow-sm border hover-elevate transition-all duration-200"
-                      data-testid={`card-game-${game.id}`}
-                    >
-                      {/* Sport Badge */}
-                      <div className="flex items-start justify-between mb-3">
-                        <Badge 
-                          className={`${colors.bg} ${colors.text} flex items-center gap-1.5`}
-                          data-testid={`badge-sport-${game.id}`}
-                        >
-                          <SportIcon className="h-3.5 w-3.5" />
-                          {game.sport}
-                        </Badge>
-                        <Badge 
-                          variant="outline"
-                          className="text-xs"
-                          data-testid={`badge-type-${game.id}`}
-                        >
-                          {game.isHome === "home" ? "HOME" : "AWAY"}
-                        </Badge>
-                      </div>
-
-                      {/* Date & Time */}
-                      <div className="mb-3">
-                        <p className="text-2xl font-bold text-[#1e3a5f]" data-testid={`text-date-${game.id}`}>
-                          {format(new Date(game.date), "MMM d, yyyy")}
-                        </p>
-                        <p className="text-lg font-semibold text-foreground" data-testid={`text-time-${game.id}`}>
-                          {game.time}
-                        </p>
-                      </div>
-
-                      {/* Opponent */}
-                      <div className="mb-2">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-                          {game.isHome === "home" ? "VS" : "@"}
-                        </p>
-                        <p className="text-lg font-semibold text-foreground" data-testid={`text-opponent-${game.id}`}>
-                          {game.opponent}
-                        </p>
-                      </div>
-
-                      {/* Location */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span data-testid={`text-location-${game.id}`}>{game.location}</span>
-                      </div>
+                    <Card key={game.id} className="hover-elevate transition-all" data-testid={`card-recent-${game.id}`}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div
+                              className="inline-block px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
+                              style={{ backgroundColor: sportColors[game.sport as keyof typeof sportColors] }}
+                              data-testid={`badge-sport-recent-${game.id}`}
+                            >
+                              {game.sport}
+                            </div>
+                            <CardTitle className="text-xl">
+                              {game.isHome === "home" ? "vs" : "@"} {game.opponent}
+                            </CardTitle>
+                          </div>
+                          {lakersScore !== null && opponentScore !== null && (
+                            <div className="text-right">
+                              <div
+                                className={`text-2xl font-bold ${won ? "text-[hsl(150,60%,45%)]" : "text-muted-foreground"}`}
+                                data-testid={`score-${game.id}`}
+                              >
+                                {lakersScore} - {opponentScore}
+                              </div>
+                              <div className={`text-sm font-semibold ${won ? "text-[hsl(150,60%,45%)]" : "text-muted-foreground"}`}>
+                                {won ? "WIN" : "LOSS"}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm text-muted-foreground" data-testid={`text-date-recent-${game.id}`}>
+                          {format(new Date(game.date), "MMMM d, yyyy")}
+                        </div>
+                      </CardContent>
                     </Card>
                   );
-                })
-              )}
-            </div>
-          </div>
+                })}
+              </div>
+            )}
+          </section>
         </div>
-      </main>
+
+        {/* Get Notifications CTA */}
+        <section className="mt-12">
+          <Card className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] text-white border-0">
+            <CardContent className="p-8 md:p-12 text-center">
+              <Bell className="h-16 w-16 mx-auto mb-4" />
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">Never Miss a Game</h3>
+              <p className="text-lg mb-6 max-w-2xl mx-auto opacity-90">
+                Subscribe to get email notifications 24 hours before each game and on game day morning.
+                Stay connected with Lakers Athletics!
+              </p>
+              <Link href="/subscribe">
+                <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] hover:bg-white/90 border-0" data-testid="button-subscribe-cta">
+                  <Bell className="mr-2 h-5 w-5" />
+                  Subscribe to Notifications
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-[hsl(215,25%,20%)] text-white py-8 mt-12">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm opacity-80">
+            © 2025 Colchester High School Lakers Athletics. Go Lakers!
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
