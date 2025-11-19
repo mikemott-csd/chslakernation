@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
 import type { Game, SportType } from "@shared/schema";
-import logoUrl from "@assets/image_1760554231081.png";
+import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
 
 const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Soccer", "Basketball", "Volleyball"];
 

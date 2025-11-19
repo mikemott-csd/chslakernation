@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import logoUrl from "@assets/image_1760554231081.png";
+import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
 import { Check, X, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 

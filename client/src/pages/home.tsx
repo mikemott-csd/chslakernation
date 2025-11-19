@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import type { Game } from "@shared/schema";
-import logoUrl from "@assets/image_1760554231081.png";
+import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
 import basketballImg from "@assets/generated_images/Lakers_basketball_game_action_d0021acb.png";
 import footballImg from "@assets/generated_images/Lakers_football_team_huddle_2dd07c0a.png";
 import soccerImg from "@assets/generated_images/Lakers_soccer_action_shot_12c64d04.png";

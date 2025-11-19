@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import logoUrl from "@assets/image_1760554231081.png";
+import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
 import { ArrowLeft, Check } from "lucide-react";
 
 const SPORTS = ["Football", "Soccer", "Basketball", "Volleyball"] as const;
