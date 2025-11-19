@@ -113,11 +113,25 @@ export default function Subscribe() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
-      <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center px-4 md:px-8 shadow-md">
-        <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 mr-4" style={{ filter: 'drop-shadow(0 0 0 transparent) brightness(1.2) contrast(1.1)', mixBlendMode: 'screen' }} data-testid="img-logo" />
-        <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
-          Colchester Lakers Athletics
-        </h1>
+      <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-4 md:px-8 shadow-md">
+        <div className="flex items-center gap-4">
+          <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16" style={{ filter: 'drop-shadow(0 0 0 transparent) brightness(1.2) contrast(1.1)', mixBlendMode: 'screen' }} data-testid="img-logo" />
+          <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
+            Colchester Lakers Athletics
+          </h1>
+        </div>
+        <nav className="flex gap-2 md:gap-4">
+          <Link href="/">
+            <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-home">
+              Home
+            </Button>
+          </Link>
+          <Link href="/schedule">
+            <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-schedule">
+              Schedule
+            </Button>
+          </Link>
+        </nav>
       </header>
 
       <div className="container mx-auto px-4 py-12 max-w-2xl">

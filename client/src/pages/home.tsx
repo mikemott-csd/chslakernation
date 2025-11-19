@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink } from "lucide-react";
+import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import type { Game } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
 import basketballImg from "@assets/generated_images/Lakers_basketball_game_action_d0021acb.png";
 import footballImg from "@assets/generated_images/Lakers_football_team_huddle_2dd07c0a.png";
@@ -23,9 +25,45 @@ const sportColors = {
 
 export default function Home() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
     queryKey: ["/api/games"],
+  });
+
+  // Load "going" games from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("goingGames");
+    if (stored) {
+      setGoingGames(new Set(JSON.parse(stored)));
+    }
+  }, []);
+
+  // Mutation for marking attendance
+  const attendanceMutation = useMutation({
+    mutationFn: async (gameId: string) => {
+      const response = await apiRequest(`/api/games/${gameId}/attendance`, { method: "POST" });
+      return response.json();
+    },
+    onSuccess: (data, gameId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/games"] });
+      const newGoingGames = new Set(goingGames);
+      newGoingGames.add(gameId);
+      setGoingGames(newGoingGames);
+      localStorage.setItem("goingGames", JSON.stringify(Array.from(newGoingGames)));
+      toast({
+        title: "You're going!",
+        description: "We've added you to the attendance count.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update attendance. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Auto-rotate hero images
@@ -57,7 +95,7 @@ export default function Home() {
             Colchester Lakers Athletics
           </h1>
         </div>
-        <nav className="flex gap-2 md:gap-4">
+        <nav className="flex gap-2 md:gap-4 items-center">
           <Link href="/">
             <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-home">
               Home
@@ -66,6 +104,12 @@ export default function Home() {
           <Link href="/schedule">
             <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-schedule">
               Schedule
+            </Button>
+          </Link>
+          <Link href="/subscribe">
+            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20" data-testid="button-get-notifications">
+              <Bell className="mr-2 h-4 w-4" />
+              Get Notifications
             </Button>
           </Link>
         </nav>
@@ -99,12 +143,6 @@ export default function Home() {
               <Button size="lg" variant="default" className="bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
                 <Calendar className="mr-2 h-5 w-5" />
                 View Full Schedule
-              </Button>
-            </Link>
-            <Link href="/subscribe">
-              <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white" data-testid="button-get-notifications">
-                <Bell className="mr-2 h-5 w-5" />
-                Get Game Notifications
               </Button>
             </Link>
           </div>
@@ -154,14 +192,31 @@ export default function Home() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2" data-testid={`text-date-${game.id}`}>
-                          <Calendar className="h-4 w-4" />
-                          {format(new Date(game.date), "EEEE, MMMM d, yyyy")} at {game.time}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2" data-testid={`text-date-${game.id}`}>
+                            <Calendar className="h-4 w-4" />
+                            {format(new Date(game.date), "EEEE, MMMM d, yyyy")} at {game.time}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-4 w-4" />
+                            {game.location}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="h-4 w-4" />
-                          {game.location}
+                        <div className="flex items-center justify-between gap-3 pt-2 border-t">
+                          <span className="text-sm text-muted-foreground" data-testid={`text-attendance-${game.id}`}>
+                            <UserCheck className="h-4 w-4 inline mr-1" />
+                            {game.attendanceCount} {game.attendanceCount === 1 ? 'person' : 'people'} going
+                          </span>
+                          <Button
+                            size="sm"
+                            variant={goingGames.has(game.id) ? "secondary" : "default"}
+                            onClick={() => attendanceMutation.mutate(game.id)}
+                            disabled={goingGames.has(game.id) || attendanceMutation.isPending}
+                            data-testid={`button-going-${game.id}`}
+                          >
+                            {goingGames.has(game.id) ? "You're going!" : "I'm going"}
+                          </Button>
                         </div>
                       </div>
                     </CardContent>

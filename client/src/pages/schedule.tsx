@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,13 @@ import {
   ChevronRight, 
   MapPin, 
   Trophy,
-  Bell
+  Bell,
+  UserCheck
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
 import type { Game, SportType } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
 
 const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Soccer", "Basketball", "Volleyball"];
@@ -61,9 +64,45 @@ export default function Home() {
   const [selectedSport, setSelectedSport] = useState<SportType | "All Sports">("All Sports");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const { data: games = [], isLoading, isError, error } = useQuery<Game[]>({
     queryKey: ["/api/games"],
+  });
+
+  // Load "going" games from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("goingGames");
+    if (stored) {
+      setGoingGames(new Set(JSON.parse(stored)));
+    }
+  }, []);
+
+  // Mutation for marking attendance
+  const attendanceMutation = useMutation({
+    mutationFn: async (gameId: string) => {
+      const response = await apiRequest(`/api/games/${gameId}/attendance`, { method: "POST" });
+      return response.json();
+    },
+    onSuccess: (data, gameId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/games"] });
+      const newGoingGames = new Set(goingGames);
+      newGoingGames.add(gameId);
+      setGoingGames(newGoingGames);
+      localStorage.setItem("goingGames", JSON.stringify(Array.from(newGoingGames)));
+      toast({
+        title: "You're going!",
+        description: "We've added you to the attendance count.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update attendance. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Filter games by selected sport
@@ -107,7 +146,7 @@ export default function Home() {
               Colchester Lakers Athletics
             </h1>
           </div>
-          <nav className="flex gap-2 md:gap-4">
+          <nav className="flex gap-2 md:gap-4 items-center">
             <Link href="/">
               <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-home">
                 Home
@@ -116,6 +155,12 @@ export default function Home() {
             <Link href="/schedule">
               <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-schedule">
                 Schedule
+              </Button>
+            </Link>
+            <Link href="/subscribe">
+              <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20" data-testid="button-get-notifications">
+                <Bell className="mr-2 h-4 w-4" />
+                Get Notifications
               </Button>
             </Link>
           </nav>
@@ -340,9 +385,26 @@ export default function Home() {
                       </div>
 
                       {/* Location */}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                         <MapPin className="h-4 w-4" />
                         <span data-testid={`text-location-${game.id}`}>{game.location}</span>
+                      </div>
+
+                      {/* Attendance */}
+                      <div className="flex items-center justify-between gap-3 pt-3 border-t">
+                        <span className="text-sm text-muted-foreground" data-testid={`text-attendance-${game.id}`}>
+                          <UserCheck className="h-4 w-4 inline mr-1" />
+                          {game.attendanceCount} {game.attendanceCount === 1 ? 'person' : 'people'} going
+                        </span>
+                        <Button
+                          size="sm"
+                          variant={goingGames.has(game.id) ? "secondary" : "default"}
+                          onClick={() => attendanceMutation.mutate(game.id)}
+                          disabled={goingGames.has(game.id) || attendanceMutation.isPending}
+                          data-testid={`button-going-${game.id}`}
+                        >
+                          {goingGames.has(game.id) ? "You're going!" : "I'm going"}
+                        </Button>
                       </div>
                     </Card>
                   );
