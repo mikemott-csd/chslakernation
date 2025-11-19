@@ -99,7 +99,7 @@ export default function Home() {
             <img 
               src={logoUrl} 
               alt="Colchester Lakers Logo" 
-              className="h-14 md:h-18 w-auto object-contain"
+              className="h-14 md:h-18 w-auto object-contain mix-blend-multiply"
               data-testid="img-logo"
             />
             <h1 className="text-white text-2xl md:text-3xl font-bold">

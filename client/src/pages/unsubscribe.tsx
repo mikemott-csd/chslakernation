@@ -65,7 +65,7 @@ export default function Unsubscribe() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
       <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center px-4 md:px-8 shadow-md">
-        <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 mr-4" data-testid="img-logo" />
+        <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 mr-4 mix-blend-multiply" data-testid="img-logo" />
         <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
           Colchester Lakers Athletics
         </h1>
