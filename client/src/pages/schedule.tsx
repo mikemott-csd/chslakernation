@@ -91,7 +91,7 @@ export default function Home() {
   const paddingDays = Array(firstDayOfWeek).fill(null);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
       {/* Branded Header with Gradient */}
       <header className="w-full bg-gradient-to-r from-primary via-primary to-[#1e3a5f] shadow-md">
         <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between gap-4">
@@ -99,7 +99,7 @@ export default function Home() {
             <img 
               src={logoUrl} 
               alt="Colchester Lakers Logo" 
-              className="h-12 md:h-16 w-auto"
+              className="h-14 md:h-18 w-auto object-contain"
               data-testid="img-logo"
             />
             <h1 className="text-white text-2xl md:text-3xl font-bold">
@@ -123,6 +123,16 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Page Title */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-[hsl(215,25%,20%)] mb-2">
+            Game Schedule
+          </h1>
+          <p className="text-muted-foreground">
+            View and filter upcoming Lakers games by sport and date
+          </p>
+        </div>
+
         {/* Sport Filter Buttons */}
         <div className="flex flex-wrap gap-4 mb-8" role="group" aria-label="Sport filters">
           {SPORTS.map((sport) => {
@@ -157,7 +167,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Interactive Calendar - 3 columns */}
           <div className="lg:col-span-3">
-            <Card className="shadow-md rounded-lg overflow-hidden">
+            <Card className="shadow-lg rounded-lg overflow-hidden border-2">
               {/* Month Header */}
               <div className="bg-primary text-primary-foreground p-6 flex items-center justify-between">
                 <Button
@@ -216,10 +226,10 @@ export default function Home() {
                         onClick={() => setSelectedDate(isSelected ? null : day)}
                         className={`
                           aspect-square rounded-md flex flex-col items-center justify-center
-                          transition-colors duration-150 relative
-                          ${isCurrentDay ? 'bg-blue-50' : ''}
-                          ${isSelected ? 'ring-2 ring-primary ring-offset-2' : ''}
-                          ${hasGames ? 'hover:bg-accent/10 cursor-pointer' : 'cursor-default'}
+                          transition-all duration-150 relative
+                          ${isCurrentDay ? 'bg-[hsl(210,85%,95%)] border border-[hsl(210,85%,35%)]' : ''}
+                          ${isSelected ? 'ring-2 ring-primary ring-offset-2 bg-[hsl(210,85%,90%)]' : ''}
+                          ${hasGames && !isSelected ? 'bg-[hsl(150,60%,95%)] hover:bg-[hsl(150,60%,90%)] cursor-pointer' : hasGames ? 'cursor-pointer' : 'cursor-default'}
                           ${!isSameMonth(day, currentMonth) ? 'text-muted-foreground/30' : 'text-foreground'}
                         `}
                         data-testid={`button-calendar-day-${format(day, 'yyyy-MM-dd')}`}
@@ -250,11 +260,13 @@ export default function Home() {
 
           {/* Upcoming Games List - 2 columns */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-semibold mb-6 text-foreground">
-              {selectedDate ? `Games on ${format(selectedDate, "MMM d")}` : "Upcoming Games"}
-            </h2>
+            <Card className="p-6 shadow-lg border-2 mb-6">
+              <h2 className="text-2xl font-bold text-[hsl(215,25%,20%)]">
+                {selectedDate ? `Games on ${format(selectedDate, "MMM d")}` : "Upcoming Games"}
+              </h2>
+            </Card>
             
-            <div className="space-y-4 max-h-[600px] lg:max-h-[700px] overflow-y-auto pr-2">
+            <div className="space-y-4 max-h-[600px] lg:max-h-[700px] overflow-y-auto pr-2 scrollbar-thin">
               {isLoading ? (
                 <div className="text-center py-12 text-muted-foreground" data-testid="loading-games">
                   Loading games...
@@ -285,7 +297,7 @@ export default function Home() {
                   return (
                     <Card 
                       key={game.id} 
-                      className="p-6 shadow-sm border hover-elevate transition-all duration-200"
+                      className="p-6 shadow-md border-2 hover-elevate transition-all duration-200"
                       data-testid={`card-game-${game.id}`}
                     >
                       {/* Sport Badge */}

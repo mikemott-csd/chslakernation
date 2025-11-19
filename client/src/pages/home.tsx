@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Bell, Trophy, Clock, MapPin } from "lucide-react";
+import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import type { Game } from "@shared/schema";
 import logoUrl from "@assets/image_1760554231081.png";
@@ -51,8 +51,8 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
       {/* Header */}
       <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-4 md:px-8 shadow-md">
-        <div className="flex items-center">
-          <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 mr-4" data-testid="img-logo" />
+        <div className="flex items-center gap-4">
+          <img src={logoUrl} alt="CHS Lakers" className="h-14 md:h-18 w-auto object-contain" data-testid="img-logo" />
           <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
             Colchester Lakers Athletics
           </h1>
@@ -82,7 +82,7 @@ export default function Home() {
             <img
               src={img}
               alt="Lakers Athletics"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain bg-gradient-to-br from-[hsl(210,85%,35%)] to-[hsl(210,85%,20%)]"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           </div>
@@ -241,6 +241,109 @@ export default function Home() {
             )}
           </section>
         </div>
+
+        {/* Laker Sports News */}
+        <section className="mt-12">
+          <div className="flex items-center gap-3 mb-6">
+            <Newspaper className="h-8 w-8 text-[hsl(210,85%,35%)]" />
+            <h3 className="text-2xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-news-header">
+              Laker Sports News
+            </h3>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="hover-elevate transition-all">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-start justify-between gap-2">
+                  <span>Football Team Advances to State Championships</span>
+                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Lakers football finished with a strong 5-2 record, advancing to the Division II State Championships with a dominant 48-6 victory over Rice Memorial.
+                </p>
+                <a
+                  href="https://www.maxpreps.com/vt/colchester/colchester-lakers/football/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
+                  data-testid="link-football-news"
+                >
+                  Read More <ExternalLink className="h-3 w-3" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate transition-all">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-start justify-between gap-2">
+                  <span>Baseball Team Gears Up for 2025 Season</span>
+                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Coach Perry's squad expects a deep pitching rotation featuring junior Johnny Luter (ranked #3 in Vermont) who hit .400 last season.
+                </p>
+                <a
+                  href="https://www.maxpreps.com/vt/colchester/colchester-lakers/baseball/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
+                  data-testid="link-baseball-news"
+                >
+                  Read More <ExternalLink className="h-3 w-3" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate transition-all">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-start justify-between gap-2">
+                  <span>Basketball Teams Compete in Division I</span>
+                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Both boys and girls basketball teams are showcasing competitive play against top Division I opponents throughout the winter season.
+                </p>
+                <a
+                  href="https://www.maxpreps.com/vt/colchester/colchester-lakers/basketball/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
+                  data-testid="link-basketball-news"
+                >
+                  Read More <ExternalLink className="h-3 w-3" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate transition-all">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-start justify-between gap-2">
+                  <span>Follow All Lakers Athletics</span>
+                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Stay updated with all Lakers sports including football, basketball, soccer, volleyball, baseball, lacrosse, and more year-round.
+                </p>
+                <a
+                  href="https://www.csdvt.org/chs/athletics/athletics.php"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
+                  data-testid="link-athletics-page"
+                >
+                  Visit Athletics Page <ExternalLink className="h-3 w-3" />
+                </a>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
 
         {/* Get Notifications CTA */}
         <section className="mt-12">
