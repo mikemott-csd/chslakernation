@@ -99,7 +99,8 @@ export default function Home() {
             <img 
               src={logoUrl} 
               alt="Colchester Lakers Logo" 
-              className="h-14 md:h-18 w-auto object-contain mix-blend-multiply"
+              className="h-14 md:h-18 w-auto object-contain"
+              style={{ filter: 'drop-shadow(0 0 0 transparent) brightness(1.2) contrast(1.1)', mixBlendMode: 'screen' }}
               data-testid="img-logo"
             />
             <h1 className="text-white text-2xl md:text-3xl font-bold">

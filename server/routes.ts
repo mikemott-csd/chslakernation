@@ -17,6 +17,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Increment attendance for a game
+  app.post("/api/games/:id/attendance", async (req, res) => {
+    try {
+      const game = await storage.incrementAttendance(req.params.id);
+      if (!game) {
+        return res.status(404).json({ message: "Game not found" });
+      }
+      res.json(game);
+    } catch (error) {
+      console.error('Failed to increment attendance:', error);
+      res.status(500).json({ message: "Failed to increment attendance" });
+    }
+  });
+
   // Create a new subscription
   app.post("/api/subscriptions", async (req, res) => {
     try {

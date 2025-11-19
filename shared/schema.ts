@@ -29,6 +29,7 @@ export const games = pgTable("games", {
   homeScore: integer("home_score"), // CHS Lakers score (nullable until game is final)
   awayScore: integer("away_score"), // Opponent score (nullable until game is final)
   final: boolean("final").default(false).notNull(), // true if game is completed
+  attendanceCount: integer("attendance_count").default(0).notNull(), // Number of people marked as going
 });
 
 export const insertGameSchema = createInsertSchema(games).omit({

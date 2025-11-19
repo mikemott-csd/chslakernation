@@ -15,6 +15,7 @@ export interface IStorage {
   replaceAllGames(games: Game[]): Promise<void>;
   clearGames(): Promise<void>;
   upsertGamesBatch(games: InsertGame[]): Promise<{ added: number; updated: number }>;
+  incrementAttendance(gameId: string): Promise<Game | undefined>;
   
   // Subscription operations
   getAllSubscriptions(): Promise<Subscription[]>;
@@ -112,6 +113,21 @@ export class DbStorage implements IStorage {
     }
 
     return { added, updated };
+  }
+
+  async incrementAttendance(gameId: string): Promise<Game | undefined> {
+    const game = await this.getGameById(gameId);
+    if (!game) {
+      return undefined;
+    }
+
+    const result = await db
+      .update(games)
+      .set({ attendanceCount: game.attendanceCount + 1 })
+      .where(eq(games.id, gameId))
+      .returning();
+
+    return result[0];
   }
 
   private seedGamesIfEmpty = async () => {

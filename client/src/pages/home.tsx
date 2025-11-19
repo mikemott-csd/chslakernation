@@ -52,7 +52,7 @@ export default function Home() {
       {/* Header */}
       <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-4 md:px-8 shadow-md">
         <div className="flex items-center gap-4">
-          <img src={logoUrl} alt="CHS Lakers" className="h-14 md:h-18 w-auto object-contain mix-blend-multiply" data-testid="img-logo" />
+          <img src={logoUrl} alt="CHS Lakers" className="h-14 md:h-18 w-auto object-contain" style={{ filter: 'drop-shadow(0 0 0 transparent) brightness(1.2) contrast(1.1)', mixBlendMode: 'screen' }} data-testid="img-logo" />
           <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
             Colchester Lakers Athletics
           </h1>
