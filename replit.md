@@ -14,11 +14,11 @@ I prefer clear and concise explanations. I want iterative development with frequ
 
 ### UI/UX Decisions
 The application features a responsive design with a strong emphasis on Colchester High School's Lakers branding, utilizing a Lakers blue and green color scheme. The UI incorporates Shadcn components with Tailwind CSS for a modern and consistent look. Key UI elements include:
-- **Branded Header**: Full-width gradient background (Lakers Blue to Navy) with the CHS Lakers logo and "Colchester Lakers Athletics Schedule" title.
+- **Branded Header**: Full-width gradient background (Lakers Blue to Navy) with the CHS Lakers logo and "Colchester Lakers Athletics Schedule" title. The logo uses CSS screen blend mode with brightness/contrast filters for transparency against the blue background. Header includes "Get Notifications" button across all pages.
 - **Sport Filter Buttons**: Pill-shaped buttons allowing users to filter games by sport.
 - **Interactive Calendar**: Card-based design with Lakers Blue header, navigation arrows, and game indicators (colored dots) for days with scheduled events.
-- **Upcoming Games List**: Scrollable game cards displaying sport badges, date/time, opponent, and location.
-- **Dynamic Home Page**: Features auto-rotating hero images (Lakers-themed sports photos), a "Recent Results" section with scores and WIN/LOSS indicators, and an "Upcoming Games Preview" (next 5 games), along with a prominent "Get Game Notifications" call to action.
+- **Upcoming Games List**: Scrollable game cards displaying sport badges, date/time, opponent, location, attendance count, and "I'm going" button.
+- **Dynamic Home Page**: Features auto-rotating hero images (Lakers-themed sports photos), a "Recent Results" section with scores and WIN/LOSS indicators, and an "Upcoming Games Preview" (next 5 games).
 
 ### Technical Implementations
 - **Frontend**: React with TypeScript, TanStack Query for data fetching, and Wouter for routing.
@@ -27,6 +27,7 @@ The application features a responsive design with a strong emphasis on Colcheste
 - **Date Handling**: `date-fns` library for robust date and time manipulation.
 - **Scheduling**: `node-cron` for automated tasks like Google Drive sync and email notifications.
 - **Score Tracking**: Database fields `homeScore`, `awayScore`, and a `final` boolean flag for completed games.
+- **Attendance Tracking**: Database field `attendanceCount` (integer, default 0) with atomic SQL increment to prevent race conditions under concurrent requests. Users can mark attendance via "I'm going" button with localStorage persistence.
 - **Game Deduplication**: Implemented via `upsertGamesBatch` based on sport, date, time, and opponent.
 - **Email Notification System**: Integration with Mailjet for sending game reminders, including a welcome email and secure unsubscribe links. Notifications are sent 24 hours before a game and on game day morning (8 AM).
 - **Admin API**: Secure endpoints for manual Google Drive synchronization and viewing sync logs, authenticated via an `ADMIN_SECRET`.
@@ -34,7 +35,12 @@ The application features a responsive design with a strong emphasis on Colcheste
 ### Feature Specifications
 - **Dynamic Home Page**: Displays auto-rotating hero images, recent game results with scores, and a preview of upcoming games.
 - **Dedicated Schedule Page**: An interactive calendar with sport filtering capabilities.
-- **Email Notifications**: Users can subscribe to receive game reminders for specific sports, delivered via Mailjet.
+- **Attendance Tracking**: "I'm going" button on all game cards allows users to indicate attendance. Features:
+  - Atomic SQL increment preventing race conditions
+  - localStorage tracking to prevent duplicate submissions
+  - Visual feedback with attendance count ("X people going")
+  - Button state changes to "You're going!" after clicking
+- **Email Notifications**: Users can subscribe to receive game reminders for specific sports, delivered via Mailjet. "Get Notifications" button accessible from header navigation on all pages.
 - **Google Drive Sync**: Hourly automatic synchronization of game schedules from a public Google Drive Excel file. Supports various date/time formats and case-insensitive "Home/Away" parsing.
 - **Admin Functionality**: API endpoints for manual data synchronization and viewing sync history, protected by an administrator secret.
 - **Responsive Design**: Adapts to different screen sizes, providing an optimal viewing experience on both mobile and desktop.
