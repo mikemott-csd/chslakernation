@@ -1,7 +1,7 @@
 import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, subscriptions, games, syncLogs } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -116,18 +116,13 @@ export class DbStorage implements IStorage {
   }
 
   async incrementAttendance(gameId: string): Promise<Game | undefined> {
-    const game = await this.getGameById(gameId);
-    if (!game) {
-      return undefined;
-    }
-
     const result = await db
       .update(games)
-      .set({ attendanceCount: game.attendanceCount + 1 })
+      .set({ attendanceCount: sql`${games.attendanceCount} + 1` })
       .where(eq(games.id, gameId))
       .returning();
 
-    return result[0];
+    return result[0] || undefined;
   }
 
   private seedGamesIfEmpty = async () => {
