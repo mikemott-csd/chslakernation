@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Bell, Trophy, Clock } from "lucide-react";
+import { Calendar, Bell, Trophy, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import type { Game } from "@shared/schema";
 import logoUrl from "@assets/image_1760554231081.png";
@@ -96,13 +96,13 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/schedule">
-              <Button size="lg" variant="default" className="bg-[hsl(210,85%,35%)] hover:bg-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
+              <Button size="lg" variant="default" className="bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
                 <Calendar className="mr-2 h-5 w-5" />
                 View Full Schedule
               </Button>
             </Link>
             <Link href="/subscribe">
-              <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20" data-testid="button-get-notifications">
+              <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white" data-testid="button-get-notifications">
                 <Bell className="mr-2 h-5 w-5" />
                 Get Game Notifications
               </Button>
@@ -159,8 +159,9 @@ export default function Home() {
                           <Calendar className="h-4 w-4" />
                           {format(new Date(game.date), "EEEE, MMMM d, yyyy")} at {game.time}
                         </div>
-                        <div className="text-sm">
-                          📍 {game.location}
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="h-4 w-4" />
+                          {game.location}
                         </div>
                       </div>
                     </CardContent>
@@ -252,7 +253,7 @@ export default function Home() {
                 Stay connected with Lakers Athletics!
               </p>
               <Link href="/subscribe">
-                <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] hover:bg-white/90 border-0" data-testid="button-subscribe-cta">
+                <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] border-0" data-testid="button-subscribe-cta">
                   <Bell className="mr-2 h-5 w-5" />
                   Subscribe to Notifications
                 </Button>
