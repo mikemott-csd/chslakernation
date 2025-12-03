@@ -10,7 +10,9 @@ import {
   MapPin, 
   Trophy,
   Bell,
-  UserCheck
+  UserCheck,
+  Home as HomeIcon,
+  Calendar
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
 import type { Game, SportType } from "@shared/schema";
@@ -67,7 +69,7 @@ const SPORT_ICONS: Record<string, typeof Trophy> = {
   "Hockey": Trophy,
 };
 
-export default function Home() {
+export default function Schedule() {
   const [selectedSport, setSelectedSport] = useState<SportType | "All Sports">("All Sports");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -140,31 +142,43 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
       {/* Branded Header with Gradient */}
       <header className="w-full bg-gradient-to-r from-primary via-primary to-[#1e3a5f] shadow-md">
-        <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 md:px-6 h-16 md:h-24 flex items-center justify-between gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <img 
               src={logoUrl} 
               alt="Colchester Lakers Logo" 
-              className="h-14 md:h-18 w-auto object-contain rounded"
+              className="h-10 md:h-18 w-auto object-contain rounded"
               data-testid="img-logo"
             />
-            <h1 className="text-white text-2xl md:text-3xl font-bold">
+            <h1 className="text-white text-base md:text-3xl font-bold hidden sm:block">
               Colchester Lakers Athletics
             </h1>
+            <h1 className="text-white text-base font-bold sm:hidden">
+              Lakers
+            </h1>
           </div>
-          <nav className="flex gap-2 md:gap-4 items-center">
+          <nav className="flex gap-1 md:gap-4 items-center">
             <Link href="/">
-              <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-home">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-home-mobile">
+                <HomeIcon className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-home">
                 Home
               </Button>
             </Link>
             <Link href="/schedule">
-              <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-schedule">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-schedule-mobile">
+                <Calendar className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-schedule">
                 Schedule
               </Button>
             </Link>
             <Link href="/subscribe">
-              <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20" data-testid="button-get-notifications">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="button-get-notifications-mobile">
+                <Bell className="h-5 w-5" />
+              </Button>
+              <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20 hidden md:flex" data-testid="button-get-notifications">
                 <Bell className="mr-2 h-4 w-4" />
                 Get Notifications
               </Button>
@@ -174,19 +188,19 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-8">
         {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-[hsl(215,25%,20%)] mb-2">
+        <div className="mb-4 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold text-[hsl(215,25%,20%)] mb-1 md:mb-2">
             Game Schedule
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             View and filter upcoming Lakers games by sport and date
           </p>
         </div>
 
-        {/* Sport Filter Buttons */}
-        <div className="flex flex-wrap gap-4 mb-8" role="group" aria-label="Sport filters">
+        {/* Sport Filter Buttons - Scrollable on mobile */}
+        <div className="flex gap-2 md:gap-4 mb-4 md:mb-8 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible" role="group" aria-label="Sport filters">
           {SPORTS.map((sport) => {
             const isActive = selectedSport === sport;
             const colors = SPORT_COLORS[sport];
@@ -194,13 +208,14 @@ export default function Home() {
             return (
               <Button
                 key={sport}
+                size="sm"
                 onClick={() => {
                   setSelectedSport(sport);
                   setSelectedDate(null);
                 }}
                 variant={isActive ? "default" : "outline"}
                 className={`
-                  rounded-full transition-all duration-200
+                  rounded-full transition-all duration-200 flex-shrink-0 text-xs md:text-sm
                   ${isActive 
                     ? `${colors.bg} ${colors.text} shadow-md` 
                     : `bg-white ${colors.border} border-2 text-foreground`
@@ -216,12 +231,12 @@ export default function Home() {
         </div>
 
         {/* Two-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-8">
           {/* Interactive Calendar - 3 columns */}
           <div className="lg:col-span-3">
             <Card className="shadow-lg rounded-lg overflow-hidden border-2">
               {/* Month Header */}
-              <div className="bg-primary text-primary-foreground p-6 flex items-center justify-between">
+              <div className="bg-primary text-primary-foreground p-3 md:p-6 flex items-center justify-between">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -230,10 +245,10 @@ export default function Home() {
                   data-testid="button-prev-month"
                   aria-label="Previous month"
                 >
-                  <ChevronLeft className="h-6 w-6" />
+                  <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
                 </Button>
                 
-                <h2 className="text-2xl font-bold" data-testid="text-current-month">
+                <h2 className="text-lg md:text-2xl font-bold" data-testid="text-current-month">
                   {format(currentMonth, "MMMM yyyy")}
                 </h2>
                 
@@ -245,23 +260,28 @@ export default function Home() {
                   data-testid="button-next-month"
                   aria-label="Next month"
                 >
-                  <ChevronRight className="h-6 w-6" />
+                  <ChevronRight className="h-5 w-5 md:h-6 md:w-6" />
                 </Button>
               </div>
 
               {/* Calendar Grid */}
-              <div className="p-6">
+              <div className="p-2 md:p-6">
                 {/* Day Names */}
-                <div className="grid grid-cols-7 gap-2 mb-4">
+                <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 md:mb-4">
+                  {["S", "M", "T", "W", "T", "F", "S"].map((day, idx) => (
+                    <div key={idx} className="text-center text-xs md:text-sm font-semibold text-muted-foreground md:hidden">
+                      {day}
+                    </div>
+                  ))}
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="text-center text-sm font-semibold text-muted-foreground">
+                    <div key={day} className="text-center text-sm font-semibold text-muted-foreground hidden md:block">
                       {day}
                     </div>
                   ))}
                 </div>
 
                 {/* Calendar Days */}
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 md:gap-2">
                   {paddingDays.map((_, index) => (
                     <div key={`padding-${index}`} className="aspect-square" />
                   ))}
@@ -278,25 +298,25 @@ export default function Home() {
                         onClick={() => setSelectedDate(isSelected ? null : day)}
                         className={`
                           aspect-square rounded-md flex flex-col items-center justify-center
-                          transition-all duration-150 relative
+                          transition-all duration-150 relative p-0.5 md:p-1
                           ${isCurrentDay ? 'bg-[hsl(210,85%,95%)] border border-[hsl(210,85%,35%)]' : ''}
-                          ${isSelected ? 'ring-2 ring-primary ring-offset-2 bg-[hsl(210,85%,90%)]' : ''}
+                          ${isSelected ? 'ring-2 ring-primary ring-offset-1 md:ring-offset-2 bg-[hsl(210,85%,90%)]' : ''}
                           ${hasGames && !isSelected ? 'bg-[hsl(150,60%,95%)] hover:bg-[hsl(150,60%,90%)] cursor-pointer' : hasGames ? 'cursor-pointer' : 'cursor-default'}
                           ${!isSameMonth(day, currentMonth) ? 'text-muted-foreground/30' : 'text-foreground'}
                         `}
                         data-testid={`button-calendar-day-${format(day, 'yyyy-MM-dd')}`}
                         aria-label={`${format(day, 'MMMM d, yyyy')}${hasGames ? `, ${dayGames.length} game${dayGames.length > 1 ? 's' : ''}` : ''}`}
                       >
-                        <span className={`text-base font-medium ${isCurrentDay ? 'font-bold' : ''}`}>
+                        <span className={`text-xs md:text-base font-medium ${isCurrentDay ? 'font-bold' : ''}`}>
                           {format(day, "d")}
                         </span>
                         
                         {hasGames && (
-                          <div className="flex gap-1 mt-1">
+                          <div className="flex gap-0.5 md:gap-1 mt-0.5 md:mt-1">
                             {Array.from(new Set(dayGames.map(g => g.sport))).map((sport) => (
                               <div
                                 key={sport}
-                                className={`w-1.5 h-1.5 rounded-full ${SPORT_COLORS[sport]?.dot || 'bg-primary'}`}
+                                className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${SPORT_COLORS[sport]?.dot || 'bg-primary'}`}
                                 aria-hidden="true"
                               />
                             ))}
@@ -312,8 +332,8 @@ export default function Home() {
 
           {/* Upcoming Games List - 2 columns */}
           <div className="lg:col-span-2">
-            <Card className="p-6 shadow-lg border-2 mb-6">
-              <h2 className="text-2xl font-bold text-[hsl(215,25%,20%)]">
+            <Card className="p-3 md:p-6 shadow-lg border-2 mb-4 md:mb-6">
+              <h2 className="text-lg md:text-2xl font-bold text-[hsl(215,25%,20%)]">
                 {selectedDate ? `Games on ${format(selectedDate, "MMM d")}` : "Upcoming Games"}
               </h2>
             </Card>

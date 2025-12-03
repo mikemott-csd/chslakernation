@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu } from "lucide-react";
 import { format } from "date-fns";
 import type { Game, NewsArticle } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -99,26 +99,38 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
       {/* Header */}
-      <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-4 md:px-8 shadow-md">
-        <div className="flex items-center gap-4">
-          <img src={logoUrl} alt="CHS Lakers" className="h-14 md:h-18 w-auto object-contain rounded" data-testid="img-logo" />
-          <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
+      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
+        <div className="flex items-center gap-2 md:gap-4">
+          <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-18 w-auto object-contain rounded" data-testid="img-logo" />
+          <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
             Colchester Lakers Athletics
           </h1>
+          <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-header-mobile">
+            Lakers
+          </h1>
         </div>
-        <nav className="flex gap-2 md:gap-4 items-center">
+        <nav className="flex gap-1 md:gap-4 items-center">
           <Link href="/">
-            <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-home">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-home-mobile">
+              <HomeIcon className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-home">
               Home
             </Button>
           </Link>
           <Link href="/schedule">
-            <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-schedule">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-schedule-mobile">
+              <Calendar className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-schedule">
               Schedule
             </Button>
           </Link>
           <Link href="/subscribe">
-            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20" data-testid="button-get-notifications">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="button-get-notifications-mobile">
+              <Bell className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20 hidden md:flex" data-testid="button-get-notifications">
               <Bell className="mr-2 h-4 w-4" />
               Get Notifications
             </Button>
@@ -127,7 +139,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section with Shuffling Images */}
-      <section className="relative h-[400px] md:h-[500px] overflow-hidden">
+      <section className="relative h-[280px] sm:h-[350px] md:h-[500px] overflow-hidden">
         {heroImages.map((img, index) => (
           <div
             key={index}
@@ -143,16 +155,16 @@ export default function Home() {
           </div>
         ))}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
-          <h2 className="text-4xl md:text-6xl font-bold mb-4" data-testid="text-hero-title">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-2 md:mb-4" data-testid="text-hero-title">
             Go Lakers!
           </h2>
-          <p className="text-xl md:text-2xl mb-8 max-w-2xl">
+          <p className="text-base sm:text-xl md:text-2xl mb-4 md:mb-8 max-w-2xl">
             Follow Colchester High School athletics and never miss a game
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             <Link href="/schedule">
-              <Button size="lg" variant="default" className="bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
-                <Calendar className="mr-2 h-5 w-5" />
+              <Button size="default" className="md:text-lg bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
+                <Calendar className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                 View Full Schedule
               </Button>
             </Link>
@@ -160,13 +172,13 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
-        <div className="grid md:grid-cols-2 gap-8">
+      <div className="container mx-auto px-3 md:px-4 py-6 md:py-12 max-w-7xl">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
           {/* Upcoming Games */}
           <section>
-            <div className="flex items-center gap-3 mb-6">
-              <Clock className="h-8 w-8 text-[hsl(210,85%,35%)]" />
-              <h3 className="text-2xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-upcoming-header">
+            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+              <Clock className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,35%)]" />
+              <h3 className="text-xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-upcoming-header">
                 Upcoming Games
               </h3>
             </div>
@@ -259,9 +271,9 @@ export default function Home() {
 
           {/* Recent Games with Scores */}
           <section>
-            <div className="flex items-center gap-3 mb-6">
-              <Trophy className="h-8 w-8 text-[hsl(150,60%,45%)]" />
-              <h3 className="text-2xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-recent-header">
+            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+              <Trophy className="h-6 w-6 md:h-8 md:w-8 text-[hsl(150,60%,45%)]" />
+              <h3 className="text-xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-recent-header">
                 Recent Results
               </h3>
             </div>
@@ -349,10 +361,10 @@ export default function Home() {
         </div>
 
         {/* Laker Sports News */}
-        <section className="mt-12">
-          <div className="flex items-center gap-3 mb-6">
-            <Newspaper className="h-8 w-8 text-[hsl(210,85%,35%)]" />
-            <h3 className="text-2xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-news-header">
+        <section className="mt-8 md:mt-12">
+          <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+            <Newspaper className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,35%)]" />
+            <h3 className="text-xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-news-header">
               Laker Sports News
             </h3>
           </div>

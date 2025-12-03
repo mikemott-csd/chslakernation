@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2, Home as HomeIcon, Calendar, Bell } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Unsubscribe() {
@@ -64,28 +64,46 @@ export default function Unsubscribe() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
-      <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-4 md:px-8 shadow-md">
-        <div className="flex items-center gap-4">
-          <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 rounded" data-testid="img-logo" />
-          <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
+      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
+        <div className="flex items-center gap-2 md:gap-4">
+          <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-16 rounded" data-testid="img-logo" />
+          <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
             Colchester Lakers Athletics
           </h1>
+          <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-header-mobile">
+            Lakers
+          </h1>
         </div>
-        <nav className="flex gap-2 md:gap-4">
+        <nav className="flex gap-1 md:gap-4 items-center">
           <Link href="/">
-            <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-home">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-home-mobile">
+              <HomeIcon className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-home">
               Home
             </Button>
           </Link>
           <Link href="/schedule">
-            <Button variant="ghost" className="text-white hover:bg-white/20" data-testid="link-schedule">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-schedule-mobile">
+              <Calendar className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-schedule">
               Schedule
+            </Button>
+          </Link>
+          <Link href="/subscribe">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="button-get-notifications-mobile">
+              <Bell className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20 hidden md:flex" data-testid="button-get-notifications">
+              <Bell className="mr-2 h-4 w-4" />
+              Get Notifications
             </Button>
           </Link>
         </nav>
       </header>
 
-      <div className="container mx-auto px-4 py-12 max-w-2xl">
+      <div className="container mx-auto px-4 py-8 md:py-12 max-w-2xl">
         <Card className="text-center">
           <CardHeader>
             {isSuccess && (
