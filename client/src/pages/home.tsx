@@ -307,93 +307,61 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="hover-elevate transition-all">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-start justify-between gap-2">
-                  <span>Football Team Advances to State Championships</span>
-                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Lakers football finished with a strong 6-3 record, advancing to the Division II State Championships with a dominant 48-6 victory over Rice Memorial.
-                </p>
+              <CardContent className="p-6">
                 <a
-                  href="https://www.burlingtonfreepress.com/search/?q=colchester+high+school+football"
+                  href="https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/11/24/meet-colchester-lakers-footballs-foreign-exchange-student-sebastian-viertlboeck/86857726007/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
+                  className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
                   data-testid="link-football-news"
                 >
-                  Read More on Burlington Free Press <ExternalLink className="h-3 w-3" />
+                  <span className="font-semibold">This state football champion is a German foreign exchange student</span>
+                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
                 </a>
               </CardContent>
             </Card>
 
             <Card className="hover-elevate transition-all">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-start justify-between gap-2">
-                  <span>Boys Basketball Season Highlights</span>
-                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Coach Joe Maheux leads the Lakers with standout Vinny Wagoner showcasing deadly outside shooting and defensive play in Division I competition.
-                </p>
+              <CardContent className="p-6">
                 <a
-                  href="https://www.burlingtonfreepress.com/search/?q=colchester+high+school+basketball"
+                  href="https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/11/24/vermont-high-school-football-coaches-all-state-teams-for-2025-season/87271432007/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
-                  data-testid="link-basketball-news"
+                  className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
+                  data-testid="link-allstate-football"
                 >
-                  Read More on Burlington Free Press <ExternalLink className="h-3 w-3" />
+                  <span className="font-semibold">Find out who made VT high school football coaches' all-state teams</span>
+                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
                 </a>
               </CardContent>
             </Card>
 
             <Card className="hover-elevate transition-all">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-start justify-between gap-2">
-                  <span>Girls Basketball All-League Honors</span>
-                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Dakota Karpinski earned First Team All-League and Harlow Hier received Honorable Mention in the Lake Division for the 2024-25 season.
-                </p>
+              <CardContent className="p-6">
                 <a
-                  href="https://www.burlingtonfreepress.com/search/?q=colchester+girls+basketball"
+                  href="https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/12/03/vermont-free-press-all-state-boys-soccer-team-for-2025-season/87343019007/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
-                  data-testid="link-girls-basketball-news"
+                  className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
+                  data-testid="link-boys-soccer-news"
                 >
-                  Read More on Burlington Free Press <ExternalLink className="h-3 w-3" />
+                  <span className="font-semibold">50 players selected to the 2025 Free Press All-State Boys Soccer Team</span>
+                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
                 </a>
               </CardContent>
             </Card>
 
             <Card className="hover-elevate transition-all">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-start justify-between gap-2">
-                  <span>Follow All Lakers Athletics</span>
-                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Stay updated with all Lakers sports coverage from the Burlington Free Press including scores, standings, and feature stories.
-                </p>
+              <CardContent className="p-6">
                 <a
-                  href="https://www.burlingtonfreepress.com/search/?q=colchester+high+school+sports"
+                  href="https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/12/01/vermont-free-press-all-state-girls-soccer-team-for-2025-season/87342830007/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
-                  data-testid="link-athletics-page"
+                  className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
+                  data-testid="link-girls-soccer-news"
                 >
-                  View All Coverage <ExternalLink className="h-3 w-3" />
+                  <span className="font-semibold">50 players selected to the 36th Free Press All-State Girls Soccer Team</span>
+                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
                 </a>
               </CardContent>
             </Card>
