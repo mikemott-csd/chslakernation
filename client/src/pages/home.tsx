@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck } from "lucide-react";
+import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import type { Game, NewsArticle } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -27,6 +27,8 @@ const sportColors = {
 export default function Home() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false);
+  const [showAllRecent, setShowAllRecent] = useState(false);
   const { toast } = useToast();
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
@@ -80,15 +82,19 @@ export default function Home() {
   }, []);
 
   const now = new Date();
-  const upcomingGames = games
+  const allUpcomingGames = games
     .filter((game) => new Date(game.date) >= now && !game.final)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 5);
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const recentGames = games
+  const allRecentGames = games
     .filter((game) => game.final)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const upcomingGames = showAllUpcoming ? allUpcomingGames : allUpcomingGames.slice(0, 2);
+  const recentGames = showAllRecent ? allRecentGames : allRecentGames.slice(0, 2);
+  
+  const hasMoreUpcoming = allUpcomingGames.length > 2;
+  const hasMoreRecent = allRecentGames.length > 2;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
@@ -227,6 +233,26 @@ export default function Home() {
                     </CardContent>
                   </Card>
                 ))}
+                {hasMoreUpcoming && (
+                  <Button
+                    variant="ghost"
+                    className="w-full mt-2"
+                    onClick={() => setShowAllUpcoming(!showAllUpcoming)}
+                    data-testid="button-toggle-upcoming"
+                  >
+                    {showAllUpcoming ? (
+                      <>
+                        <ChevronUp className="mr-2 h-4 w-4" />
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="mr-2 h-4 w-4" />
+                        Show {allUpcomingGames.length - 2} More Games
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </section>
@@ -297,6 +323,26 @@ export default function Home() {
                     </Card>
                   );
                 })}
+                {hasMoreRecent && (
+                  <Button
+                    variant="ghost"
+                    className="w-full mt-2"
+                    onClick={() => setShowAllRecent(!showAllRecent)}
+                    data-testid="button-toggle-recent"
+                  >
+                    {showAllRecent ? (
+                      <>
+                        <ChevronUp className="mr-2 h-4 w-4" />
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="mr-2 h-4 w-4" />
+                        Show {allRecentGames.length - 2} More Results
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </section>
