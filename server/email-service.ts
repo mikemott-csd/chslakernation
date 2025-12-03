@@ -5,7 +5,7 @@ import { format } from "date-fns";
 // Initialize Mailjet with API keys from environment
 const MAILJET_API_KEY = process.env.MAILJET_API_KEY || '';
 const MAILJET_SECRET_KEY = process.env.MAILJET_SECRET_KEY || '';
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@colchesterlakers.com';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@colchestersd.org';
 const FROM_NAME = process.env.FROM_NAME || 'Colchester Lakers Athletics';
 const APP_URL = process.env.REPLIT_DEV_DOMAIN 
   ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
