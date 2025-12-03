@@ -20,7 +20,7 @@ export type User = typeof users.$inferSelect;
 // Sports Schedule Schema
 export const games = pgTable("games", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  sport: text("sport").notNull(), // Football, Soccer, Basketball, Volleyball
+  sport: text("sport").notNull(), // Football, Soccer, Basketball, Volleyball, Hockey
   opponent: text("opponent").notNull(),
   date: timestamp("date", { mode: "date" }).notNull(),
   time: text("time").notNull(),
@@ -40,7 +40,7 @@ export type InsertGame = z.infer<typeof insertGameSchema>;
 export type Game = typeof games.$inferSelect;
 
 // Type for sport names
-export type SportType = "Football" | "Soccer" | "Basketball" | "Volleyball";
+export type SportType = "Football" | "Soccer" | "Basketball" | "Volleyball" | "Hockey";
 
 // Email Subscriptions Schema
 export const subscriptions = pgTable("subscriptions", {

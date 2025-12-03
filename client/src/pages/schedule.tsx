@@ -18,7 +18,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
 
-const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Soccer", "Basketball", "Volleyball"];
+const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Soccer", "Basketball", "Volleyball", "Hockey"];
 
 const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
   "All Sports": { 
@@ -51,6 +51,12 @@ const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; d
     border: "border-chart-4",
     dot: "bg-chart-4"
   },
+  "Hockey": { 
+    bg: "bg-chart-5", 
+    text: "text-white", 
+    border: "border-chart-5",
+    dot: "bg-chart-5"
+  },
 };
 
 const SPORT_ICONS: Record<string, typeof Trophy> = {
@@ -58,6 +64,7 @@ const SPORT_ICONS: Record<string, typeof Trophy> = {
   "Soccer": Trophy,
   "Basketball": Trophy,
   "Volleyball": Trophy,
+  "Hockey": Trophy,
 };
 
 export default function Home() {

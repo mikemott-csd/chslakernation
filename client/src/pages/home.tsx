@@ -21,6 +21,7 @@ const sportColors = {
   Soccer: "hsl(150, 60%, 45%)",
   Basketball: "hsl(25, 75%, 50%)",
   Volleyball: "hsl(340, 70%, 55%)",
+  Hockey: "hsl(195, 80%, 40%)",
 };
 
 export default function Home() {

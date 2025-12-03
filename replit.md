@@ -15,7 +15,7 @@ I prefer clear and concise explanations. I want iterative development with frequ
 ### UI/UX Decisions
 The application features a responsive design with a strong emphasis on Colchester High School's Lakers branding, utilizing a Lakers blue and green color scheme. The UI incorporates Shadcn components with Tailwind CSS for a modern and consistent look. Key UI elements include:
 - **Branded Header**: Full-width gradient background (Lakers Blue to Navy) with the CHS Lakers logo and "Colchester Lakers Athletics Schedule" title. The logo uses CSS screen blend mode with brightness/contrast filters for transparency against the blue background. Header includes "Get Notifications" button across all pages.
-- **Sport Filter Buttons**: Pill-shaped buttons allowing users to filter games by sport.
+- **Sport Filter Buttons**: Pill-shaped buttons allowing users to filter games by sport (Football, Soccer, Basketball, Volleyball, Hockey).
 - **Interactive Calendar**: Card-based design with Lakers Blue header, navigation arrows, and game indicators (colored dots) for days with scheduled events.
 - **Upcoming Games List**: Scrollable game cards displaying sport badges, date/time, opponent, location, attendance count, and "I'm going" button.
 - **Dynamic Home Page**: Features auto-rotating hero images (Lakers-themed sports photos), a "Recent Results" section with scores and WIN/LOSS indicators, and an "Upcoming Games Preview" (next 5 games).
