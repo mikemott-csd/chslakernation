@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck } from "lucide-react";
 import { format } from "date-fns";
-import type { Game } from "@shared/schema";
+import type { Game, NewsArticle } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
@@ -30,6 +30,10 @@ export default function Home() {
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
     queryKey: ["/api/games"],
+  });
+
+  const { data: newsArticles = [] } = useQuery<NewsArticle[]>({
+    queryKey: ["/api/news"],
   });
 
   // Load "going" games from localStorage
@@ -306,65 +310,22 @@ export default function Home() {
             </h3>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
-            <Card className="hover-elevate transition-all">
-              <CardContent className="p-6">
-                <a
-                  href="https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/11/24/meet-colchester-lakers-footballs-foreign-exchange-student-sebastian-viertlboeck/86857726007/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
-                  data-testid="link-football-news"
-                >
-                  <span className="font-semibold">This state football champion is a German foreign exchange student</span>
-                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
-                </a>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-elevate transition-all">
-              <CardContent className="p-6">
-                <a
-                  href="https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/11/24/vermont-high-school-football-coaches-all-state-teams-for-2025-season/87271432007/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
-                  data-testid="link-allstate-football"
-                >
-                  <span className="font-semibold">Find out who made VT high school football coaches' all-state teams</span>
-                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
-                </a>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-elevate transition-all">
-              <CardContent className="p-6">
-                <a
-                  href="https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/12/03/vermont-free-press-all-state-boys-soccer-team-for-2025-season/87343019007/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
-                  data-testid="link-boys-soccer-news"
-                >
-                  <span className="font-semibold">50 players selected to the 2025 Free Press All-State Boys Soccer Team</span>
-                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
-                </a>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-elevate transition-all">
-              <CardContent className="p-6">
-                <a
-                  href="https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/12/01/vermont-free-press-all-state-girls-soccer-team-for-2025-season/87342830007/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
-                  data-testid="link-girls-soccer-news"
-                >
-                  <span className="font-semibold">50 players selected to the 36th Free Press All-State Girls Soccer Team</span>
-                  <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
-                </a>
-              </CardContent>
-            </Card>
+            {newsArticles.slice(0, 4).map((article, index) => (
+              <Card key={article.id} className="hover-elevate transition-all">
+                <CardContent className="p-6">
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
+                    data-testid={`link-news-${index}`}
+                  >
+                    <span className="font-semibold">{article.title}</span>
+                    <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
+                  </a>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
 

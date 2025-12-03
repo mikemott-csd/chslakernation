@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertSubscriptionSchema } from "@shared/schema";
 import { sendWelcomeEmail } from "./email-service";
 import { syncFromGoogleDrive } from "./sync-service";
+import { syncNewsArticles } from "./news-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all games
@@ -154,6 +155,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Failed to fetch sync logs:', error);
       res.status(500).json({ message: "Failed to fetch sync logs" });
+    }
+  });
+
+  // Get news articles
+  app.get("/api/news", async (_req, res) => {
+    try {
+      const articles = await storage.getRecentNewsArticles(8);
+      res.json(articles);
+    } catch (error) {
+      console.error('Failed to fetch news articles:', error);
+      res.status(500).json({ message: "Failed to fetch news articles" });
+    }
+  });
+
+  // Admin: Manually trigger news sync
+  app.post("/api/admin/sync-news", async (req, res) => {
+    try {
+      const adminSecret = process.env.ADMIN_SECRET;
+      const providedSecret = req.headers['x-admin-secret'];
+      
+      if (!adminSecret || providedSecret !== adminSecret) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      console.log('Manual news sync triggered via admin endpoint');
+      const result = await syncNewsArticles();
+      
+      res.json({
+        success: true,
+        message: `News sync complete: ${result.added} added, ${result.updated} updated`,
+        ...result,
+      });
+    } catch (error) {
+      console.error('Admin news sync error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "News sync failed" 
+      });
     }
   });
 

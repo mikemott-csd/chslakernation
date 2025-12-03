@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, subscriptions, games, syncLogs } from "@shared/schema";
+import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, type NewsArticle, type InsertNewsArticle, subscriptions, games, syncLogs, newsArticles } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
@@ -28,6 +28,12 @@ export interface IStorage {
   // Sync log operations
   createSyncLog(log: InsertSyncLog): Promise<SyncLog>;
   getRecentSyncLogs(limit: number): Promise<SyncLog[]>;
+  
+  // News article operations
+  getAllNewsArticles(): Promise<NewsArticle[]>;
+  getRecentNewsArticles(limit: number): Promise<NewsArticle[]>;
+  upsertNewsArticle(article: InsertNewsArticle): Promise<NewsArticle>;
+  clearNewsArticles(): Promise<void>;
 }
 
 export class DbStorage implements IStorage {
@@ -433,6 +439,32 @@ export class DbStorage implements IStorage {
   async getRecentSyncLogs(limit: number): Promise<SyncLog[]> {
     const result = await db.select().from(syncLogs).orderBy(desc(syncLogs.syncedAt)).limit(limit);
     return result;
+  }
+
+  // News article operations
+  async getAllNewsArticles(): Promise<NewsArticle[]> {
+    return await db.select().from(newsArticles).orderBy(desc(newsArticles.fetchedAt));
+  }
+
+  async getRecentNewsArticles(limit: number): Promise<NewsArticle[]> {
+    return await db.select().from(newsArticles).orderBy(desc(newsArticles.fetchedAt)).limit(limit);
+  }
+
+  async upsertNewsArticle(article: InsertNewsArticle): Promise<NewsArticle> {
+    const existing = await db.select().from(newsArticles).where(eq(newsArticles.url, article.url));
+    if (existing.length > 0) {
+      const result = await db.update(newsArticles)
+        .set({ title: article.title, publishedAt: article.publishedAt, fetchedAt: new Date() })
+        .where(eq(newsArticles.url, article.url))
+        .returning();
+      return result[0];
+    }
+    const result = await db.insert(newsArticles).values(article).returning();
+    return result[0];
+  }
+
+  async clearNewsArticles(): Promise<void> {
+    await db.delete(newsArticles);
   }
 }
 

@@ -1,8 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { startSyncJob, startNotificationJob } from "./cron";
+import { startSyncJob, startNotificationJob, startNewsSyncJob } from "./cron";
 import { storage } from "./storage";
+import { seedNewsIfEmpty } from "./news-service";
 
 const app = express();
 app.use(express.json());
@@ -43,6 +44,9 @@ app.use((req, res, next) => {
   
   // Initialize database storage and seed games if needed
   await storage.initialize();
+  
+  // Seed news articles if empty
+  await seedNewsIfEmpty();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -78,5 +82,8 @@ app.use((req, res, next) => {
     
     // Start the hourly notification job
     startNotificationJob();
+    
+    // Start the weekly news sync job
+    startNewsSyncJob();
   });
 })();

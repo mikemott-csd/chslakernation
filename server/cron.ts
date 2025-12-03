@@ -1,9 +1,11 @@
 import cron, { type ScheduledTask } from 'node-cron';
 import { syncFromGoogleDrive } from './sync-service';
 import { notificationService } from './notification-service';
+import { syncNewsArticles } from './news-service';
 
 let syncJob: ScheduledTask | null = null;
 let notificationJob: ScheduledTask | null = null;
+let newsSyncJob: ScheduledTask | null = null;
 
 /**
  * Perform the sync operation
@@ -105,4 +107,53 @@ export async function triggerManualSync() {
  */
 export async function triggerManualNotificationCheck() {
   await performNotificationCheck();
+}
+
+/**
+ * Perform the news sync operation
+ */
+async function performNewsSync() {
+  try {
+    console.log('[Cron] Starting weekly news sync from Burlington Free Press...');
+    const result = await syncNewsArticles();
+    console.log(`[Cron] News sync complete: ${result.added} added, ${result.updated} updated`);
+  } catch (error) {
+    console.error('[Cron] News sync failed:', error);
+  }
+}
+
+/**
+ * Start the weekly news sync job
+ */
+export function startNewsSyncJob() {
+  if (newsSyncJob) {
+    console.log('[Cron] News sync job already running');
+    return;
+  }
+
+  // Run every Sunday at 6:00 AM
+  // Format: minute hour day month weekday (0 = Sunday)
+  newsSyncJob = cron.schedule('0 6 * * 0', async () => {
+    await performNewsSync();
+  });
+
+  console.log('[Cron] Weekly news sync job started (runs every Sunday at 6:00 AM)');
+}
+
+/**
+ * Stop the news sync job
+ */
+export function stopNewsSyncJob() {
+  if (newsSyncJob) {
+    newsSyncJob.stop();
+    newsSyncJob = null;
+    console.log('[Cron] News sync job stopped');
+  }
+}
+
+/**
+ * Manual news sync trigger
+ */
+export async function triggerManualNewsSync() {
+  await performNewsSync();
 }

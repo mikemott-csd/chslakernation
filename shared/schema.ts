@@ -79,3 +79,20 @@ export const insertSyncLogSchema = createInsertSchema(syncLogs).omit({
 
 export type InsertSyncLog = z.infer<typeof insertSyncLogSchema>;
 export type SyncLog = typeof syncLogs.$inferSelect;
+
+// News Articles Schema - Burlington Free Press articles about Colchester sports
+export const newsArticles = pgTable("news_articles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  url: text("url").notNull().unique(),
+  publishedAt: timestamp("published_at", { mode: "date" }),
+  fetchedAt: timestamp("fetched_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertNewsArticleSchema = createInsertSchema(newsArticles).omit({
+  id: true,
+  fetchedAt: true,
+});
+
+export type InsertNewsArticle = z.infer<typeof insertNewsArticleSchema>;
+export type NewsArticle = typeof newsArticles.$inferSelect;
