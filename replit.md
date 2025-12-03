@@ -25,7 +25,7 @@ The application features a responsive design with a strong emphasis on Colcheste
 - **Backend**: Express.js with a PostgreSQL database.
 - **Database**: PostgreSQL (Replit built-in) managed with Drizzle ORM for persistent storage of games, subscriptions, and sync logs.
 - **Date Handling**: `date-fns` library for robust date and time manipulation.
-- **Scheduling**: `node-cron` for automated tasks like Google Drive sync and email notifications.
+- **Scheduling**: `node-cron` for automated tasks like Google Drive sync, email notifications, and weekly news updates.
 - **Score Tracking**: Database fields `homeScore`, `awayScore`, and a `final` boolean flag for completed games.
 - **Attendance Tracking**: Database field `attendanceCount` (integer, default 0) with atomic SQL increment to prevent race conditions under concurrent requests. Users can mark attendance via "I'm going" button with localStorage persistence.
 - **Game Deduplication**: Implemented via `upsertGamesBatch` based on sport, date, time, and opponent.
@@ -33,7 +33,8 @@ The application features a responsive design with a strong emphasis on Colcheste
 - **Admin API**: Secure endpoints for manual Google Drive synchronization and viewing sync logs, authenticated via an `ADMIN_SECRET`.
 
 ### Feature Specifications
-- **Dynamic Home Page**: Displays auto-rotating hero images, recent game results with scores, and a preview of upcoming games.
+- **Dynamic Home Page**: Displays auto-rotating hero images, recent game results with scores, a preview of upcoming games, and a "Laker Sports News" section with articles from Burlington Free Press.
+- **Automated News Updates**: Weekly cron job (Sundays at 6 AM) fetches sports news articles from Burlington Free Press, stored in the `news_articles` database table. Articles display on the home page with direct links to the source.
 - **Dedicated Schedule Page**: An interactive calendar with sport filtering capabilities.
 - **Attendance Tracking**: "I'm going" button on all game cards allows users to indicate attendance. Features:
   - Atomic SQL increment preventing race conditions
@@ -50,7 +51,7 @@ The application follows a client-server architecture. The frontend handles user 
 
 ## External Dependencies
 
--   **PostgreSQL**: Primary database for storing game schedules, user subscriptions, and sync logs.
+-   **PostgreSQL**: Primary database for storing game schedules, user subscriptions, sync logs, and news articles.
 -   **Mailjet**: Email service provider for sending game notifications and subscription management emails. Configured via `MAILJET_API_KEY` and `MAILJET_SECRET_KEY` environment variables.
 -   **Google Drive (via Excel)**: Used as the source for game schedule data, automatically synchronized via a public Excel file URL set in `SYNC_GOOGLE_DRIVE_URL`.
 -   **Wouter**: A lightweight React router for client-side navigation.
