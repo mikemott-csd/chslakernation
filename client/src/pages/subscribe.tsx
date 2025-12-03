@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
+import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
 import { ArrowLeft, Check } from "lucide-react";
 
 const SPORTS = ["Football", "Soccer", "Basketball", "Volleyball"] as const;
@@ -70,7 +70,7 @@ export default function Subscribe() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
         <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center px-4 md:px-8 shadow-md">
-          <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 mr-4" data-testid="img-logo" />
+          <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 mr-4 rounded" data-testid="img-logo" />
           <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
             Colchester Lakers Athletics
           </h1>
@@ -115,7 +115,7 @@ export default function Subscribe() {
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
       <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-4 md:px-8 shadow-md">
         <div className="flex items-center gap-4">
-          <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16" style={{ filter: 'drop-shadow(0 0 0 transparent) brightness(1.2) contrast(1.1)', mixBlendMode: 'screen' }} data-testid="img-logo" />
+          <img src={logoUrl} alt="CHS Lakers" className="h-12 md:h-16 rounded" data-testid="img-logo" />
           <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
             Colchester Lakers Athletics
           </h1>

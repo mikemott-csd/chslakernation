@@ -16,7 +16,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameM
 import type { Game, SportType } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
+import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
 
 const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Soccer", "Basketball", "Volleyball"];
 
@@ -138,8 +138,7 @@ export default function Home() {
             <img 
               src={logoUrl} 
               alt="Colchester Lakers Logo" 
-              className="h-14 md:h-18 w-auto object-contain"
-              style={{ filter: 'drop-shadow(0 0 0 transparent) brightness(1.2) contrast(1.1)', mixBlendMode: 'screen' }}
+              className="h-14 md:h-18 w-auto object-contain rounded"
               data-testid="img-logo"
             />
             <h1 className="text-white text-2xl md:text-3xl font-bold">

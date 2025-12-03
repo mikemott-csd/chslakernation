@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import type { Game, NewsArticle } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/CHSLogo_1763583029891.jpg";
+import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
 import basketballImg from "@assets/generated_images/Lakers_basketball_game_action_d0021acb.png";
 import footballImg from "@assets/generated_images/Lakers_football_team_huddle_2dd07c0a.png";
 import soccerImg from "@assets/generated_images/Lakers_soccer_action_shot_12c64d04.png";
@@ -94,7 +94,7 @@ export default function Home() {
       {/* Header */}
       <header className="h-20 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-4 md:px-8 shadow-md">
         <div className="flex items-center gap-4">
-          <img src={logoUrl} alt="CHS Lakers" className="h-14 md:h-18 w-auto object-contain" style={{ filter: 'drop-shadow(0 0 0 transparent) brightness(1.2) contrast(1.1)', mixBlendMode: 'screen' }} data-testid="img-logo" />
+          <img src={logoUrl} alt="CHS Lakers" className="h-14 md:h-18 w-auto object-contain rounded" data-testid="img-logo" />
           <h1 className="text-white text-xl md:text-2xl font-bold" data-testid="text-header">
             Colchester Lakers Athletics
           </h1>
