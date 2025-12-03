@@ -315,16 +315,16 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Lakers football finished with a strong 5-2 record, advancing to the Division II State Championships with a dominant 48-6 victory over Rice Memorial.
+                  Lakers football finished with a strong 6-3 record, advancing to the Division II State Championships with a dominant 48-6 victory over Rice Memorial.
                 </p>
                 <a
-                  href="https://www.maxpreps.com/vt/colchester/colchester-lakers/football/"
+                  href="https://www.burlingtonfreepress.com/search/?q=colchester+high+school+football"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
                   data-testid="link-football-news"
                 >
-                  Read More <ExternalLink className="h-3 w-3" />
+                  Read More on Burlington Free Press <ExternalLink className="h-3 w-3" />
                 </a>
               </CardContent>
             </Card>
@@ -332,45 +332,45 @@ export default function Home() {
             <Card className="hover-elevate transition-all">
               <CardHeader>
                 <CardTitle className="text-lg flex items-start justify-between gap-2">
-                  <span>Baseball Team Gears Up for 2025 Season</span>
+                  <span>Boys Basketball Season Highlights</span>
                   <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Coach Perry's squad expects a deep pitching rotation featuring junior Johnny Luter (ranked #3 in Vermont) who hit .400 last season.
+                  Coach Joe Maheux leads the Lakers with standout Vinny Wagoner showcasing deadly outside shooting and defensive play in Division I competition.
                 </p>
                 <a
-                  href="https://www.maxpreps.com/vt/colchester/colchester-lakers/baseball/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
-                  data-testid="link-baseball-news"
-                >
-                  Read More <ExternalLink className="h-3 w-3" />
-                </a>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-elevate transition-all">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-start justify-between gap-2">
-                  <span>Basketball Teams Compete in Division I</span>
-                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Both boys and girls basketball teams are showcasing competitive play against top Division I opponents throughout the winter season.
-                </p>
-                <a
-                  href="https://www.maxpreps.com/vt/colchester/colchester-lakers/basketball/"
+                  href="https://www.burlingtonfreepress.com/search/?q=colchester+high+school+basketball"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
                   data-testid="link-basketball-news"
                 >
-                  Read More <ExternalLink className="h-3 w-3" />
+                  Read More on Burlington Free Press <ExternalLink className="h-3 w-3" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate transition-all">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-start justify-between gap-2">
+                  <span>Girls Basketball All-League Honors</span>
+                  <Trophy className="h-5 w-5 text-[hsl(210,85%,35%)] flex-shrink-0" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Dakota Karpinski earned First Team All-League and Harlow Hier received Honorable Mention in the Lake Division for the 2024-25 season.
+                </p>
+                <a
+                  href="https://www.burlingtonfreepress.com/search/?q=colchester+girls+basketball"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
+                  data-testid="link-girls-basketball-news"
+                >
+                  Read More on Burlington Free Press <ExternalLink className="h-3 w-3" />
                 </a>
               </CardContent>
             </Card>
@@ -384,16 +384,16 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Stay updated with all Lakers sports including football, basketball, soccer, volleyball, baseball, lacrosse, and more year-round.
+                  Stay updated with all Lakers sports coverage from the Burlington Free Press including scores, standings, and feature stories.
                 </p>
                 <a
-                  href="https://www.csdvt.org/chs/athletics/athletics.php"
+                  href="https://www.burlingtonfreepress.com/search/?q=colchester+high+school+sports"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-[hsl(210,85%,35%)] hover:underline"
                   data-testid="link-athletics-page"
                 >
-                  Visit Athletics Page <ExternalLink className="h-3 w-3" />
+                  View All Coverage <ExternalLink className="h-3 w-3" />
                 </a>
               </CardContent>
             </Card>
