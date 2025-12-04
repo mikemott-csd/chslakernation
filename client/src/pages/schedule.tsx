@@ -119,10 +119,16 @@ export default function Schedule() {
     ? games 
     : games.filter(game => game.sport === selectedSport);
 
-  // Filter games by selected date if one is selected
+  // Get current date for filtering upcoming games
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  // Filter games by selected date if one is selected, otherwise show only upcoming games
   const displayedGames = selectedDate
     ? filteredGames.filter(game => isSameDay(new Date(game.date), selectedDate))
-    : filteredGames;
+    : filteredGames
+        .filter(game => new Date(game.date) >= now)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   // Get days for the current month
   const monthStart = startOfMonth(currentMonth);
