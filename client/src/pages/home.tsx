@@ -261,7 +261,7 @@ export default function Home() {
                     ) : (
                       <>
                         <ChevronDown className="mr-2 h-4 w-4" />
-                        Show {allUpcomingGames.length - 2} More Games
+                        Show More Games
                       </>
                     )}
                   </Button>
@@ -351,7 +351,7 @@ export default function Home() {
                     ) : (
                       <>
                         <ChevronDown className="mr-2 h-4 w-4" />
-                        Show {allRecentGames.length - 2} More Results
+                        Show More Results
                       </>
                     )}
                   </Button>
