@@ -184,6 +184,7 @@ export async function sendGameNotification(
     const request = mailjet
       .post('send', { version: 'v3.1' })
       .request({
+        SandboxMode: false,
         Messages: [
           {
             From: {
@@ -357,6 +358,7 @@ export async function send24HourReminder(
     const request = mailjet
       .post('send', { version: 'v3.1' })
       .request({
+        SandboxMode: false,
         Messages: [
           {
             From: {
@@ -530,6 +532,7 @@ export async function sendGameDayReminder(
     const request = mailjet
       .post('send', { version: 'v3.1' })
       .request({
+        SandboxMode: false,
         Messages: [
           {
             From: {
@@ -658,6 +661,7 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
     const request = mailjet
       .post('send', { version: 'v3.1' })
       .request({
+        SandboxMode: false,
         Messages: [
           {
             From: {
