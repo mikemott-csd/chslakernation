@@ -76,3 +76,9 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_mem_db:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+FROM_EMAIL = "noreply@colchestersd.org"
+FROM_NAME = "Colchester Lakers Athletics"
