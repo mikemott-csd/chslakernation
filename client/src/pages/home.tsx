@@ -90,8 +90,9 @@ export default function Home() {
     .filter((game) => game.final)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const upcomingGames = showAllUpcoming ? allUpcomingGames : allUpcomingGames.slice(0, 2);
-  const recentGames = showAllRecent ? allRecentGames : allRecentGames.slice(0, 2);
+  // Limit upcoming games to 10 max when expanded, 2 when collapsed
+  const upcomingGames = showAllUpcoming ? allUpcomingGames.slice(0, 10) : allUpcomingGames.slice(0, 2);
+  const recentGames = showAllRecent ? allRecentGames.slice(0, 10) : allRecentGames.slice(0, 2);
   
   const hasMoreUpcoming = allUpcomingGames.length > 2;
   const hasMoreRecent = allRecentGames.length > 2;
