@@ -18,8 +18,11 @@ if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
     apiKey: MAILJET_API_KEY,
     apiSecret: MAILJET_SECRET_KEY
   });
+  console.log('[Email Service] Mailjet configured successfully with FROM_EMAIL:', FROM_EMAIL);
 } else {
   console.warn('Warning: MAILJET_API_KEY or MAILJET_SECRET_KEY not set. Email notifications will not work.');
+  console.log('[Email Service] MAILJET_API_KEY exists:', !!MAILJET_API_KEY);
+  console.log('[Email Service] MAILJET_SECRET_KEY exists:', !!MAILJET_SECRET_KEY);
 }
 
 interface GameEmailData {
@@ -649,6 +652,9 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
   `;
 
   try {
+    console.log(`[Email Service] Attempting to send welcome email to ${subscription.email}`);
+    console.log(`[Email Service] Using FROM_EMAIL: ${FROM_EMAIL}, FROM_NAME: ${FROM_NAME}`);
+    
     const request = mailjet
       .post('send', { version: 'v3.1' })
       .request({
@@ -670,11 +676,13 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
         ]
       });
 
-    await request;
-    console.log(`Welcome email sent to ${subscription.email}`);
+    const response = await request;
+    console.log(`[Email Service] Welcome email sent to ${subscription.email}`, JSON.stringify(response.body, null, 2));
     return true;
-  } catch (error) {
-    console.error(`Failed to send welcome email to ${subscription.email}:`, error);
+  } catch (error: any) {
+    console.error(`[Email Service] Failed to send welcome email to ${subscription.email}:`);
+    console.error(`[Email Service] Error message:`, error?.message);
+    console.error(`[Email Service] Error response:`, JSON.stringify(error?.response?.data || error?.response?.body || error, null, 2));
     return false;
   }
 }
