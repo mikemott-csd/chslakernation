@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { startSyncJob, startNotificationJob, startNewsSyncJob } from "./cron";
+import { startSyncJob, startNotificationJob, startNewsSyncJob, startPhotoSyncJob } from "./cron";
 import { storage } from "./storage";
 import { seedNewsIfEmpty } from "./news-service";
 
@@ -85,5 +85,8 @@ app.use((req, res, next) => {
     
     // Start the weekly news sync job
     startNewsSyncJob();
+    
+    // Start the hourly photo sync job
+    startPhotoSyncJob();
   });
 })();

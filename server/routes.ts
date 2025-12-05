@@ -5,6 +5,7 @@ import { insertSubscriptionSchema } from "@shared/schema";
 import { sendWelcomeEmail, checkMailjetStatus } from "./email-service";
 import { syncFromGoogleDrive } from "./sync-service";
 import { syncNewsArticles } from "./news-service";
+import { syncPhotosFromGoogleDrive } from "./photo-sync-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all games
@@ -240,6 +241,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Failed to send test email:', error);
       res.status(500).json({ message: "Failed to send test email" });
+    }
+  });
+
+  // Get all photos (public endpoint)
+  app.get("/api/photos", async (_req, res) => {
+    try {
+      const photos = await storage.getAllPhotos();
+      res.json(photos);
+    } catch (error) {
+      console.error('Failed to fetch photos:', error);
+      res.status(500).json({ message: "Failed to fetch photos" });
+    }
+  });
+
+  // Admin: Manually trigger photo sync from Google Drive
+  app.post("/api/admin/sync-photos", async (req, res) => {
+    try {
+      const adminSecret = process.env.ADMIN_SECRET;
+      const providedSecret = req.headers['x-admin-secret'] || req.body.adminSecret;
+      
+      if (!adminSecret || providedSecret !== adminSecret) {
+        console.warn(`Unauthorized photo sync attempt from ${req.ip}`);
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      console.log('Manual photo sync triggered via admin endpoint');
+      
+      const result = await syncPhotosFromGoogleDrive('manual');
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: result.message,
+          photosAdded: result.photosAdded,
+          photosRemoved: result.photosRemoved,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: result.message,
+          errors: result.errors,
+        });
+      }
+    } catch (error) {
+      console.error('Admin photo sync error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Photo sync failed" 
+      });
+    }
+  });
+
+  // Get recent photo sync logs
+  app.get("/api/admin/photo-sync-logs", async (req, res) => {
+    try {
+      const adminSecret = process.env.ADMIN_SECRET;
+      const providedSecret = req.headers['x-admin-secret'];
+      
+      if (!adminSecret || providedSecret !== adminSecret) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const limit = parseInt(req.query.limit as string) || 10;
+      const logs = await storage.getRecentPhotoSyncLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error('Failed to fetch photo sync logs:', error);
+      res.status(500).json({ message: "Failed to fetch photo sync logs" });
     }
   });
 

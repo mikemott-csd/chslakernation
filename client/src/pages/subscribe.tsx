@@ -12,7 +12,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
-import { ArrowLeft, Check, Home as HomeIcon, Calendar, Bell } from "lucide-react";
+import { ArrowLeft, Check, Home as HomeIcon, Calendar, Bell, Image } from "lucide-react";
 
 const SPORTS = ["Football", "Soccer", "Basketball", "Volleyball", "Hockey"] as const;
 
@@ -96,6 +96,14 @@ export default function Subscribe() {
                 Schedule
               </Button>
             </Link>
+            <Link href="/gallery">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-gallery-mobile">
+                <Image className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-gallery">
+                Gallery
+              </Button>
+            </Link>
             <Link href="/subscribe">
               <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="button-get-notifications-mobile">
                 <Bell className="h-5 w-5" />
@@ -170,6 +178,14 @@ export default function Subscribe() {
             </Button>
             <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-schedule">
               Schedule
+            </Button>
+          </Link>
+          <Link href="/gallery">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-gallery-mobile">
+              <Image className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-gallery">
+              Gallery
             </Button>
           </Link>
           <Link href="/subscribe">

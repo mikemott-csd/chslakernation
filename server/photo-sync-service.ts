@@ -1,0 +1,217 @@
+import { google } from 'googleapis';
+import { type InsertPhoto } from "@shared/schema";
+import { storage } from "./storage";
+
+export interface PhotoSyncResult {
+  success: boolean;
+  photosAdded: number;
+  photosRemoved: number;
+  errors: string[];
+  message: string;
+}
+
+interface GoogleDriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  thumbnailLink?: string;
+  webViewLink?: string;
+  webContentLink?: string;
+  createdTime?: string;
+}
+
+/**
+ * Get authenticated Google Drive client using service account
+ */
+function getGoogleDriveClient() {
+  const credentialsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  
+  if (!credentialsJson) {
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON environment variable not configured');
+  }
+
+  let credentials;
+  try {
+    credentials = JSON.parse(credentialsJson);
+  } catch (error) {
+    throw new Error('Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON');
+  }
+
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+  });
+
+  return google.drive({ version: 'v3', auth });
+}
+
+/**
+ * List all image files in a Google Drive folder
+ */
+async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> {
+  const drive = getGoogleDriveClient();
+  
+  const allFiles: GoogleDriveFile[] = [];
+  let pageToken: string | undefined;
+
+  do {
+    const response = await drive.files.list({
+      q: `'${folderId}' in parents and (mimeType contains 'image/') and trashed = false`,
+      fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink, webContentLink, createdTime)',
+      pageSize: 100,
+      pageToken,
+    });
+
+    if (response.data.files) {
+      allFiles.push(...(response.data.files as GoogleDriveFile[]));
+    }
+
+    pageToken = response.data.nextPageToken || undefined;
+  } while (pageToken);
+
+  return allFiles;
+}
+
+/**
+ * Generate a public thumbnail URL for a Google Drive file
+ * Uses the thumbnail with specified size
+ */
+function generateThumbnailUrl(fileId: string, size: number = 400): string {
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
+}
+
+/**
+ * Generate a direct view URL for a Google Drive file
+ */
+function generateViewUrl(fileId: string): string {
+  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+}
+
+/**
+ * Sync photos from Google Drive folder to database
+ */
+export async function syncPhotosFromGoogleDrive(triggeredBy: 'manual' | 'cron'): Promise<PhotoSyncResult> {
+  const folderId = process.env.GOOGLE_DRIVE_PHOTOS_FOLDER_ID;
+  
+  if (!folderId) {
+    const errorMessage = 'GOOGLE_DRIVE_PHOTOS_FOLDER_ID environment variable not configured';
+    
+    await storage.createPhotoSyncLog({
+      photosAdded: 0,
+      photosRemoved: 0,
+      status: 'error',
+      errorMessage,
+      triggeredBy,
+    });
+    
+    return {
+      success: false,
+      photosAdded: 0,
+      photosRemoved: 0,
+      errors: [errorMessage],
+      message: errorMessage,
+    };
+  }
+
+  try {
+    console.log(`[PhotoSync] Starting sync from Google Drive folder: ${folderId}`);
+    
+    // List all photos in the folder
+    const drivePhotos = await listPhotosInFolder(folderId);
+    console.log(`[PhotoSync] Found ${drivePhotos.length} photos in Google Drive folder`);
+
+    let photosAdded = 0;
+    const drivePhotoIds: string[] = [];
+    const errors: string[] = [];
+
+    // Upsert each photo
+    for (const driveFile of drivePhotos) {
+      try {
+        drivePhotoIds.push(driveFile.id);
+        
+        const existingPhoto = await storage.getPhotoByGoogleDriveId(driveFile.id);
+        
+        const photoData: InsertPhoto = {
+          googleDriveId: driveFile.id,
+          name: driveFile.name,
+          mimeType: driveFile.mimeType,
+          thumbnailUrl: generateThumbnailUrl(driveFile.id),
+          webViewUrl: driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`,
+          downloadUrl: generateViewUrl(driveFile.id),
+          createdTime: driveFile.createdTime ? new Date(driveFile.createdTime) : null,
+        };
+
+        await storage.upsertPhoto(photoData);
+        
+        if (!existingPhoto) {
+          photosAdded++;
+        }
+      } catch (error) {
+        const errMsg = `Failed to sync photo ${driveFile.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        errors.push(errMsg);
+        console.error(`[PhotoSync] ${errMsg}`);
+      }
+    }
+
+    // Remove photos that are no longer in Google Drive
+    const photosRemoved = await storage.deletePhotosByGoogleDriveIds(drivePhotoIds);
+    if (photosRemoved > 0) {
+      console.log(`[PhotoSync] Removed ${photosRemoved} photos no longer in Google Drive`);
+    }
+
+    // Build success message
+    let message = '';
+    if (photosAdded === 0 && photosRemoved === 0) {
+      message = `Photos up to date (${drivePhotos.length} total)`;
+    } else {
+      const parts: string[] = [];
+      if (photosAdded > 0) parts.push(`${photosAdded} added`);
+      if (photosRemoved > 0) parts.push(`${photosRemoved} removed`);
+      message = `Successfully synced photos: ${parts.join(', ')} (${drivePhotos.length} total)`;
+    }
+
+    if (errors.length > 0) {
+      message += ` - ${errors.length} errors`;
+    }
+
+    // Log success
+    await storage.createPhotoSyncLog({
+      photosAdded,
+      photosRemoved,
+      status: errors.length === 0 ? 'success' : 'partial',
+      errorMessage: errors.length > 0 ? errors.join('; ') : null,
+      triggeredBy,
+    });
+
+    console.log(`[PhotoSync] ${message}`);
+
+    return {
+      success: true,
+      photosAdded,
+      photosRemoved,
+      errors,
+      message,
+    };
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error during photo sync';
+    
+    await storage.createPhotoSyncLog({
+      photosAdded: 0,
+      photosRemoved: 0,
+      status: 'error',
+      errorMessage,
+      triggeredBy,
+    });
+
+    console.error('[PhotoSync] Sync error:', error);
+
+    return {
+      success: false,
+      photosAdded: 0,
+      photosRemoved: 0,
+      errors: [errorMessage],
+      message: errorMessage,
+    };
+  }
+}

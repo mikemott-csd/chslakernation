@@ -12,7 +12,8 @@ import {
   Bell,
   UserCheck,
   Home as HomeIcon,
-  Calendar
+  Calendar,
+  Image
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
 import type { Game, SportType } from "@shared/schema";
@@ -178,6 +179,14 @@ export default function Schedule() {
               </Button>
               <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-schedule">
                 Schedule
+              </Button>
+            </Link>
+            <Link href="/gallery">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-gallery-mobile">
+                <Image className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-gallery">
+                Gallery
               </Button>
             </Link>
             <Link href="/subscribe">

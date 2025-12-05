@@ -2,10 +2,12 @@ import cron, { type ScheduledTask } from 'node-cron';
 import { syncFromGoogleDrive } from './sync-service';
 import { notificationService } from './notification-service';
 import { syncNewsArticles } from './news-service';
+import { syncPhotosFromGoogleDrive } from './photo-sync-service';
 
 let syncJob: ScheduledTask | null = null;
 let notificationJob: ScheduledTask | null = null;
 let newsSyncJob: ScheduledTask | null = null;
+let photoSyncJob: ScheduledTask | null = null;
 
 /**
  * Perform the sync operation
@@ -156,4 +158,57 @@ export function stopNewsSyncJob() {
  */
 export async function triggerManualNewsSync() {
   await performNewsSync();
+}
+
+/**
+ * Perform the photo sync operation
+ */
+async function performPhotoSync() {
+  try {
+    console.log('[Cron] Starting scheduled photo sync from Google Drive...');
+    const result = await syncPhotosFromGoogleDrive('cron');
+    if (result.success) {
+      console.log(`[Cron] ${result.message}`);
+    } else {
+      console.error(`[Cron] Photo sync failed: ${result.message}`);
+    }
+  } catch (error) {
+    console.error('[Cron] Photo sync failed:', error);
+  }
+}
+
+/**
+ * Start the hourly photo sync job
+ */
+export function startPhotoSyncJob() {
+  if (photoSyncJob) {
+    console.log('[Cron] Photo sync job already running');
+    return;
+  }
+
+  // Run every hour at minute 30
+  // Format: minute hour day month weekday
+  photoSyncJob = cron.schedule('30 * * * *', async () => {
+    await performPhotoSync();
+  });
+
+  console.log('[Cron] Hourly photo sync job started (runs 30 minutes past every hour)');
+}
+
+/**
+ * Stop the photo sync job
+ */
+export function stopPhotoSyncJob() {
+  if (photoSyncJob) {
+    photoSyncJob.stop();
+    photoSyncJob = null;
+    console.log('[Cron] Photo sync job stopped');
+  }
+}
+
+/**
+ * Manual photo sync trigger
+ */
+export async function triggerManualPhotoSync() {
+  await performPhotoSync();
 }

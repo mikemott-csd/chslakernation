@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu } from "lucide-react";
+import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image } from "lucide-react";
 import { format } from "date-fns";
 import type { Game, NewsArticle } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -125,6 +125,14 @@ export default function Home() {
             </Button>
             <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-schedule">
               Schedule
+            </Button>
+          </Link>
+          <Link href="/gallery">
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-gallery-mobile">
+              <Image className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-gallery">
+              Gallery
             </Button>
           </Link>
           <Link href="/subscribe">
