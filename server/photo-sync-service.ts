@@ -54,11 +54,12 @@ async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> 
   const allFiles: GoogleDriveFile[] = [];
   const foldersToProcess: string[] = [folderId];
   
-  // First, verify we can access the folder
+  // First, verify we can access the folder (with shared drive support)
   try {
     const folderInfo = await drive.files.get({
       fileId: folderId,
       fields: 'id, name, mimeType',
+      supportsAllDrives: true,
     });
     console.log(`[PhotoSync] Folder access confirmed: "${folderInfo.data.name}" (${folderInfo.data.id})`);
   } catch (error: any) {
@@ -72,12 +73,14 @@ async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> 
     let pageToken: string | undefined;
 
     do {
-      // List all files in current folder (images and subfolders)
+      // List all files in current folder (images and subfolders) with shared drive support
       const response = await drive.files.list({
         q: `'${currentFolderId}' in parents and trashed = false`,
         fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink, webContentLink, createdTime)',
         pageSize: 100,
         pageToken,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
       });
 
       if (response.data.files) {
@@ -124,17 +127,18 @@ export async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffe
   try {
     const drive = getGoogleDriveClient();
     
-    // Get file metadata first
+    // Get file metadata first (with shared drive support)
     const metaResponse = await drive.files.get({
       fileId,
       fields: 'mimeType',
+      supportsAllDrives: true,
     });
     
     const mimeType = metaResponse.data.mimeType || 'image/jpeg';
     
-    // Download the file
+    // Download the file (with shared drive support)
     const response = await drive.files.get(
-      { fileId, alt: 'media' },
+      { fileId, alt: 'media', supportsAllDrives: true },
       { responseType: 'arraybuffer' }
     );
     
@@ -154,10 +158,11 @@ export async function getThumbnail(fileId: string, size: number = 400): Promise<
   try {
     const drive = getGoogleDriveClient();
     
-    // Get file with thumbnail link
+    // Get file with thumbnail link (with shared drive support)
     const response = await drive.files.get({
       fileId,
       fields: 'thumbnailLink',
+      supportsAllDrives: true,
     });
     
     let thumbnailUrl = response.data.thumbnailLink;

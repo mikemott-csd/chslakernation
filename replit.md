@@ -43,6 +43,12 @@ The application features a responsive design with a strong emphasis on Colcheste
   - Button state changes to "You're going!" after clicking
 - **Email Notifications**: Users can subscribe to receive game reminders for specific sports, delivered via Mailjet. "Get Notifications" button accessible from header navigation on all pages.
 - **Google Drive Sync**: Hourly automatic synchronization of game schedules from a public Google Drive Excel file. Supports various date/time formats and case-insensitive "Home/Away" parsing.
+- **Photo Gallery**: Displays photos synced from Google Drive folder (ID: `1wU0xYomfpuH8U7LTTDrZtMGthmAa_Uo8`). Features:
+  - Hourly automatic sync from Google Drive (runs at minute 30)
+  - Images proxied through backend (`/api/photos/:fileId/thumbnail` and `/api/photos/:fileId/image`) to avoid permission issues
+  - Responsive grid layout with lightbox viewer for full-size images
+  - Service account: `csd-ai-lakers-photo-sync@csd-ai-club.iam.gserviceaccount.com` (requires Viewer access to folder)
+  - Supports shared drives with `supportsAllDrives` option
 - **Admin Functionality**: API endpoints for manual data synchronization and viewing sync history, protected by an administrator secret.
 - **Responsive Design**: Adapts to different screen sizes, providing an optimal viewing experience on both mobile and desktop.
 
