@@ -44,6 +44,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const updated = await storage.updateSubscription(existing.id, {
           sports: validatedData.sports,
         });
+        
+        // Send confirmation email for subscription update (async, don't wait)
+        if (updated) {
+          sendWelcomeEmail(updated).catch(err => 
+            console.error('Failed to send update confirmation email:', err)
+          );
+        }
+        
         res.json({ subscription: updated, message: "Subscription updated successfully" });
       } else {
         // Create new subscription
