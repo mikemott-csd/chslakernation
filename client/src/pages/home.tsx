@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image } from "lucide-react";
 import { format } from "date-fns";
-import type { Game, NewsArticle } from "@shared/schema";
+import type { Game, NewsArticle, Photo } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
@@ -14,7 +14,7 @@ import footballImg from "@assets/generated_images/Lakers_football_team_huddle_2d
 import soccerImg from "@assets/generated_images/Lakers_soccer_action_shot_12c64d04.png";
 import volleyballImg from "@assets/generated_images/Lakers_volleyball_spike_action_2c2516e6.png";
 
-const heroImages = [basketballImg, footballImg, soccerImg, volleyballImg];
+const fallbackHeroImages = [basketballImg, footballImg, soccerImg, volleyballImg];
 
 const sportColors = {
   Football: "hsl(210, 85%, 35%)",
@@ -38,6 +38,32 @@ export default function Home() {
   const { data: newsArticles = [] } = useQuery<NewsArticle[]>({
     queryKey: ["/api/news"],
   });
+
+  const { data: photos = [] } = useQuery<Photo[]>({
+    queryKey: ["/api/photos"],
+  });
+
+  // Get hero images - use synced photos if available, otherwise use fallback images
+  const heroImages = useMemo(() => {
+    // Filter to photos with valid downloadUrl
+    const validPhotos = photos.filter(photo => photo.downloadUrl);
+    
+    if (validPhotos.length > 0) {
+      // Use the last 10 synced photos (most recent first based on sync/created time)
+      const recentPhotos = [...validPhotos]
+        .sort((a, b) => {
+          const dateA = a.syncedAt ? new Date(a.syncedAt).getTime() : (a.createdTime ? new Date(a.createdTime).getTime() : 0);
+          const dateB = b.syncedAt ? new Date(b.syncedAt).getTime() : (b.createdTime ? new Date(b.createdTime).getTime() : 0);
+          return dateB - dateA;
+        })
+        .slice(0, 10);
+      // Use full-size image (downloadUrl) for hero carousel
+      return recentPhotos.map(photo => photo.downloadUrl as string);
+    }
+    
+    // Fall back to static images if no valid photos
+    return fallbackHeroImages;
+  }, [photos]);
 
   // Load "going" games from localStorage
   useEffect(() => {
@@ -75,11 +101,19 @@ export default function Home() {
 
   // Auto-rotate hero images
   useEffect(() => {
+    if (heroImages.length === 0) return;
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [heroImages.length]);
+
+  // Reset index if it's out of bounds when photos change
+  useEffect(() => {
+    if (currentImageIndex >= heroImages.length && heroImages.length > 0) {
+      setCurrentImageIndex(0);
+    }
+  }, [heroImages.length, currentImageIndex]);
 
   const now = new Date();
   const allUpcomingGames = games
