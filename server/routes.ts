@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertSubscriptionSchema } from "@shared/schema";
-import { sendWelcomeEmail } from "./email-service";
+import { sendWelcomeEmail, checkMailjetStatus } from "./email-service";
 import { syncFromGoogleDrive } from "./sync-service";
 import { syncNewsArticles } from "./news-service";
 
@@ -193,6 +193,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         message: error instanceof Error ? error.message : "News sync failed" 
       });
+    }
+  });
+
+  // Debug: Check Mailjet status
+  app.get("/api/debug/mailjet-status", async (_req, res) => {
+    try {
+      const status = await checkMailjetStatus();
+      res.json(status);
+    } catch (error) {
+      console.error('Failed to check Mailjet status:', error);
+      res.status(500).json({ message: "Failed to check Mailjet status" });
     }
   });
 

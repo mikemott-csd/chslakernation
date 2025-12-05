@@ -675,6 +675,7 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
               }
             ],
             Subject: 'You\'re subscribed to Lakers game notifications!',
+            TextPart: `Welcome to Lakers Notifications!\n\nThank you for subscribing to Colchester Lakers Athletics game notifications!\n\nYou'll receive notifications for: ${sportsText}\nWhen: 24 hours before each game AND on game day morning\n\nNever miss a Lakers game!\n\nTo unsubscribe: ${unsubscribeUrl}`,
             HTMLPart: htmlContent
           }
         ]
@@ -682,6 +683,21 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
 
     const response = await request;
     console.log(`[Email Service] Welcome email sent to ${subscription.email}`, JSON.stringify(response.body, null, 2));
+    
+    // Query the message status using the Message API for debugging
+    if (response.body?.Messages?.[0]?.To?.[0]?.MessageID) {
+      const messageId = response.body.Messages[0].To[0].MessageID;
+      try {
+        const messageStatus = await mailjet
+          .get('message', { version: 'v3' })
+          .id(messageId)
+          .request();
+        console.log(`[Email Service] Message status for ${messageId}:`, JSON.stringify(messageStatus.body, null, 2));
+      } catch (statusError: any) {
+        console.log(`[Email Service] Could not fetch message status:`, statusError?.message);
+      }
+    }
+    
     return true;
   } catch (error: any) {
     console.error(`[Email Service] Failed to send welcome email to ${subscription.email}:`);
@@ -691,9 +707,42 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
   }
 }
 
+/**
+ * Debug function to check Mailjet account and sender status
+ */
+export async function checkMailjetStatus(): Promise<any> {
+  if (!mailjet) {
+    return { error: 'Mailjet not configured' };
+  }
+
+  try {
+    // Check sender addresses
+    const senderResult = await mailjet
+      .get('sender', { version: 'v3' })
+      .request();
+    
+    // Check API key info
+    const apiKeyResult = await mailjet
+      .get('apikey', { version: 'v3' })
+      .request();
+    
+    return {
+      senders: senderResult.body,
+      apiKey: apiKeyResult.body
+    };
+  } catch (error: any) {
+    return { 
+      error: error?.message,
+      statusCode: error?.statusCode,
+      response: error?.response?.data || error?.response?.body
+    };
+  }
+}
+
 export const emailService = {
   sendGameNotification,
   send24HourReminder,
   sendGameDayReminder,
   sendWelcomeEmail,
+  checkMailjetStatus,
 };
