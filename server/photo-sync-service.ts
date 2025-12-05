@@ -46,29 +46,58 @@ function getGoogleDriveClient() {
 }
 
 /**
- * List all image files in a Google Drive folder
+ * List all image files in a Google Drive folder (including subfolders)
  */
 async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> {
   const drive = getGoogleDriveClient();
   
   const allFiles: GoogleDriveFile[] = [];
-  let pageToken: string | undefined;
-
-  do {
-    const response = await drive.files.list({
-      q: `'${folderId}' in parents and (mimeType contains 'image/') and trashed = false`,
-      fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink, webContentLink, createdTime)',
-      pageSize: 100,
-      pageToken,
+  const foldersToProcess: string[] = [folderId];
+  
+  // First, verify we can access the folder
+  try {
+    const folderInfo = await drive.files.get({
+      fileId: folderId,
+      fields: 'id, name, mimeType',
     });
+    console.log(`[PhotoSync] Folder access confirmed: "${folderInfo.data.name}" (${folderInfo.data.id})`);
+  } catch (error: any) {
+    console.error(`[PhotoSync] Cannot access folder ${folderId}:`, error.message);
+    throw new Error(`Cannot access Google Drive folder: ${error.message}`);
+  }
 
-    if (response.data.files) {
-      allFiles.push(...(response.data.files as GoogleDriveFile[]));
-    }
+  // Process folders recursively
+  while (foldersToProcess.length > 0) {
+    const currentFolderId = foldersToProcess.shift()!;
+    let pageToken: string | undefined;
 
-    pageToken = response.data.nextPageToken || undefined;
-  } while (pageToken);
+    do {
+      // List all files in current folder (images and subfolders)
+      const response = await drive.files.list({
+        q: `'${currentFolderId}' in parents and trashed = false`,
+        fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink, webContentLink, createdTime)',
+        pageSize: 100,
+        pageToken,
+      });
 
+      if (response.data.files) {
+        for (const file of response.data.files) {
+          if (file.mimeType === 'application/vnd.google-apps.folder') {
+            // Add subfolder to process list
+            console.log(`[PhotoSync] Found subfolder: "${file.name}"`);
+            foldersToProcess.push(file.id!);
+          } else if (file.mimeType?.startsWith('image/')) {
+            // Add image file
+            allFiles.push(file as GoogleDriveFile);
+          }
+        }
+      }
+
+      pageToken = response.data.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  console.log(`[PhotoSync] Total images found across all folders: ${allFiles.length}`);
   return allFiles;
 }
 
