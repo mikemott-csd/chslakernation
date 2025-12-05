@@ -207,6 +207,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug: Send a test email to any address
+  app.post("/api/debug/test-email", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email address required" });
+      }
+      
+      // Create a mock subscription for testing
+      const testSubscription = {
+        id: 'test-id',
+        email: email,
+        sports: ['Football', 'Basketball'],
+        unsubscribeToken: 'test-token',
+        createdAt: new Date()
+      };
+      
+      const result = await sendWelcomeEmail(testSubscription);
+      res.json({ 
+        success: result, 
+        message: result ? `Test email sent to ${email}` : 'Failed to send email'
+      });
+    } catch (error) {
+      console.error('Failed to send test email:', error);
+      res.status(500).json({ message: "Failed to send test email" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
