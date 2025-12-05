@@ -73,18 +73,88 @@ async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> 
 }
 
 /**
- * Generate a public thumbnail URL for a Google Drive file
- * Uses the thumbnail with specified size
+ * Generate a proxied thumbnail URL that goes through our server
+ * This allows the server to fetch private images using the service account
  */
-function generateThumbnailUrl(fileId: string, size: number = 400): string {
-  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
+function generateThumbnailUrl(fileId: string): string {
+  return `/api/photos/${fileId}/thumbnail`;
 }
 
 /**
- * Generate a direct view URL for a Google Drive file
+ * Generate a proxied full image URL that goes through our server
  */
 function generateViewUrl(fileId: string): string {
-  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  return `/api/photos/${fileId}/image`;
+}
+
+/**
+ * Download a file from Google Drive
+ * Returns the file as a buffer with content type
+ */
+export async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffer; mimeType: string } | null> {
+  try {
+    const drive = getGoogleDriveClient();
+    
+    // Get file metadata first
+    const metaResponse = await drive.files.get({
+      fileId,
+      fields: 'mimeType',
+    });
+    
+    const mimeType = metaResponse.data.mimeType || 'image/jpeg';
+    
+    // Download the file
+    const response = await drive.files.get(
+      { fileId, alt: 'media' },
+      { responseType: 'arraybuffer' }
+    );
+    
+    const buffer = Buffer.from(response.data as ArrayBuffer);
+    return { buffer, mimeType };
+  } catch (error) {
+    console.error(`[PhotoSync] Failed to download file ${fileId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get a thumbnail from Google Drive
+ * Returns the thumbnail as a buffer
+ */
+export async function getThumbnail(fileId: string, size: number = 400): Promise<{ buffer: Buffer; mimeType: string } | null> {
+  try {
+    const drive = getGoogleDriveClient();
+    
+    // Get file with thumbnail link
+    const response = await drive.files.get({
+      fileId,
+      fields: 'thumbnailLink',
+    });
+    
+    let thumbnailUrl = response.data.thumbnailLink;
+    if (!thumbnailUrl) {
+      // If no thumbnail, return the full image
+      return downloadDriveFile(fileId);
+    }
+    
+    // Modify the thumbnail URL to get a larger size
+    thumbnailUrl = thumbnailUrl.replace(/=s\d+/, `=s${size}`);
+    
+    // Fetch the thumbnail
+    const thumbnailResponse = await fetch(thumbnailUrl);
+    if (!thumbnailResponse.ok) {
+      // Fall back to full image if thumbnail fetch fails
+      return downloadDriveFile(fileId);
+    }
+    
+    const buffer = Buffer.from(await thumbnailResponse.arrayBuffer());
+    const mimeType = thumbnailResponse.headers.get('content-type') || 'image/jpeg';
+    
+    return { buffer, mimeType };
+  } catch (error) {
+    console.error(`[PhotoSync] Failed to get thumbnail for ${fileId}:`, error);
+    return null;
+  }
 }
 
 /**

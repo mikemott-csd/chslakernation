@@ -5,7 +5,7 @@ import { insertSubscriptionSchema } from "@shared/schema";
 import { sendWelcomeEmail, checkMailjetStatus } from "./email-service";
 import { syncFromGoogleDrive } from "./sync-service";
 import { syncNewsArticles } from "./news-service";
-import { syncPhotosFromGoogleDrive } from "./photo-sync-service";
+import { syncPhotosFromGoogleDrive, downloadDriveFile, getThumbnail } from "./photo-sync-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all games
@@ -252,6 +252,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Failed to fetch photos:', error);
       res.status(500).json({ message: "Failed to fetch photos" });
+    }
+  });
+
+  // Proxy endpoint for photo thumbnails (serves images through backend)
+  app.get("/api/photos/:fileId/thumbnail", async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const result = await getThumbnail(fileId);
+      
+      if (!result) {
+        return res.status(404).json({ message: "Thumbnail not found" });
+      }
+      
+      res.set('Content-Type', result.mimeType);
+      res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      res.send(result.buffer);
+    } catch (error) {
+      console.error('Failed to fetch thumbnail:', error);
+      res.status(500).json({ message: "Failed to fetch thumbnail" });
+    }
+  });
+
+  // Proxy endpoint for full-size photos (serves images through backend)
+  app.get("/api/photos/:fileId/image", async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const result = await downloadDriveFile(fileId);
+      
+      if (!result) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      
+      res.set('Content-Type', result.mimeType);
+      res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      res.send(result.buffer);
+    } catch (error) {
+      console.error('Failed to fetch image:', error);
+      res.status(500).json({ message: "Failed to fetch image" });
     }
   });
 
