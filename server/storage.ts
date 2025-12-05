@@ -1,7 +1,7 @@
-import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, type NewsArticle, type InsertNewsArticle, subscriptions, games, syncLogs, newsArticles } from "@shared/schema";
+import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, type NewsArticle, type InsertNewsArticle, type Photo, type InsertPhoto, type PhotoSyncLog, type InsertPhotoSyncLog, subscriptions, games, syncLogs, newsArticles, photos, photoSyncLogs } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, notInArray } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -34,6 +34,16 @@ export interface IStorage {
   getRecentNewsArticles(limit: number): Promise<NewsArticle[]>;
   upsertNewsArticle(article: InsertNewsArticle): Promise<NewsArticle>;
   clearNewsArticles(): Promise<void>;
+  
+  // Photo operations
+  getAllPhotos(): Promise<Photo[]>;
+  getPhotoByGoogleDriveId(googleDriveId: string): Promise<Photo | undefined>;
+  upsertPhoto(photo: InsertPhoto): Promise<Photo>;
+  deletePhotosByGoogleDriveIds(idsToKeep: string[]): Promise<number>;
+  
+  // Photo sync log operations
+  createPhotoSyncLog(log: InsertPhotoSyncLog): Promise<PhotoSyncLog>;
+  getRecentPhotoSyncLogs(limit: number): Promise<PhotoSyncLog[]>;
 }
 
 export class DbStorage implements IStorage {
@@ -465,6 +475,59 @@ export class DbStorage implements IStorage {
 
   async clearNewsArticles(): Promise<void> {
     await db.delete(newsArticles);
+  }
+
+  // Photo operations
+  async getAllPhotos(): Promise<Photo[]> {
+    return await db.select().from(photos).orderBy(desc(photos.createdTime));
+  }
+
+  async getPhotoByGoogleDriveId(googleDriveId: string): Promise<Photo | undefined> {
+    const result = await db.select().from(photos).where(eq(photos.googleDriveId, googleDriveId));
+    return result[0];
+  }
+
+  async upsertPhoto(photo: InsertPhoto): Promise<Photo> {
+    const existing = await db.select().from(photos).where(eq(photos.googleDriveId, photo.googleDriveId));
+    if (existing.length > 0) {
+      const result = await db.update(photos)
+        .set({
+          name: photo.name,
+          mimeType: photo.mimeType,
+          thumbnailUrl: photo.thumbnailUrl,
+          webViewUrl: photo.webViewUrl,
+          downloadUrl: photo.downloadUrl,
+          createdTime: photo.createdTime,
+          syncedAt: new Date(),
+        })
+        .where(eq(photos.googleDriveId, photo.googleDriveId))
+        .returning();
+      return result[0];
+    }
+    const result = await db.insert(photos).values(photo).returning();
+    return result[0];
+  }
+
+  async deletePhotosByGoogleDriveIds(idsToKeep: string[]): Promise<number> {
+    if (idsToKeep.length === 0) {
+      const result = await db.delete(photos).returning();
+      return result.length;
+    }
+    const result = await db.delete(photos)
+      .where(notInArray(photos.googleDriveId, idsToKeep))
+      .returning();
+    return result.length;
+  }
+
+  // Photo sync log operations
+  async createPhotoSyncLog(insertLog: InsertPhotoSyncLog): Promise<PhotoSyncLog> {
+    const result = await db.insert(photoSyncLogs).values(insertLog).returning();
+    return result[0];
+  }
+
+  async getRecentPhotoSyncLogs(limit: number): Promise<PhotoSyncLog[]> {
+    const result = await db.select().from(photoSyncLogs).orderBy(desc(photoSyncLogs.syncedAt)).limit(limit);
+    return result;
   }
 }
 

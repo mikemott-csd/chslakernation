@@ -96,3 +96,43 @@ export const insertNewsArticleSchema = createInsertSchema(newsArticles).omit({
 
 export type InsertNewsArticle = z.infer<typeof insertNewsArticleSchema>;
 export type NewsArticle = typeof newsArticles.$inferSelect;
+
+// Photos Schema - photos synced from Google Drive
+export const photos = pgTable("photos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  googleDriveId: text("google_drive_id").notNull().unique(),
+  name: text("name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  webViewUrl: text("web_view_url"),
+  downloadUrl: text("download_url"),
+  createdTime: timestamp("created_time", { mode: "date" }),
+  syncedAt: timestamp("synced_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertPhotoSchema = createInsertSchema(photos).omit({
+  id: true,
+  syncedAt: true,
+});
+
+export type InsertPhoto = z.infer<typeof insertPhotoSchema>;
+export type Photo = typeof photos.$inferSelect;
+
+// Photo Sync Logs Schema - tracks Google Drive photo sync history
+export const photoSyncLogs = pgTable("photo_sync_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  syncedAt: timestamp("synced_at", { mode: "date" }).notNull().defaultNow(),
+  photosAdded: integer("photos_added").notNull(),
+  photosRemoved: integer("photos_removed").notNull(),
+  status: text("status").notNull(), // "success" or "error"
+  errorMessage: text("error_message"),
+  triggeredBy: text("triggered_by").notNull(), // "manual" or "cron"
+});
+
+export const insertPhotoSyncLogSchema = createInsertSchema(photoSyncLogs).omit({
+  id: true,
+  syncedAt: true,
+});
+
+export type InsertPhotoSyncLog = z.infer<typeof insertPhotoSyncLogSchema>;
+export type PhotoSyncLog = typeof photoSyncLogs.$inferSelect;
