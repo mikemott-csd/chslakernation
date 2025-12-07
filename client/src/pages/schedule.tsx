@@ -16,6 +16,7 @@ import {
   Image
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
+import { parseLocalDate } from "@/lib/dateUtils";
 import type { Game, SportType } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -126,10 +127,10 @@ export default function Schedule() {
 
   // Filter games by selected date if one is selected, otherwise show only upcoming games
   const displayedGames = selectedDate
-    ? filteredGames.filter(game => isSameDay(new Date(game.date), selectedDate))
+    ? filteredGames.filter(game => isSameDay(parseLocalDate(game.date), selectedDate))
     : filteredGames
-        .filter(game => new Date(game.date) >= now)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        .filter(game => parseLocalDate(game.date) >= now)
+        .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime());
 
   // Get days for the current month
   const monthStart = startOfMonth(currentMonth);
@@ -138,7 +139,7 @@ export default function Schedule() {
 
   // Get games for each day in the current month
   const getGamesForDay = (day: Date) => {
-    return filteredGames.filter(game => isSameDay(new Date(game.date), day));
+    return filteredGames.filter(game => isSameDay(parseLocalDate(game.date), day));
   };
 
   // Calculate padding days to align with proper weekday
@@ -408,7 +409,7 @@ export default function Schedule() {
                       {/* Date & Time */}
                       <div className="mb-3">
                         <p className="text-2xl font-bold text-[#1e3a5f]" data-testid={`text-date-${game.id}`}>
-                          {format(new Date(game.date), "MMM d, yyyy")}
+                          {format(parseLocalDate(game.date), "MMM d, yyyy")}
                         </p>
                         <p className="text-lg font-semibold text-foreground" data-testid={`text-time-${game.id}`}>
                           {game.time}

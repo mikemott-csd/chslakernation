@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image } from "lucide-react";
 import { format } from "date-fns";
+import { parseLocalDate } from "@/lib/dateUtils";
 import type { Game, NewsArticle, Photo } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -116,13 +117,14 @@ export default function Home() {
   }, [heroImages.length, currentImageIndex]);
 
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   const allUpcomingGames = games
-    .filter((game) => new Date(game.date) >= now && !game.final)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .filter((game) => parseLocalDate(game.date) >= now && !game.final)
+    .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime());
 
   const allRecentGames = games
     .filter((game) => game.final)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort((a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime());
 
   // Limit upcoming games to 10 max when expanded, 2 when collapsed
   const upcomingGames = showAllUpcoming ? allUpcomingGames.slice(0, 10) : allUpcomingGames.slice(0, 2);
@@ -262,7 +264,7 @@ export default function Home() {
                         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2" data-testid={`text-date-${game.id}`}>
                             <Calendar className="h-4 w-4" />
-                            {format(new Date(game.date), "EEEE, MMMM d, yyyy")} at {game.time}
+                            {format(parseLocalDate(game.date), "EEEE, MMMM d, yyyy")} at {game.time}
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <MapPin className="h-4 w-4" />
@@ -372,7 +374,7 @@ export default function Home() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-sm text-muted-foreground" data-testid={`text-date-recent-${game.id}`}>
-                          {format(new Date(game.date), "MMMM d, yyyy")}
+                          {format(parseLocalDate(game.date), "MMMM d, yyyy")}
                         </div>
                       </CardContent>
                     </Card>
