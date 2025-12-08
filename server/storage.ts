@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, type NewsArticle, type InsertNewsArticle, type Photo, type InsertPhoto, type PhotoSyncLog, type InsertPhotoSyncLog, subscriptions, games, syncLogs, newsArticles, photos, photoSyncLogs } from "@shared/schema";
+import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, type NewsArticle, type InsertNewsArticle, type Photo, type InsertPhoto, type PhotoSyncLog, type InsertPhotoSyncLog, type SentNotification, type InsertSentNotification, subscriptions, games, syncLogs, newsArticles, photos, photoSyncLogs, sentNotifications } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, notInArray } from "drizzle-orm";
@@ -44,6 +44,13 @@ export interface IStorage {
   // Photo sync log operations
   createPhotoSyncLog(log: InsertPhotoSyncLog): Promise<PhotoSyncLog>;
   getRecentPhotoSyncLogs(limit: number): Promise<PhotoSyncLog[]>;
+  
+  // Sent notification operations (two-phase: pending -> sent)
+  hasNotificationBeenSent(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean>;
+  recordSentNotification(notification: InsertSentNotification): Promise<SentNotification | null>;
+  tryRecordNotificationAtomically(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean>;
+  markNotificationSent(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean>;
+  deleteNotificationRecord(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -528,6 +535,172 @@ export class DbStorage implements IStorage {
   async getRecentPhotoSyncLogs(limit: number): Promise<PhotoSyncLog[]> {
     const result = await db.select().from(photoSyncLogs).orderBy(desc(photoSyncLogs.syncedAt)).limit(limit);
     return result;
+  }
+
+  // Sent notification operations
+  async hasNotificationBeenSent(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean> {
+    const result = await db.select().from(sentNotifications).where(
+      and(
+        eq(sentNotifications.gameId, gameId),
+        eq(sentNotifications.subscriptionId, subscriptionId),
+        eq(sentNotifications.notificationType, notificationType)
+      )
+    );
+    return result.length > 0;
+  }
+
+  async recordSentNotification(notification: InsertSentNotification): Promise<SentNotification | null> {
+    try {
+      const result = await db.insert(sentNotifications).values(notification).returning();
+      return result[0];
+    } catch (error: any) {
+      // Handle unique constraint violation (duplicate notification)
+      if (error.code === '23505') {
+        // Constraint violation - notification already exists
+        return null;
+      }
+      throw error;
+    }
+  }
+  
+  // Two-phase notification: try to claim notification for sending
+  // Returns: 'send' (we should send), 'skip' (already sent or in progress), or throws on error
+  async tryRecordNotificationAtomically(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean> {
+    try {
+      // Try to insert with status='pending'
+      await db.insert(sentNotifications).values({
+        gameId,
+        subscriptionId,
+        notificationType,
+        status: 'pending',
+      });
+      // Insert succeeded - we claimed this notification, should send the email
+      return true;
+    } catch (error: any) {
+      // Handle unique constraint violation (duplicate notification)
+      if (error.code === '23505') {
+        // Check the existing record's status
+        const existing = await db.select().from(sentNotifications).where(
+          and(
+            eq(sentNotifications.gameId, gameId),
+            eq(sentNotifications.subscriptionId, subscriptionId),
+            eq(sentNotifications.notificationType, notificationType)
+          )
+        );
+        
+        if (existing.length > 0) {
+          const record = existing[0];
+          
+          // If already sent, skip
+          if (record.status === 'sent') {
+            return false;
+          }
+          
+          // If 'sending' and stale, the process crashed during email send
+          // We don't know if email was delivered - retry to ensure delivery
+          // (Missing a notification is worse than a rare duplicate reminder)
+          if (record.status === 'sending' && record.createdAt) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            if (record.createdAt < fiveMinutesAgo) {
+              // Stale 'sending' record - process crashed during email send
+              // Reset to pending and retry - accept possible duplicate over missed notification
+              const claimResult = await db.update(sentNotifications)
+                .set({ status: 'pending', createdAt: new Date() })
+                .where(
+                  and(
+                    eq(sentNotifications.id, record.id),
+                    eq(sentNotifications.status, 'sending'),
+                    sql`${sentNotifications.createdAt} < ${fiveMinutesAgo}`
+                  )
+                )
+                .returning();
+              
+              if (claimResult.length > 0) {
+                console.log(`[Notifications] Reclaimed stale 'sending' notification for retry: ${notificationType} for game ${gameId} (may cause duplicate if email was already delivered)`);
+                return true; // Re-attempt the email
+              }
+              return false;
+            }
+          }
+          
+          // If pending and stale, the process crashed before email send - retry
+          if (record.status === 'pending' && record.createdAt) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            if (record.createdAt < fiveMinutesAgo) {
+              // Stale pending record from crashed process - try to atomically claim it
+              // Use WHERE conditions to ensure only one worker can claim it
+              const claimResult = await db.update(sentNotifications)
+                .set({ createdAt: new Date() })
+                .where(
+                  and(
+                    eq(sentNotifications.id, record.id),
+                    eq(sentNotifications.status, 'pending'),
+                    sql`${sentNotifications.createdAt} < ${fiveMinutesAgo}`
+                  )
+                )
+                .returning();
+              
+              if (claimResult.length > 0) {
+                console.log(`[Notifications] Claimed stale pending notification for retry: ${notificationType} for game ${gameId}`);
+                return true; // We successfully claimed it, re-attempt the email
+              }
+              // Another worker already claimed it
+              return false;
+            }
+          }
+          
+          // Recent pending/sending record - another process is handling it
+          return false;
+        }
+        
+        // Record doesn't exist (race condition) - shouldn't happen but treat as skip
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  // Mark notification as 'sending' (about to send email)
+  async markNotificationSending(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean> {
+    const result = await db.update(sentNotifications)
+      .set({ status: 'sending', createdAt: new Date() })
+      .where(
+        and(
+          eq(sentNotifications.gameId, gameId),
+          eq(sentNotifications.subscriptionId, subscriptionId),
+          eq(sentNotifications.notificationType, notificationType),
+          eq(sentNotifications.status, 'pending') // Only transition from pending
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  // Mark notification as successfully sent
+  async markNotificationSent(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean> {
+    const result = await db.update(sentNotifications)
+      .set({ status: 'sent', sentAt: new Date() })
+      .where(
+        and(
+          eq(sentNotifications.gameId, gameId),
+          eq(sentNotifications.subscriptionId, subscriptionId),
+          eq(sentNotifications.notificationType, notificationType)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  // Delete a notification record (used when email delivery fails to allow retry)
+  async deleteNotificationRecord(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean> {
+    const result = await db.delete(sentNotifications).where(
+      and(
+        eq(sentNotifications.gameId, gameId),
+        eq(sentNotifications.subscriptionId, subscriptionId),
+        eq(sentNotifications.notificationType, notificationType)
+      )
+    ).returning();
+    return result.length > 0;
   }
 }
 

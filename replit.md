@@ -29,7 +29,16 @@ The application features a responsive design with a strong emphasis on Colcheste
 - **Score Tracking**: Database fields `homeScore`, `awayScore`, and a `final` boolean flag for completed games.
 - **Attendance Tracking**: Database field `attendanceCount` (integer, default 0) with atomic SQL increment to prevent race conditions under concurrent requests. Users can mark attendance via "I'm going" button with localStorage persistence.
 - **Game Deduplication**: Implemented via `upsertGamesBatch` based on sport, date, time, and opponent.
-- **Email Notification System**: Integration with Mailjet for sending game reminders, including a welcome email and secure unsubscribe links. Notifications are sent 24 hours before a game and on game day morning (8 AM).
+- **Email Notification System**: Integration with Mailjet for sending game reminders with robust deduplication and reliability features:
+  - **Three-phase commit**: Notifications use 'pending' → 'sending' → 'sent' status tracking to distinguish crash points
+  - **24-hour reminders**: Sent within a 6-hour window (21-27 hours before game) to ensure delivery despite server restarts
+  - **Game day reminders**: Sent between 8-9 AM on the day of the game
+  - **Atomic deduplication**: Database unique constraint prevents duplicate notifications even under concurrent processing
+  - **Stale recovery with crash handling**:
+    - Stale 'pending' records (>5 min): Retried (crash before email sent)
+    - Stale 'sending' records (>5 min): Retried (crash during email - prioritizes delivery over duplicate prevention)
+    - Trade-off: Missing a notification is worse than a rare duplicate reminder
+  - **Atomic claims**: Uses UPDATE...WHERE...RETURNING to prevent concurrent workers from claiming the same stale record
 - **Admin API**: Secure endpoints for manual Google Drive synchronization and viewing sync logs, authenticated via an `ADMIN_SECRET`.
 
 ### Feature Specifications

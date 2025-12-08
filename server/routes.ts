@@ -6,6 +6,7 @@ import { sendWelcomeEmail, checkMailjetStatus } from "./email-service";
 import { syncFromGoogleDrive } from "./sync-service";
 import { syncNewsArticles } from "./news-service";
 import { syncPhotosFromGoogleDrive, downloadDriveFile, getThumbnail } from "./photo-sync-service";
+import { triggerManualNotificationCheck } from "./cron";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all games
@@ -241,6 +242,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Failed to send test email:', error);
       res.status(500).json({ message: "Failed to send test email" });
+    }
+  });
+
+  // Debug: Manually trigger notification check
+  app.post("/api/debug/trigger-notifications", async (_req, res) => {
+    try {
+      console.log('[Debug] Manual notification check triggered via API');
+      const result = await triggerManualNotificationCheck();
+      res.json({
+        success: true,
+        message: `Notification check complete: ${result.emailsSent} emails sent, ${result.skippedDuplicates} duplicates skipped`,
+        gamesIn24Hours: result.gamesIn24Hours,
+        gamesMorningOf: result.gamesMorningOf,
+        emailsSent: result.emailsSent,
+        skippedDuplicates: result.skippedDuplicates,
+        errors: result.errors,
+      });
+    } catch (error) {
+      console.error('Failed to trigger notification check:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to trigger notification check" 
+      });
     }
   });
 

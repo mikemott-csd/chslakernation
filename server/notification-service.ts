@@ -5,14 +5,17 @@ import { addHours, isSameDay, startOfDay, isAfter, isBefore, parseISO } from 'da
 /**
  * Notification scheduler service
  * Sends game reminder emails at two points:
- * 1. 24 hours before the game
- * 2. Morning of game day (8 AM)
+ * 1. 24 hours before the game (with a 6-hour window: 21-27 hours before)
+ * 2. Morning of game day (8 AM - 9 AM)
+ * 
+ * Includes deduplication to prevent sending the same notification multiple times.
  */
 
 interface NotificationCheck {
   gamesIn24Hours: number;
   gamesMorningOf: number;
   emailsSent: number;
+  skippedDuplicates: number;
   errors: string[];
 }
 
@@ -25,6 +28,7 @@ export async function checkAndSendNotifications(): Promise<NotificationCheck> {
     gamesIn24Hours: 0,
     gamesMorningOf: 0,
     emailsSent: 0,
+    skippedDuplicates: 0,
     errors: [],
   };
 
@@ -39,7 +43,6 @@ export async function checkAndSendNotifications(): Promise<NotificationCheck> {
     }
 
     const now = new Date();
-    const in24Hours = addHours(now, 24);
     const morningStart = new Date(now);
     morningStart.setHours(8, 0, 0, 0);
     const morningEnd = new Date(now);
@@ -64,8 +67,10 @@ export async function checkAndSendNotifications(): Promise<NotificationCheck> {
       }
 
       // Check if this game needs 24-hour notification
+      // Widened window: 21-27 hours before game (6-hour window centered around 24 hours)
+      // This ensures we catch games even if the server restarts or cron timing varies
       const timeDiffHours = (gameDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-      const needs24HourNotification = timeDiffHours > 23 && timeDiffHours <= 25;
+      const needs24HourNotification = timeDiffHours > 21 && timeDiffHours <= 27;
 
       // Check if this game needs morning-of notification
       const needsMorningNotification = 
@@ -86,35 +91,147 @@ export async function checkAndSendNotifications(): Promise<NotificationCheck> {
       if (needs24HourNotification) {
         result.gamesIn24Hours++;
         for (const subscriber of interestedSubscribers) {
+          // Atomically try to record this notification - prevents race conditions
+          // If this returns true, we're the first to claim this notification, so we should send it
+          let shouldSend = false;
           try {
-            await emailService.send24HourReminder(subscriber.email, game, subscriber.unsubscribeToken);
-            result.emailsSent++;
-            console.log(`[Notifications] Sent 24-hour reminder for ${game.sport} vs ${game.opponent} to ${subscriber.email}`);
+            shouldSend = await storage.tryRecordNotificationAtomically(game.id, subscriber.id, '24hour');
           } catch (error) {
-            const errMsg = `Failed to send 24-hour reminder to ${subscriber.email}: ${error}`;
+            const errMsg = `Failed to record notification for ${subscriber.email}: ${error}`;
+            console.error(`[Notifications] ${errMsg}`);
+            result.errors.push(errMsg);
+            continue;
+          }
+          
+          if (!shouldSend) {
+            result.skippedDuplicates++;
+            console.log(`[Notifications] Skipping duplicate 24-hour reminder for ${game.sport} vs ${game.opponent} to ${subscriber.email}`);
+            continue;
+          }
+
+          // Mark as 'sending' before attempting email - this distinguishes between
+          // "crashed before sending" and "crashed during/after sending"
+          try {
+            await storage.markNotificationSending(game.id, subscriber.id, '24hour');
+          } catch (markError) {
+            const errMsg = `Failed to mark notification as sending for ${subscriber.email}: ${markError}`;
+            console.error(`[Notifications] ${errMsg}`);
+            result.errors.push(errMsg);
+            continue;
+          }
+
+          // Send the email
+          let emailSent = false;
+          try {
+            emailSent = await emailService.send24HourReminder(subscriber.email, game, subscriber.unsubscribeToken);
+          } catch (emailError) {
+            // Email threw an error - delete the record so it can be retried
+            await storage.deleteNotificationRecord(game.id, subscriber.id, '24hour');
+            const errMsg = `Email send threw error for ${subscriber.email}: ${emailError} - will retry`;
+            console.error(`[Notifications] ${errMsg}`);
+            result.errors.push(errMsg);
+            continue;
+          }
+          
+          if (!emailSent) {
+            // Email returned false (delivery failed) - delete the record so it can be retried
+            await storage.deleteNotificationRecord(game.id, subscriber.id, '24hour');
+            const errMsg = `Email delivery failed for ${subscriber.email} - will retry on next check`;
+            console.error(`[Notifications] ${errMsg}`);
+            result.errors.push(errMsg);
+            continue;
+          }
+          
+          // Email was sent successfully - now mark as sent
+          // If this fails, record stays in 'sending' state - stale recovery will mark as sent
+          try {
+            await storage.markNotificationSent(game.id, subscriber.id, '24hour');
+          } catch (markError) {
+            // Email was sent but marking failed - record stays in 'sending'
+            // Stale recovery will mark it as 'sent' to prevent duplicates
+            const errMsg = `Email sent to ${subscriber.email} but mark-sent failed: ${markError}`;
             console.error(`[Notifications] ${errMsg}`);
             result.errors.push(errMsg);
           }
+          
+          result.emailsSent++;
+          console.log(`[Notifications] Sent 24-hour reminder for ${game.sport} vs ${game.opponent} to ${subscriber.email}`);
         }
       }
 
       if (needsMorningNotification) {
         result.gamesMorningOf++;
         for (const subscriber of interestedSubscribers) {
+          // Atomically try to record this notification - prevents race conditions
+          // If this returns true, we're the first to claim this notification, so we should send it
+          let shouldSend = false;
           try {
-            await emailService.sendGameDayReminder(subscriber.email, game, subscriber.unsubscribeToken);
-            result.emailsSent++;
-            console.log(`[Notifications] Sent game day reminder for ${game.sport} vs ${game.opponent} to ${subscriber.email}`);
+            shouldSend = await storage.tryRecordNotificationAtomically(game.id, subscriber.id, 'gameday');
           } catch (error) {
-            const errMsg = `Failed to send game day reminder to ${subscriber.email}: ${error}`;
+            const errMsg = `Failed to record notification for ${subscriber.email}: ${error}`;
+            console.error(`[Notifications] ${errMsg}`);
+            result.errors.push(errMsg);
+            continue;
+          }
+          
+          if (!shouldSend) {
+            result.skippedDuplicates++;
+            console.log(`[Notifications] Skipping duplicate game day reminder for ${game.sport} vs ${game.opponent} to ${subscriber.email}`);
+            continue;
+          }
+
+          // Mark as 'sending' before attempting email - this distinguishes between
+          // "crashed before sending" and "crashed during/after sending"
+          try {
+            await storage.markNotificationSending(game.id, subscriber.id, 'gameday');
+          } catch (markError) {
+            const errMsg = `Failed to mark notification as sending for ${subscriber.email}: ${markError}`;
+            console.error(`[Notifications] ${errMsg}`);
+            result.errors.push(errMsg);
+            continue;
+          }
+
+          // Send the email
+          let emailSent = false;
+          try {
+            emailSent = await emailService.sendGameDayReminder(subscriber.email, game, subscriber.unsubscribeToken);
+          } catch (emailError) {
+            // Email threw an error - delete the record so it can be retried
+            await storage.deleteNotificationRecord(game.id, subscriber.id, 'gameday');
+            const errMsg = `Email send threw error for ${subscriber.email}: ${emailError} - will retry`;
+            console.error(`[Notifications] ${errMsg}`);
+            result.errors.push(errMsg);
+            continue;
+          }
+          
+          if (!emailSent) {
+            // Email returned false (delivery failed) - delete the record so it can be retried
+            await storage.deleteNotificationRecord(game.id, subscriber.id, 'gameday');
+            const errMsg = `Email delivery failed for ${subscriber.email} - will retry on next check`;
+            console.error(`[Notifications] ${errMsg}`);
+            result.errors.push(errMsg);
+            continue;
+          }
+          
+          // Email was sent successfully - now mark as sent
+          // If this fails, record stays in 'sending' state - stale recovery will mark as sent
+          try {
+            await storage.markNotificationSent(game.id, subscriber.id, 'gameday');
+          } catch (markError) {
+            // Email was sent but marking failed - record stays in 'sending'
+            // Stale recovery will mark it as 'sent' to prevent duplicates
+            const errMsg = `Email sent to ${subscriber.email} but mark-sent failed: ${markError}`;
             console.error(`[Notifications] ${errMsg}`);
             result.errors.push(errMsg);
           }
+          
+          result.emailsSent++;
+          console.log(`[Notifications] Sent game day reminder for ${game.sport} vs ${game.opponent} to ${subscriber.email}`);
         }
       }
     }
 
-    console.log(`[Notifications] Check complete: ${result.emailsSent} emails sent for ${result.gamesIn24Hours} 24-hour reminders and ${result.gamesMorningOf} game day reminders`);
+    console.log(`[Notifications] Check complete: ${result.emailsSent} emails sent, ${result.skippedDuplicates} duplicates skipped for ${result.gamesIn24Hours} 24-hour reminders and ${result.gamesMorningOf} game day reminders`);
     if (result.errors.length > 0) {
       console.error(`[Notifications] ${result.errors.length} errors occurred`);
     }

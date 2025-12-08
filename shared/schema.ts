@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -136,3 +136,29 @@ export const insertPhotoSyncLogSchema = createInsertSchema(photoSyncLogs).omit({
 
 export type InsertPhotoSyncLog = z.infer<typeof insertPhotoSyncLogSchema>;
 export type PhotoSyncLog = typeof photoSyncLogs.$inferSelect;
+
+// Sent Notifications Schema - tracks which notifications have been sent to prevent duplicates
+// Uses a three-phase approach: pending -> sending -> sent to handle process crashes
+// - 'pending': claimed but email not yet attempted
+// - 'sending': email send in progress (prevents re-send on stale recovery)
+// - 'sent': email delivered and confirmed
+export const sentNotifications = pgTable("sent_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  gameId: varchar("game_id").notNull(),
+  subscriptionId: varchar("subscription_id").notNull(),
+  notificationType: text("notification_type").notNull(), // "24hour" or "gameday"
+  status: text("status").notNull().default("pending"), // "pending", "sending", or "sent"
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { mode: "date" }),
+}, (table) => ({
+  uniqueNotification: unique("unique_notification").on(table.gameId, table.subscriptionId, table.notificationType),
+}));
+
+export const insertSentNotificationSchema = createInsertSchema(sentNotifications).omit({
+  id: true,
+  createdAt: true,
+  sentAt: true,
+});
+
+export type InsertSentNotification = z.infer<typeof insertSentNotificationSchema>;
+export type SentNotification = typeof sentNotifications.$inferSelect;

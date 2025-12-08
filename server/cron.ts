@@ -108,7 +108,10 @@ export async function triggerManualSync() {
  * Manual notification check trigger
  */
 export async function triggerManualNotificationCheck() {
-  await performNotificationCheck();
+  console.log('[Cron] Manual notification check triggered...');
+  const result = await notificationService.checkAndSendNotifications();
+  console.log(`[Cron] Manual notification check complete: ${result.emailsSent} emails sent, ${result.skippedDuplicates} skipped`);
+  return result;
 }
 
 /**
