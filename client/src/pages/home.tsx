@@ -17,13 +17,19 @@ import volleyballImg from "@assets/generated_images/Lakers_volleyball_spike_acti
 
 const fallbackHeroImages = [basketballImg, footballImg, soccerImg, volleyballImg];
 
-const sportColors = {
-  Football: "hsl(210, 85%, 35%)",
-  Soccer: "hsl(150, 60%, 45%)",
-  Basketball: "hsl(25, 75%, 50%)",
-  Volleyball: "hsl(340, 70%, 55%)",
-  Hockey: "hsl(195, 80%, 40%)",
+const sportColors: Record<string, string> = {
+  "Football": "hsl(210, 85%, 35%)",
+  "Boys Basketball": "hsl(150, 60%, 45%)",
+  "Girls Basketball": "hsl(25, 75%, 50%)",
+  "Volleyball": "hsl(340, 70%, 55%)",
+  "Boys Hockey": "hsl(195, 80%, 40%)",
+  // Legacy sport names for backward compatibility
+  "Basketball": "hsl(150, 60%, 45%)",
+  "Hockey": "hsl(195, 80%, 40%)",
+  "Soccer": "hsl(25, 75%, 50%)",
 };
+
+const getSportColor = (sport: string) => sportColors[sport] || "hsl(210, 15%, 50%)";
 
 export default function Home() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -248,7 +254,7 @@ export default function Home() {
                         <div className="flex-1">
                           <div
                             className="inline-block px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
-                            style={{ backgroundColor: sportColors[game.sport as keyof typeof sportColors] }}
+                            style={{ backgroundColor: getSportColor(game.sport) }}
                             data-testid={`badge-sport-${game.id}`}
                           >
                             {game.sport}
@@ -348,7 +354,7 @@ export default function Home() {
                           <div className="flex-1">
                             <div
                               className="inline-block px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
-                              style={{ backgroundColor: sportColors[game.sport as keyof typeof sportColors] }}
+                              style={{ backgroundColor: getSportColor(game.sport) }}
                               data-testid={`badge-sport-recent-${game.id}`}
                             >
                               {game.sport}

@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
 import { ArrowLeft, Check, Home as HomeIcon, Calendar, Bell, Image } from "lucide-react";
 
-const SPORTS = ["Football", "Soccer", "Basketball", "Volleyball", "Hockey"] as const;
+const SPORTS = ["Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey"] as const;
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

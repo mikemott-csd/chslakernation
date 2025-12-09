@@ -22,7 +22,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
 
-const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Soccer", "Basketball", "Volleyball", "Hockey"];
+const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey"];
+
+const DEFAULT_SPORT_COLOR = { 
+  bg: "bg-muted", 
+  text: "text-muted-foreground", 
+  border: "border-muted",
+  dot: "bg-muted"
+};
 
 const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
   "All Sports": { 
@@ -37,13 +44,13 @@ const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; d
     border: "border-chart-1",
     dot: "bg-chart-1"
   },
-  "Soccer": { 
+  "Boys Basketball": { 
     bg: "bg-chart-2", 
     text: "text-white", 
     border: "border-chart-2",
     dot: "bg-chart-2"
   },
-  "Basketball": { 
+  "Girls Basketball": { 
     bg: "bg-chart-3", 
     text: "text-white", 
     border: "border-chart-3",
@@ -55,20 +62,41 @@ const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; d
     border: "border-chart-4",
     dot: "bg-chart-4"
   },
+  "Boys Hockey": { 
+    bg: "bg-chart-5", 
+    text: "text-white", 
+    border: "border-chart-5",
+    dot: "bg-chart-5"
+  },
+  // Legacy sport names for backward compatibility
+  "Basketball": { 
+    bg: "bg-chart-2", 
+    text: "text-white", 
+    border: "border-chart-2",
+    dot: "bg-chart-2"
+  },
   "Hockey": { 
     bg: "bg-chart-5", 
     text: "text-white", 
     border: "border-chart-5",
     dot: "bg-chart-5"
   },
+  "Soccer": { 
+    bg: "bg-chart-3", 
+    text: "text-white", 
+    border: "border-chart-3",
+    dot: "bg-chart-3"
+  },
 };
+
+const getSportColors = (sport: string) => SPORT_COLORS[sport] || DEFAULT_SPORT_COLOR;
 
 const SPORT_ICONS: Record<string, typeof Trophy> = {
   "Football": Trophy,
-  "Soccer": Trophy,
-  "Basketball": Trophy,
+  "Boys Basketball": Trophy,
+  "Girls Basketball": Trophy,
   "Volleyball": Trophy,
-  "Hockey": Trophy,
+  "Boys Hockey": Trophy,
 };
 
 export default function Schedule() {
@@ -379,7 +407,7 @@ export default function Schedule() {
                 </Card>
               ) : (
                 displayedGames.map((game) => {
-                  const colors = SPORT_COLORS[game.sport];
+                  const colors = getSportColors(game.sport);
                   const SportIcon = SPORT_ICONS[game.sport] || Trophy;
                   
                   return (
