@@ -200,7 +200,8 @@ export default function Home() {
             <img
               src={img}
               alt="Lakers Athletics"
-              className="w-full h-full object-cover object-top"
+              className="w-full h-full object-cover"
+              style={{ objectPosition: '50% 35%' }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           </div>
