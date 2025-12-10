@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image } from "lucide-react";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateUtils";
@@ -190,37 +191,75 @@ export default function Home() {
       </header>
 
       {/* Hero Section with Shuffling Images */}
-      <section className="relative h-[280px] sm:h-[350px] md:h-[500px] overflow-hidden">
-        {heroImages.map((img, index) => (
-          <div
-            key={index}
-            className="absolute inset-0 transition-opacity duration-1000"
-            style={{ opacity: currentImageIndex === index ? 1 : 0 }}
-          >
-            <img
-              src={img}
-              alt="Lakers Athletics"
-              className="w-full h-full object-cover"
-              style={{ objectPosition: '50% 35%' }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-          </div>
-        ))}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
-          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-2 md:mb-4" data-testid="text-hero-title">
-            Go Lakers!
-          </h2>
-          <p className="text-base sm:text-xl md:text-2xl mb-4 md:mb-8 max-w-2xl">
-            Follow Colchester High School athletics and never miss a game
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-            <Link href="/schedule">
-              <Button size="default" className="md:text-lg bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
-                <Calendar className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                View Full Schedule
-              </Button>
-            </Link>
-          </div>
+      <section className="relative w-full overflow-hidden">
+        {/* Mobile: 4:3 aspect ratio, Desktop: 16:9 aspect ratio */}
+        <div className="block md:hidden">
+          <AspectRatio ratio={4/3}>
+            <div className="relative w-full h-full">
+              {heroImages.map((img, index) => (
+                <div
+                  key={index}
+                  className="absolute inset-0 transition-opacity duration-1000"
+                  style={{ opacity: currentImageIndex === index ? 1 : 0 }}
+                >
+                  <img
+                    src={img}
+                    alt="Lakers Athletics"
+                    className="w-full h-full object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                </div>
+              ))}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
+                <h2 className="text-3xl sm:text-4xl font-bold mb-2" data-testid="text-hero-title">
+                  Go Lakers!
+                </h2>
+                <p className="text-base sm:text-xl mb-4 max-w-2xl">
+                  Follow Colchester High School athletics and never miss a game
+                </p>
+                <Link href="/schedule">
+                  <Button size="default" className="bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule-mobile">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    View Full Schedule
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </AspectRatio>
+        </div>
+        <div className="hidden md:block">
+          <AspectRatio ratio={16/9}>
+            <div className="relative w-full h-full">
+              {heroImages.map((img, index) => (
+                <div
+                  key={index}
+                  className="absolute inset-0 transition-opacity duration-1000"
+                  style={{ opacity: currentImageIndex === index ? 1 : 0 }}
+                >
+                  <img
+                    src={img}
+                    alt="Lakers Athletics"
+                    className="w-full h-full object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                </div>
+              ))}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
+                <h2 className="text-6xl font-bold mb-4" data-testid="text-hero-title-desktop">
+                  Go Lakers!
+                </h2>
+                <p className="text-2xl mb-8 max-w-2xl">
+                  Follow Colchester High School athletics and never miss a game
+                </p>
+                <Link href="/schedule">
+                  <Button size="default" className="text-lg bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
+                    <Calendar className="mr-2 h-5 w-5" />
+                    View Full Schedule
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </AspectRatio>
         </div>
       </section>
 
