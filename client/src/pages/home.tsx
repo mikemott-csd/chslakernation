@@ -138,7 +138,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
       {/* Header */}
       <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
-        <div className="flex items-center gap-2 md:gap-4">
+        <Link href="/" className="flex items-center gap-2 md:gap-4 hover:opacity-90 transition-opacity" data-testid="link-banner-home">
           <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-18 w-auto object-contain rounded" data-testid="img-logo" />
           <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
             CHS Laker Nation
@@ -146,7 +146,7 @@ export default function Home() {
           <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-header-mobile">
             Lakers
           </h1>
-        </div>
+        </Link>
         <nav className="flex gap-1 md:gap-4 items-center">
           <Link href="/">
             <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-home-mobile">
