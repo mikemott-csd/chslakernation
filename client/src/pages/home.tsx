@@ -11,12 +11,6 @@ import type { Game, NewsArticle, Photo } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
-import basketballImg from "@assets/generated_images/Lakers_basketball_game_action_d0021acb.png";
-import footballImg from "@assets/generated_images/Lakers_football_team_huddle_2dd07c0a.png";
-import soccerImg from "@assets/generated_images/Lakers_soccer_action_shot_12c64d04.png";
-import volleyballImg from "@assets/generated_images/Lakers_volleyball_spike_action_2c2516e6.png";
-
-const fallbackHeroImages = [basketballImg, footballImg, soccerImg, volleyballImg];
 
 const sportColors: Record<string, string> = {
   "Football": "hsl(210, 85%, 35%)",
@@ -51,7 +45,7 @@ export default function Home() {
     queryKey: ["/api/photos"],
   });
 
-  // Get hero images - use synced photos if available, otherwise use fallback images
+  // Get hero images from synced photos
   const heroImages = useMemo(() => {
     // Filter to photos with valid downloadUrl
     const validPhotos = photos.filter(photo => photo.downloadUrl);
@@ -69,8 +63,8 @@ export default function Home() {
       return recentPhotos.map(photo => photo.downloadUrl as string);
     }
     
-    // Fall back to static images if no valid photos
-    return fallbackHeroImages;
+    // No fallback - return empty array if no photos
+    return [];
   }, [photos]);
 
   // Load "going" games from localStorage
@@ -195,8 +189,8 @@ export default function Home() {
         {/* Mobile: 4:3 aspect ratio, Desktop: 16:9 aspect ratio */}
         <div className="block md:hidden">
           <AspectRatio ratio={4/3}>
-            <div className="relative w-full h-full">
-              {heroImages.map((img, index) => (
+            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(210,85%,35%)] to-[hsl(210,85%,20%)]">
+              {heroImages.length > 0 && heroImages.map((img, index) => (
                 <div
                   key={index}
                   className="absolute inset-0 transition-opacity duration-1000"
@@ -207,9 +201,9 @@ export default function Home() {
                     alt="Lakers Athletics"
                     className="w-full h-full object-cover object-center"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                 </div>
               ))}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
                 <h2 className="text-3xl sm:text-4xl font-bold mb-2" data-testid="text-hero-title">
                   Go Lakers!
@@ -229,8 +223,8 @@ export default function Home() {
         </div>
         <div className="hidden md:block">
           <AspectRatio ratio={16/9}>
-            <div className="relative w-full h-full">
-              {heroImages.map((img, index) => (
+            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(210,85%,35%)] to-[hsl(210,85%,20%)]">
+              {heroImages.length > 0 && heroImages.map((img, index) => (
                 <div
                   key={index}
                   className="absolute inset-0 transition-opacity duration-1000"
@@ -241,9 +235,9 @@ export default function Home() {
                     alt="Lakers Athletics"
                     className="w-full h-full object-cover object-center"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                 </div>
               ))}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
                 <h2 className="text-6xl font-bold mb-4" data-testid="text-hero-title-desktop">
                   Go Lakers!
