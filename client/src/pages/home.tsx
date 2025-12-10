@@ -141,7 +141,7 @@ export default function Home() {
         <div className="flex items-center gap-2 md:gap-4">
           <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-18 w-auto object-contain rounded" data-testid="img-logo" />
           <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
-            Colchester Lakers Athletics
+            CHS Laker Nation
           </h1>
           <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-header-mobile">
             Lakers
@@ -481,7 +481,7 @@ export default function Home() {
               <h3 className="text-2xl md:text-3xl font-bold mb-4">Never Miss a Game</h3>
               <p className="text-lg mb-6 max-w-2xl mx-auto opacity-90">
                 Subscribe to get email notifications 24 hours before each game and on game day morning.
-                Stay connected with Lakers Athletics!
+                Stay connected with CHS Laker Nation!
               </p>
               <Link href="/subscribe">
                 <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] border-0" data-testid="button-subscribe-cta">
@@ -498,7 +498,7 @@ export default function Home() {
       <footer className="bg-[hsl(215,25%,20%)] text-white py-8 mt-12">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm opacity-80">
-            © 2025 Colchester High School Lakers Athletics. Go Lakers!
+            © 2025 CHS Laker Nation. Go Lakers!
           </p>
         </div>
       </footer>
