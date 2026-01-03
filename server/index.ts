@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { startSyncJob, startNotificationJob, startNewsSyncJob, startPhotoSyncJob } from "./cron";
 import { storage } from "./storage";
-import { seedNewsIfEmpty } from "./news-service";
+import { seedNewsIfEmpty, syncNewsArticles } from "./news-service";
 
 const app = express();
 app.use(express.json());
@@ -88,5 +88,16 @@ app.use((req, res, next) => {
     
     // Start the hourly photo sync job
     startPhotoSyncJob();
+    
+    // Run initial news sync on startup to get fresh Colchester articles
+    setTimeout(async () => {
+      try {
+        console.log("[Startup] Running initial news sync for fresh Colchester articles...");
+        const result = await syncNewsArticles();
+        console.log(`[Startup] News sync complete: ${result.added} articles refreshed`);
+      } catch (error) {
+        console.error("[Startup] Initial news sync failed:", error);
+      }
+    }, 5000);
   });
 })();

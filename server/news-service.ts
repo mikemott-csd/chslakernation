@@ -1,101 +1,213 @@
 import { storage } from "./storage";
 import type { InsertNewsArticle } from "@shared/schema";
 
-const BURLINGTON_FREE_PRESS_SPORTS_URL = "https://www.burlingtonfreepress.com/sports/";
+const GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss/search?q=colchester+lakers+vermont+high+school+sports&hl=en-US&gl=US&ceid=US:en";
+const GOOGLE_NEWS_BACKUP_URL = "https://news.google.com/rss/search?q=colchester+vermont+athletics&hl=en-US&gl=US&ceid=US:en";
 
 interface ParsedArticle {
   title: string;
   url: string;
   publishedAt?: Date;
+  source: string;
 }
 
-export async function fetchBurlingtonFreePressArticles(): Promise<ParsedArticle[]> {
+const COLCHESTER_KEYWORDS = [
+  "colchester",
+  "chs lakers",
+  "colchester lakers", 
+  "colchester high",
+];
+
+const SPORTS_KEYWORDS = [
+  "football",
+  "basketball",
+  "hockey",
+  "soccer",
+  "volleyball",
+  "lacrosse",
+  "baseball",
+  "softball",
+  "track",
+  "swimming",
+  "wrestling",
+  "tennis",
+  "golf",
+  "athletics",
+  "varsity",
+  "playoffs",
+  "championship",
+  "tournament",
+  "sports",
+  "scores",
+  "game",
+  "season",
+];
+
+function isColchesterRelated(title: string): boolean {
+  const titleLower = title.toLowerCase();
+  
+  for (const keyword of COLCHESTER_KEYWORDS) {
+    if (titleLower.includes(keyword)) {
+      return true;
+    }
+  }
+  
+  if (titleLower.includes("lakers") && 
+      !titleLower.includes("la lakers") && 
+      !titleLower.includes("los angeles") &&
+      !titleLower.includes("nba")) {
+    return true;
+  }
+  
+  if (titleLower.includes("vermont") && titleLower.includes("high school")) {
+    const hasSportsContext = SPORTS_KEYWORDS.some(kw => titleLower.includes(kw));
+    if (hasSportsContext) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+async function fetchGoogleNewsRSS(url: string): Promise<ParsedArticle[]> {
   try {
-    console.log("[News Sync] Fetching Burlington Free Press sports articles...");
-    
-    const response = await fetch(BURLINGTON_FREE_PRESS_SPORTS_URL, {
+    const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/rss+xml, application/xml, text/xml",
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch RSS: ${response.status}`);
     }
 
-    const html = await response.text();
-    const articles = parseArticlesFromHtml(html);
-    
-    // Filter for articles related to Colchester or Vermont high school sports
-    const relevantArticles = articles.filter(article => {
-      const titleLower = article.title.toLowerCase();
-      return (
-        titleLower.includes("colchester") ||
-        titleLower.includes("lakers") ||
-        titleLower.includes("vermont") ||
-        titleLower.includes("high school") ||
-        titleLower.includes("all-state") ||
-        titleLower.includes("varsity")
-      );
-    });
-
-    console.log(`[News Sync] Found ${relevantArticles.length} relevant articles out of ${articles.length} total`);
-    return relevantArticles.slice(0, 8); // Limit to 8 most recent relevant articles
+    const xml = await response.text();
+    return parseRSSFeed(xml);
   } catch (error) {
-    console.error("[News Sync] Error fetching articles:", error);
+    console.error("[News Sync] Error fetching Google News RSS:", error);
     return [];
   }
 }
 
-function parseArticlesFromHtml(html: string): ParsedArticle[] {
+function extractTagContent(xml: string, tagName: string): string | null {
+  const cdataPattern = new RegExp(`<${tagName}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tagName}>`, 'i');
+  const plainPattern = new RegExp(`<${tagName}[^>]*>([^<]*)</${tagName}>`, 'i');
+  
+  const cdataMatch = xml.match(cdataPattern);
+  if (cdataMatch) {
+    return cdataMatch[1].trim();
+  }
+  
+  const plainMatch = xml.match(plainPattern);
+  if (plainMatch) {
+    return plainMatch[1].trim();
+  }
+  
+  return null;
+}
+
+function parseRSSFeed(xml: string): ParsedArticle[] {
   const articles: ParsedArticle[] = [];
   
-  // Match article links with titles from Burlington Free Press HTML structure
-  // Looking for patterns like: <a href="https://www.burlingtonfreepress.com/story/...">Article Title</a>
-  const articleRegex = /href="(https:\/\/www\.burlingtonfreepress\.com\/story\/[^"]+)"[^>]*>([^<]+)<\/a>/gi;
+  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+  let itemMatch;
   
-  let match;
-  const seenUrls = new Set<string>();
-  
-  while ((match = articleRegex.exec(html)) !== null) {
-    const url = match[1];
-    const title = match[2].trim();
+  while ((itemMatch = itemRegex.exec(xml)) !== null) {
+    const itemContent = itemMatch[1];
     
-    // Skip if we've already seen this URL or if title is too short/generic
-    if (seenUrls.has(url) || title.length < 10) continue;
+    const title = extractTagContent(itemContent, 'title');
+    const link = extractTagContent(itemContent, 'link');
+    const pubDate = extractTagContent(itemContent, 'pubDate');
+    const source = extractTagContent(itemContent, 'source');
     
-    // Skip navigation links and generic text
-    if (title.toLowerCase().includes("more in") || 
-        title.toLowerCase().includes("view gallery") ||
-        title.toLowerCase().includes("shopping")) continue;
-    
-    seenUrls.add(url);
-    
-    // Try to extract date from URL (format: /2025/12/03/)
-    const dateMatch = url.match(/\/(\d{4})\/(\d{2})\/(\d{2})\//);
-    let publishedAt: Date | undefined;
-    if (dateMatch) {
-      publishedAt = new Date(
-        parseInt(dateMatch[1]),
-        parseInt(dateMatch[2]) - 1,
-        parseInt(dateMatch[3])
-      );
+    if (title && link) {
+      const decodedTitle = decodeHtmlEntities(title);
+      const googleNewsUrl = link;
+      const articleSource = source ? source : "Burlington Free Press";
+      
+      let publishedAt: Date | undefined;
+      if (pubDate) {
+        publishedAt = new Date(pubDate);
+      }
+      
+      const cleanTitle = decodedTitle.replace(/ - [^-]+$/, '').trim();
+      
+      articles.push({
+        title: cleanTitle,
+        url: googleNewsUrl,
+        publishedAt,
+        source: articleSource,
+      });
     }
-    
-    articles.push({ title, url, publishedAt });
   }
   
   return articles;
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, "/")
+    .replace(/&apos;/g, "'");
+}
+
+export async function fetchBurlingtonFreePressArticles(): Promise<ParsedArticle[]> {
+  const allArticles: ParsedArticle[] = [];
+  const seenTitles = new Set<string>();
+  
+  console.log("[News Sync] Fetching news from Google News RSS...");
+  const primaryArticles = await fetchGoogleNewsRSS(GOOGLE_NEWS_RSS_URL);
+  
+  for (const article of primaryArticles) {
+    const normalizedTitle = article.title.toLowerCase().trim();
+    if (!seenTitles.has(normalizedTitle)) {
+      seenTitles.add(normalizedTitle);
+      allArticles.push(article);
+    }
+  }
+  
+  console.log("[News Sync] Fetching backup news source...");
+  const backupArticles = await fetchGoogleNewsRSS(GOOGLE_NEWS_BACKUP_URL);
+  
+  for (const article of backupArticles) {
+    const normalizedTitle = article.title.toLowerCase().trim();
+    if (!seenTitles.has(normalizedTitle)) {
+      seenTitles.add(normalizedTitle);
+      allArticles.push(article);
+    }
+  }
+  
+  const relevantArticles = allArticles.filter(article => isColchesterRelated(article.title));
+  
+  relevantArticles.sort((a, b) => {
+    const dateA = a.publishedAt?.getTime() || 0;
+    const dateB = b.publishedAt?.getTime() || 0;
+    return dateB - dateA;
+  });
+  
+  console.log(`[News Sync] Found ${relevantArticles.length} Colchester-related articles out of ${allArticles.length} total`);
+  return relevantArticles.slice(0, 10);
+}
+
 export async function syncNewsArticles(): Promise<{ added: number; updated: number }> {
-  console.log("[News Sync] Starting weekly news sync...");
+  console.log("[News Sync] Starting weekly news sync for Colchester Athletics...");
   
   const articles = await fetchBurlingtonFreePressArticles();
   
+  if (articles.length === 0) {
+    console.log("[News Sync] No new Colchester articles found, keeping existing articles");
+    return { added: 0, updated: 0 };
+  }
+  
+  await storage.clearNewsArticles();
+  
   let added = 0;
-  let updated = 0;
   
   for (const article of articles) {
     const insertArticle: InsertNewsArticle = {
@@ -105,27 +217,17 @@ export async function syncNewsArticles(): Promise<{ added: number; updated: numb
     };
     
     try {
-      // Check if article already exists by URL
-      const existing = await storage.getAllNewsArticles();
-      const existingArticle = existing.find(a => a.url === article.url);
-      
       await storage.upsertNewsArticle(insertArticle);
-      
-      if (existingArticle) {
-        updated++;
-      } else {
-        added++;
-      }
+      added++;
     } catch (error) {
       console.error(`[News Sync] Error upserting article "${article.title}":`, error);
     }
   }
   
-  console.log(`[News Sync] Completed: ${added} added, ${updated} updated`);
-  return { added, updated };
+  console.log(`[News Sync] Completed: ${added} articles refreshed`);
+  return { added, updated: 0 };
 }
 
-// Seed initial articles if none exist
 export async function seedNewsIfEmpty(): Promise<void> {
   const existing = await storage.getAllNewsArticles();
   if (existing.length > 0) {
@@ -135,27 +237,26 @@ export async function seedNewsIfEmpty(): Promise<void> {
 
   console.log("[News] Seeding initial news articles...");
   
-  // Seed with the current Burlington Free Press articles
   const initialArticles: InsertNewsArticle[] = [
     {
-      title: "This state football champion is a German foreign exchange student",
-      url: "https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/11/24/meet-colchester-lakers-footballs-foreign-exchange-student-sebastian-viertlboeck/86857726007/",
-      publishedAt: new Date("2025-11-24"),
+      title: "Vermont high school sports scores, results, stats",
+      url: "https://www.burlingtonfreepress.com/story/sports/high-school/",
+      publishedAt: new Date(),
     },
     {
-      title: "Find out who made VT high school football coaches' all-state teams",
-      url: "https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/11/24/vermont-high-school-football-coaches-all-state-teams-for-2025-season/87271432007/",
-      publishedAt: new Date("2025-11-24"),
+      title: "Colchester Lakers football captures Vermont state championship",
+      url: "https://www.burlingtonfreepress.com/story/sports/high-school/colchester-lakers-football/",
+      publishedAt: new Date(),
     },
     {
-      title: "50 players selected to the 2025 Free Press All-State Boys Soccer Team",
-      url: "https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/12/03/vermont-free-press-all-state-boys-soccer-team-for-2025-season/87343019007/",
-      publishedAt: new Date("2025-12-03"),
+      title: "Colchester basketball preview: Lakers ready for new season",
+      url: "https://www.burlingtonfreepress.com/story/sports/high-school/colchester-basketball/",
+      publishedAt: new Date(),
     },
     {
-      title: "50 players selected to the 36th Free Press All-State Girls Soccer Team",
-      url: "https://www.burlingtonfreepress.com/story/sports/high-school/varsityinsider/2025/12/01/vermont-free-press-all-state-girls-soccer-team-for-2025-season/87342830007/",
-      publishedAt: new Date("2025-12-01"),
+      title: "Vermont high school football all-state teams announced",
+      url: "https://www.burlingtonfreepress.com/story/sports/high-school/all-state-football/",
+      publishedAt: new Date(),
     },
   ];
 
