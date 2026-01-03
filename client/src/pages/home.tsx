@@ -28,6 +28,7 @@ const getSportColor = (sport: string) => sportColors[sport] || "hsl(210, 15%, 50
 
 export default function Home() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [showAllRecent, setShowAllRecent] = useState(false);
@@ -116,6 +117,31 @@ export default function Home() {
       setCurrentImageIndex(0);
     }
   }, [heroImages.length, currentImageIndex]);
+
+  // Auto-cycle news articles (show 2 at a time, cycle every 6 seconds)
+  const newsPerPage = 2;
+  const totalNewsPages = Math.ceil(newsArticles.length / newsPerPage);
+  
+  useEffect(() => {
+    if (newsArticles.length <= newsPerPage) return;
+    const interval = setInterval(() => {
+      setCurrentNewsIndex((prev) => (prev + 1) % totalNewsPages);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [newsArticles.length, totalNewsPages]);
+
+  // Reset news index if it's out of bounds
+  useEffect(() => {
+    if (currentNewsIndex >= totalNewsPages && totalNewsPages > 0) {
+      setCurrentNewsIndex(0);
+    }
+  }, [totalNewsPages, currentNewsIndex]);
+
+  // Get current news articles to display
+  const visibleNews = newsArticles.slice(
+    currentNewsIndex * newsPerPage,
+    currentNewsIndex * newsPerPage + newsPerPage
+  );
 
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -447,22 +473,41 @@ export default function Home() {
 
         {/* Laker Sports News */}
         <section className="mt-8 md:mt-12">
-          <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-            <Newspaper className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,35%)]" />
-            <h3 className="text-xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-news-header">
-              Laker Sports News
-            </h3>
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <div className="flex items-center gap-2 md:gap-3">
+              <Newspaper className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,35%)]" />
+              <h3 className="text-xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-news-header">
+                Laker Sports News
+              </h3>
+            </div>
+            {totalNewsPages > 1 && (
+              <div className="flex items-center gap-2" data-testid="news-page-indicators">
+                {Array.from({ length: totalNewsPages }).map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentNewsIndex(idx)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      idx === currentNewsIndex 
+                        ? "bg-[hsl(210,85%,35%)] w-4" 
+                        : "bg-[hsl(210,85%,35%)]/30 hover:bg-[hsl(210,85%,35%)]/50"
+                    }`}
+                    aria-label={`Go to news page ${idx + 1}`}
+                    data-testid={`button-news-page-${idx}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {newsArticles.slice(0, 4).map((article, index) => (
-              <Card key={article.id} className="hover-elevate transition-all">
+          <div className="grid md:grid-cols-2 gap-6 transition-opacity duration-500" data-testid="news-grid">
+            {visibleNews.map((article, index) => (
+              <Card key={article.id} className="hover-elevate transition-all animate-in fade-in duration-500">
                 <CardContent className="p-6">
                   <a
                     href={article.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
-                    data-testid={`link-news-${index}`}
+                    data-testid={`link-news-${currentNewsIndex * newsPerPage + index}`}
                   >
                     <span className="font-semibold">{article.title}</span>
                     <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
