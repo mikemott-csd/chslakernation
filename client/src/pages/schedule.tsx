@@ -22,7 +22,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
 
-const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey"];
+const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey"];
 
 const DEFAULT_SPORT_COLOR = { 
   bg: "bg-muted", 
@@ -68,6 +68,12 @@ const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; d
     border: "border-chart-5",
     dot: "bg-chart-5"
   },
+  "Girls Ice Hockey": { 
+    bg: "bg-pink-500", 
+    text: "text-white", 
+    border: "border-pink-500",
+    dot: "bg-pink-500"
+  },
   // Legacy sport names for backward compatibility
   "Basketball": { 
     bg: "bg-chart-2", 
@@ -97,6 +103,7 @@ const SPORT_ICONS: Record<string, typeof Trophy> = {
   "Girls Basketball": Trophy,
   "Volleyball": Trophy,
   "Boys Hockey": Trophy,
+  "Girls Ice Hockey": Trophy,
 };
 
 export default function Schedule() {

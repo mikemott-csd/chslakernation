@@ -18,6 +18,7 @@ const sportColors: Record<string, string> = {
   "Girls Basketball": "hsl(25, 75%, 50%)",
   "Volleyball": "hsl(340, 70%, 55%)",
   "Boys Hockey": "hsl(195, 80%, 40%)",
+  "Girls Ice Hockey": "hsl(330, 70%, 55%)",
   // Legacy sport names for backward compatibility
   "Basketball": "hsl(150, 60%, 45%)",
   "Hockey": "hsl(195, 80%, 40%)",
