@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
@@ -12,6 +14,8 @@ import { Link } from "wouter";
 export default function Unsubscribe() {
   const [, navigate] = useLocation();
   const [token, setToken] = useState<string | null>(null);
+  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [unsubscribeAll, setUnsubscribeAll] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -28,20 +32,58 @@ export default function Unsubscribe() {
     }
   }, [toast]);
 
+  const subscriptionQuery = useQuery<{ sports: string[] }>({
+    queryKey: ["/api/subscription/by-token", token],
+    enabled: !!token,
+    queryFn: async () => {
+      const res = await fetch(`/api/subscription/by-token/${token}`);
+      if (!res.ok) throw new Error("Subscription not found");
+      return res.json();
+    },
+  });
+
+  const subscribedSports = subscriptionQuery.data?.sports || [];
+
+  useEffect(() => {
+    if (unsubscribeAll && subscribedSports.length > 0) {
+      setSelectedSports([...subscribedSports]);
+    } else if (!unsubscribeAll) {
+      setSelectedSports([]);
+    }
+  }, [unsubscribeAll, subscribedSports]);
+
+  const toggleSport = (sport: string) => {
+    setSelectedSports(prev => {
+      if (prev.includes(sport)) {
+        const newSelection = prev.filter(s => s !== sport);
+        if (newSelection.length < subscribedSports.length) {
+          setUnsubscribeAll(false);
+        }
+        return newSelection;
+      } else {
+        const newSelection = [...prev, sport];
+        if (newSelection.length === subscribedSports.length) {
+          setUnsubscribeAll(true);
+        }
+        return newSelection;
+      }
+    });
+  };
+
   const unsubscribeMutation = useMutation({
-    mutationFn: async (token: string) => {
+    mutationFn: async ({ token, sports }: { token: string; sports?: string[] }) => {
       return await apiRequest("/api/unsubscribe", {
         method: "POST",
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, sports }),
         headers: {
           "Content-Type": "application/json",
         },
       });
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast({
         title: "Unsubscribed",
-        description: "You've been unsubscribed from all Lakers game notifications.",
+        description: data.message || "You've been unsubscribed from selected sports.",
       });
     },
     onError: (error: Error) => {
@@ -55,12 +97,21 @@ export default function Unsubscribe() {
 
   const handleUnsubscribe = () => {
     if (token) {
-      unsubscribeMutation.mutate(token);
+      if (unsubscribeAll || selectedSports.length === subscribedSports.length) {
+        unsubscribeMutation.mutate({ token });
+      } else {
+        unsubscribeMutation.mutate({ token, sports: selectedSports });
+      }
     }
   };
 
   const isSuccess = unsubscribeMutation.isSuccess;
   const isError = unsubscribeMutation.isError;
+  const mutationData = unsubscribeMutation.data as any;
+  const fullyUnsubscribed = mutationData?.fullyUnsubscribed ?? true;
+  const remainingSports = mutationData?.remainingSports || [];
+
+  const canSubmit = selectedSports.length > 0 || unsubscribeAll;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
@@ -106,14 +157,38 @@ export default function Unsubscribe() {
       <div className="container mx-auto px-4 py-8 md:py-12 max-w-2xl">
         <Card className="text-center">
           <CardHeader>
+            {subscriptionQuery.isLoading && token && (
+              <>
+                <div className="mx-auto mb-4">
+                  <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
+                </div>
+                <CardTitle className="text-2xl">Loading subscription...</CardTitle>
+              </>
+            )}
+            {subscriptionQuery.isError && token && (
+              <>
+                <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                  <X className="w-10 h-10 text-red-600" data-testid="icon-error" />
+                </div>
+                <CardTitle className="text-2xl">Subscription not found</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  This unsubscribe link may be invalid or expired.
+                </CardDescription>
+              </>
+            )}
             {isSuccess && (
               <>
                 <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                   <Check className="w-10 h-10 text-green-600" data-testid="icon-success" />
                 </div>
-                <CardTitle className="text-2xl">You've been unsubscribed</CardTitle>
+                <CardTitle className="text-2xl">
+                  {fullyUnsubscribed ? "You've been unsubscribed" : "Subscription updated"}
+                </CardTitle>
                 <CardDescription className="text-base mt-2">
-                  You will no longer receive Lakers game notifications.
+                  {fullyUnsubscribed 
+                    ? "You will no longer receive Lakers game notifications."
+                    : `You're still subscribed to: ${remainingSports.join(", ")}`
+                  }
                 </CardDescription>
               </>
             )}
@@ -128,11 +203,11 @@ export default function Unsubscribe() {
                 </CardDescription>
               </>
             )}
-            {!isSuccess && !isError && token && (
+            {!isSuccess && !isError && !subscriptionQuery.isLoading && !subscriptionQuery.isError && token && (
               <>
-                <CardTitle className="text-2xl">Unsubscribe from notifications?</CardTitle>
+                <CardTitle className="text-2xl">Manage your subscriptions</CardTitle>
                 <CardDescription className="text-base mt-2">
-                  You'll no longer receive email notifications for Lakers games.
+                  Select which sports you'd like to unsubscribe from.
                 </CardDescription>
               </>
             )}
@@ -159,16 +234,49 @@ export default function Unsubscribe() {
                   </Link>
                   <Link href="/subscribe">
                     <Button variant="outline" className="w-full" data-testid="button-subscribe-again">
-                      Subscribe Again
+                      {fullyUnsubscribed ? "Subscribe Again" : "Manage Subscriptions"}
                     </Button>
                   </Link>
                 </>
               )}
-              {!isSuccess && !isError && token && (
+              {!isSuccess && !isError && !subscriptionQuery.isLoading && !subscriptionQuery.isError && token && subscribedSports.length > 0 && (
                 <>
+                  <div className="space-y-3 text-left border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-center space-x-3 pb-3 border-b">
+                      <Checkbox
+                        id="unsubscribe-all"
+                        checked={unsubscribeAll}
+                        onCheckedChange={(checked) => setUnsubscribeAll(checked === true)}
+                        data-testid="checkbox-unsubscribe-all"
+                      />
+                      <Label 
+                        htmlFor="unsubscribe-all" 
+                        className="font-semibold cursor-pointer"
+                      >
+                        Unsubscribe from all sports
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Or select specific sports:</p>
+                    {subscribedSports.map((sport) => (
+                      <div key={sport} className="flex items-center space-x-3">
+                        <Checkbox
+                          id={`sport-${sport}`}
+                          checked={selectedSports.includes(sport)}
+                          onCheckedChange={() => toggleSport(sport)}
+                          data-testid={`checkbox-sport-${sport.toLowerCase().replace(/\s+/g, '-')}`}
+                        />
+                        <Label 
+                          htmlFor={`sport-${sport}`}
+                          className="cursor-pointer"
+                        >
+                          {sport}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                   <Button
                     onClick={handleUnsubscribe}
-                    disabled={unsubscribeMutation.isPending}
+                    disabled={unsubscribeMutation.isPending || !canSubmit}
                     className="w-full"
                     variant="destructive"
                     data-testid="button-confirm-unsubscribe"
@@ -176,7 +284,12 @@ export default function Unsubscribe() {
                     {unsubscribeMutation.isPending && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    {unsubscribeMutation.isPending ? "Unsubscribing..." : "Yes, Unsubscribe"}
+                    {unsubscribeMutation.isPending 
+                      ? "Unsubscribing..." 
+                      : unsubscribeAll || selectedSports.length === subscribedSports.length
+                        ? "Unsubscribe from All"
+                        : `Unsubscribe from ${selectedSports.length} sport${selectedSports.length !== 1 ? 's' : ''}`
+                    }
                   </Button>
                   <Link href="/">
                     <Button variant="outline" className="w-full" data-testid="button-cancel">
@@ -185,7 +298,7 @@ export default function Unsubscribe() {
                   </Link>
                 </>
               )}
-              {(isError || !token) && (
+              {(isError || !token || subscriptionQuery.isError) && !isSuccess && (
                 <Link href="/">
                   <Button className="w-full" data-testid="button-back-home">
                     Back to Schedule

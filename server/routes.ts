@@ -86,10 +86,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Unsubscribe using token
+  // Get subscription by unsubscribe token (for showing current sports)
+  app.get("/api/subscription/by-token/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const subscription = await storage.getSubscriptionByToken(token);
+      if (!subscription) {
+        return res.status(404).json({ message: "Subscription not found" });
+      }
+      // Return only the sports array (don't expose email or other sensitive data)
+      res.json({ sports: subscription.sports });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subscription" });
+    }
+  });
+
+  // Unsubscribe using token - supports selective or full unsubscription
   app.post("/api/unsubscribe", async (req, res) => {
     try {
-      const { token } = req.body;
+      const { token, sports } = req.body;
       
       if (!token) {
         return res.status(400).json({ message: "Unsubscribe token required" });
@@ -100,8 +115,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Subscription not found" });
       }
       
-      await storage.deleteSubscription(subscription.id);
-      res.json({ message: "Successfully unsubscribed" });
+      // If sports array provided, do selective unsubscription
+      if (sports && Array.isArray(sports) && sports.length > 0) {
+        const remainingSports = subscription.sports.filter(s => !sports.includes(s));
+        
+        if (remainingSports.length === 0) {
+          // No sports left, delete the subscription entirely
+          await storage.deleteSubscription(subscription.id);
+          res.json({ message: "Successfully unsubscribed from all sports", fullyUnsubscribed: true });
+        } else {
+          // Update subscription with remaining sports
+          await storage.updateSubscription(subscription.id, { sports: remainingSports });
+          res.json({ 
+            message: `Successfully unsubscribed from ${sports.join(", ")}`, 
+            fullyUnsubscribed: false,
+            remainingSports 
+          });
+        }
+      } else {
+        // No sports specified, unsubscribe from all (delete subscription)
+        await storage.deleteSubscription(subscription.id);
+        res.json({ message: "Successfully unsubscribed from all sports", fullyUnsubscribed: true });
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to unsubscribe" });
     }
