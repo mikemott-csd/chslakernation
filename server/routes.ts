@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertSubscriptionSchema } from "@shared/schema";
-import { sendWelcomeEmail, checkMailjetStatus } from "./email-service";
+import { sendWelcomeEmail, checkMailjetStatus, sendUnsubscribeConfirmation } from "./email-service";
 import { syncFromGoogleDrive } from "./sync-service";
 import { syncNewsArticles } from "./news-service";
 import { syncPhotosFromGoogleDrive, downloadDriveFile, getThumbnail } from "./photo-sync-service";
@@ -115,6 +115,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Subscription not found" });
       }
       
+      const subscriberEmail = subscription.email;
+      const originalSports = [...subscription.sports];
+      
       // If sports array provided, do selective unsubscription
       if (sports && Array.isArray(sports) && sports.length > 0) {
         const remainingSports = subscription.sports.filter(s => !sports.includes(s));
@@ -122,10 +125,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (remainingSports.length === 0) {
           // No sports left, delete the subscription entirely
           await storage.deleteSubscription(subscription.id);
+          
+          // Send unsubscribe confirmation email (async, don't wait)
+          sendUnsubscribeConfirmation(subscriberEmail, originalSports, [], true).catch(err => {
+            console.error('Failed to send unsubscribe confirmation:', err);
+          });
+          
           res.json({ message: "Successfully unsubscribed from all sports", fullyUnsubscribed: true });
         } else {
           // Update subscription with remaining sports
           await storage.updateSubscription(subscription.id, { sports: remainingSports });
+          
+          // Send unsubscribe confirmation email (async, don't wait)
+          sendUnsubscribeConfirmation(subscriberEmail, sports, remainingSports, false).catch(err => {
+            console.error('Failed to send unsubscribe confirmation:', err);
+          });
+          
           res.json({ 
             message: `Successfully unsubscribed from ${sports.join(", ")}`, 
             fullyUnsubscribed: false,
@@ -135,6 +150,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         // No sports specified, unsubscribe from all (delete subscription)
         await storage.deleteSubscription(subscription.id);
+        
+        // Send unsubscribe confirmation email (async, don't wait)
+        sendUnsubscribeConfirmation(subscriberEmail, originalSports, [], true).catch(err => {
+          console.error('Failed to send unsubscribe confirmation:', err);
+        });
+        
         res.json({ message: "Successfully unsubscribed from all sports", fullyUnsubscribed: true });
       }
     } catch (error) {

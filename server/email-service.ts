@@ -708,6 +708,159 @@ export async function sendWelcomeEmail(subscription: Subscription): Promise<bool
 }
 
 /**
+ * Send unsubscribe confirmation email
+ */
+export async function sendUnsubscribeConfirmation(
+  email: string,
+  unsubscribedSports: string[],
+  remainingSports: string[],
+  fullyUnsubscribed: boolean
+): Promise<boolean> {
+  if (!mailjet) {
+    console.warn('Skipping unsubscribe confirmation email - Mailjet not configured');
+    return false;
+  }
+
+  const subscribeUrl = `${APP_URL}/subscribe`;
+  
+  const subject = fullyUnsubscribed 
+    ? "You've been unsubscribed from Lakers notifications"
+    : "Your Lakers notification preferences have been updated";
+  
+  const mainMessage = fullyUnsubscribed
+    ? "You have been successfully unsubscribed from all Colchester Lakers Athletics game notifications."
+    : `You have been unsubscribed from ${unsubscribedSports.join(", ")} notifications.`;
+  
+  const remainingMessage = !fullyUnsubscribed && remainingSports.length > 0
+    ? `<p>You're still subscribed to: <strong>${remainingSports.join(", ")}</strong></p>`
+    : "";
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${subject}</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f4f7f9;
+        }
+        .container {
+          background-color: #ffffff;
+          border-radius: 8px;
+          padding: 30px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+          background: linear-gradient(135deg, hsl(210, 85%, 35%) 0%, hsl(210, 85%, 25%) 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 8px 8px 0 0;
+          margin: -30px -30px 20px -30px;
+          text-align: center;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+        }
+        .highlight {
+          background-color: #f8f9fa;
+          padding: 15px;
+          border-radius: 4px;
+          margin: 20px 0;
+        }
+        .btn {
+          display: inline-block;
+          padding: 12px 24px;
+          background-color: hsl(210, 85%, 35%);
+          color: white !important;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 600;
+          margin-top: 15px;
+        }
+        .footer {
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid #e0e0e0;
+          font-size: 12px;
+          color: #666;
+          text-align: center;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Colchester Lakers Athletics</h1>
+        </div>
+        
+        <p>${mainMessage}</p>
+        
+        ${remainingMessage}
+        
+        <div class="highlight">
+          ${fullyUnsubscribed 
+            ? "<p>We're sorry to see you go! If you change your mind, you can always subscribe again to receive game notifications.</p>"
+            : "<p>Your notification preferences have been updated successfully.</p>"
+          }
+        </div>
+        
+        ${fullyUnsubscribed 
+          ? `<p style="text-align: center;"><a href="${subscribeUrl}" class="btn">Subscribe Again</a></p>`
+          : ""
+        }
+        
+        <div class="footer">
+          <p>Colchester Lakers Athletics</p>
+          <p>Go Lakers!</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  try {
+    const request = mailjet
+      .post('send', { version: 'v3.1' })
+      .request({
+        SandboxMode: false,
+        Messages: [
+          {
+            From: {
+              Email: FROM_EMAIL,
+              Name: FROM_NAME
+            },
+            To: [
+              {
+                Email: email,
+                Name: email.split('@')[0]
+              }
+            ],
+            Subject: subject,
+            TextPart: `${mainMessage}\n\n${!fullyUnsubscribed && remainingSports.length > 0 ? `You're still subscribed to: ${remainingSports.join(", ")}\n\n` : ""}${fullyUnsubscribed ? `Subscribe again: ${subscribeUrl}` : ""}`,
+            HTMLPart: htmlContent
+          }
+        ]
+      });
+
+    await request;
+    console.log(`[Email Service] Unsubscribe confirmation email sent to ${email}`);
+    return true;
+  } catch (error: any) {
+    console.error(`[Email Service] Failed to send unsubscribe confirmation to ${email}:`, error?.message);
+    return false;
+  }
+}
+
+/**
  * Debug function to check Mailjet account and sender status
  */
 export async function checkMailjetStatus(): Promise<any> {
@@ -744,5 +897,6 @@ export const emailService = {
   send24HourReminder,
   sendGameDayReminder,
   sendWelcomeEmail,
+  sendUnsubscribeConfirmation,
   checkMailjetStatus,
 };
