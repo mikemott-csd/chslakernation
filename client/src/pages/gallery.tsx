@@ -4,17 +4,24 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Calendar, Bell, Image, X, Home as HomeIcon, ChevronLeft, ChevronRight, Camera } from "lucide-react";
+import { Calendar, Bell, Image, X, Home as HomeIcon, ChevronLeft, ChevronRight, Camera, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import type { Photo } from "@shared/schema";
 import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
 
 export default function Gallery() {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const { data: photos = [], isLoading } = useQuery<Photo[]>({
     queryKey: ["/api/photos"],
   });
+
+  const handleImageError = (photoId: string) => {
+    setFailedImages(prev => new Set([...prev, photoId]));
+  };
+
+  const workingPhotos = photos.filter(photo => !failedImages.has(photo.id));
 
   const openLightbox = (index: number) => {
     setSelectedPhotoIndex(index);
@@ -31,7 +38,7 @@ export default function Gallery() {
   };
 
   const goToNext = () => {
-    if (selectedPhotoIndex !== null && selectedPhotoIndex < photos.length - 1) {
+    if (selectedPhotoIndex !== null && selectedPhotoIndex < workingPhotos.length - 1) {
       setSelectedPhotoIndex(selectedPhotoIndex + 1);
     }
   };
@@ -42,7 +49,9 @@ export default function Gallery() {
     if (e.key === "Escape") closeLightbox();
   };
 
-  const selectedPhoto = selectedPhotoIndex !== null ? photos[selectedPhotoIndex] : null;
+  const selectedPhoto = selectedPhotoIndex !== null ? workingPhotos[selectedPhotoIndex] : null;
+  
+  const allImagesFailed = photos.length > 0 && workingPhotos.length === 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
@@ -124,9 +133,19 @@ export default function Gallery() {
               </p>
             </CardContent>
           </Card>
+        ) : allImagesFailed ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <AlertCircle className="h-16 w-16 mx-auto mb-4 text-amber-500" />
+              <h3 className="text-xl font-semibold mb-2">Photos Unavailable</h3>
+              <p className="text-muted-foreground">
+                The photo gallery is not currently configured. Please check back later!
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-            {photos.map((photo, index) => (
+            {workingPhotos.map((photo, index) => (
               <Card
                 key={photo.id}
                 className="aspect-square overflow-hidden cursor-pointer hover-elevate transition-all group"
@@ -139,6 +158,7 @@ export default function Gallery() {
                     alt={photo.name}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     loading="lazy"
+                    onError={() => handleImageError(photo.id)}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                 </div>
@@ -186,7 +206,7 @@ export default function Gallery() {
                 </Button>
               )}
 
-              {selectedPhotoIndex !== null && selectedPhotoIndex < photos.length - 1 && (
+              {selectedPhotoIndex !== null && selectedPhotoIndex < workingPhotos.length - 1 && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -217,7 +237,7 @@ export default function Gallery() {
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  {selectedPhotoIndex !== null ? selectedPhotoIndex + 1 : 0} of {photos.length}
+                  {selectedPhotoIndex !== null ? selectedPhotoIndex + 1 : 0} of {workingPhotos.length}
                 </p>
               </div>
             </div>
