@@ -4,6 +4,24 @@ import { notificationService } from './notification-service';
 import { syncNewsArticles } from './news-service';
 import { syncPhotosFromGoogleDrive } from './photo-sync-service';
 
+// Quiet hours configuration - no notifications between 12am and 5am Eastern Time
+const QUIET_HOURS_START = 0;  // 12:00 AM (midnight)
+const QUIET_HOURS_END = 5;    // 5:00 AM
+
+/**
+ * Check if current time is within quiet hours (12am-5am Eastern Time)
+ * Returns true if notifications should be suppressed
+ */
+function isQuietHours(): boolean {
+  // Get current time in Eastern Time
+  const now = new Date();
+  const easternTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const hour = easternTime.getHours();
+  
+  // Quiet hours: 12am (0) to 5am (exclusive)
+  return hour >= QUIET_HOURS_START && hour < QUIET_HOURS_END;
+}
+
 let syncJob: ScheduledTask | null = null;
 let notificationJob: ScheduledTask | null = null;
 let newsSyncJob: ScheduledTask | null = null;
@@ -28,9 +46,16 @@ async function performSync() {
 
 /**
  * Check for games and send notifications
+ * Skips sending during quiet hours (12am-5am Eastern Time)
  */
 async function performNotificationCheck() {
   try {
+    // Skip notifications during quiet hours (12am-5am Eastern Time)
+    if (isQuietHours()) {
+      console.log('[Cron] Skipping notification check - quiet hours (12am-5am ET)');
+      return;
+    }
+    
     console.log('[Cron] Starting scheduled notification check...');
     const result = await notificationService.checkAndSendNotifications();
     console.log(`[Cron] Notification check complete: ${result.emailsSent} emails sent`);
