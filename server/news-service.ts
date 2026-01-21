@@ -73,7 +73,50 @@ function isVermontSportsRelated(title: string): boolean {
   return false;
 }
 
+/**
+ * Decode Google News article URL to get the original article URL
+ * Google News encodes the original URL in a base64-like format in the path
+ */
+function decodeGoogleNewsUrl(googleUrl: string): string | null {
+  try {
+    // Extract the encoded part from the URL
+    // Format: https://news.google.com/rss/articles/ENCODED_STRING?oc=5
+    const match = googleUrl.match(/\/articles\/([^?]+)/);
+    if (!match) return null;
+    
+    const encoded = match[1];
+    
+    // Google News uses a modified base64 encoding
+    // The encoded string starts with "CBMi" followed by length byte and the URL
+    // Try to decode it
+    const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
+    
+    // Look for URLs in the decoded string
+    const urlMatch = decoded.match(/https?:\/\/[^\s\x00-\x1f]+/);
+    if (urlMatch) {
+      let url = urlMatch[0];
+      // Clean up any trailing garbage characters
+      url = url.replace(/[\x00-\x1f]+.*$/, '');
+      if (url.includes('burlingtonfreepress.com')) {
+        return url;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
 async function resolveGoogleNewsUrl(googleUrl: string): Promise<string> {
+  // First try to decode the URL directly from the Google News format
+  const decodedUrl = decodeGoogleNewsUrl(googleUrl);
+  if (decodedUrl) {
+    console.log(`[News Sync] Decoded direct URL: ${decodedUrl}`);
+    return decodedUrl;
+  }
+  
+  // Fallback: try HTTP redirect (usually doesn't work for Google News)
   try {
     const response = await fetch(googleUrl, {
       method: 'HEAD',

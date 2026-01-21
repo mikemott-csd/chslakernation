@@ -377,11 +377,16 @@ export default function Home() {
         {/* Laker Sports News */}
         <section className="mt-8 md:mt-12">
           <div className="flex items-center justify-between mb-4 md:mb-6">
-            <div className="flex items-center gap-2 md:gap-3">
-              <Newspaper className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,35%)]" />
-              <h3 className="text-xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-news-header">
-                Laker Sports News
-              </h3>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2 md:gap-3">
+                <Newspaper className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,35%)]" />
+                <h3 className="text-xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-news-header">
+                  Laker Sports News
+                </h3>
+              </div>
+              <p className="text-sm text-muted-foreground ml-8 md:ml-11" data-testid="text-news-source">
+                From Burlington Free Press
+              </p>
             </div>
             {totalNewsPages > 1 && (
               <div className="flex items-center gap-2" data-testid="news-page-indicators">
@@ -409,11 +414,17 @@ export default function Home() {
                     href={article.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-start justify-between gap-3 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
+                    className="block text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
                     data-testid={`link-news-${currentNewsIndex * newsPerPage + index}`}
                   >
-                    <span className="font-semibold">{article.title}</span>
-                    <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="font-semibold">{article.title}</span>
+                      <ExternalLink className="h-4 w-4 flex-shrink-0 mt-1" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Burlington Free Press
+                      {article.publishedAt && ` · ${new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                    </p>
                   </a>
                 </CardContent>
               </Card>
