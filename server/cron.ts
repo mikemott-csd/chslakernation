@@ -144,7 +144,7 @@ export async function triggerManualNotificationCheck() {
  */
 async function performNewsSync() {
   try {
-    console.log('[Cron] Starting weekly news sync from Burlington Free Press...');
+    console.log('[Cron] Starting daily news sync from Burlington Free Press...');
     const result = await syncNewsArticles();
     console.log(`[Cron] News sync complete: ${result.added} added, ${result.updated} updated`);
   } catch (error) {
@@ -153,7 +153,7 @@ async function performNewsSync() {
 }
 
 /**
- * Start the weekly news sync job
+ * Start the daily news sync job
  */
 export function startNewsSyncJob() {
   if (newsSyncJob) {
@@ -161,13 +161,13 @@ export function startNewsSyncJob() {
     return;
   }
 
-  // Run every Sunday at 6:00 AM
-  // Format: minute hour day month weekday (0 = Sunday)
-  newsSyncJob = cron.schedule('0 6 * * 0', async () => {
+  // Run every day at 6:00 AM
+  // Format: minute hour day month weekday
+  newsSyncJob = cron.schedule('0 6 * * *', async () => {
     await performNewsSync();
   });
 
-  console.log('[Cron] Weekly news sync job started (runs every Sunday at 6:00 AM)');
+  console.log('[Cron] Daily news sync job started (runs every day at 6:00 AM)');
 }
 
 /**
