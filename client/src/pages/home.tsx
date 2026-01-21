@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Calendar, Bell, Trophy, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image } from "lucide-react";
+import { Calendar, Bell, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image } from "lucide-react";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateUtils";
 import type { Game, NewsArticle, Photo } from "@shared/schema";
@@ -31,7 +31,6 @@ export default function Home() {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
-  const [showAllRecent, setShowAllRecent] = useState(false);
   const { toast } = useToast();
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
@@ -149,16 +148,10 @@ export default function Home() {
     .filter((game) => parseLocalDate(game.date) >= now && !game.final)
     .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime());
 
-  const allRecentGames = games
-    .filter((game) => game.final)
-    .sort((a, b) => parseLocalDate(b.date).getTime() - parseLocalDate(a.date).getTime());
-
   // Limit upcoming games to 10 max when expanded, 2 when collapsed
   const upcomingGames = showAllUpcoming ? allUpcomingGames.slice(0, 10) : allUpcomingGames.slice(0, 2);
-  const recentGames = showAllRecent ? allRecentGames.slice(0, 10) : allRecentGames.slice(0, 2);
   
   const hasMoreUpcoming = allUpcomingGames.length > 2;
-  const hasMoreRecent = allRecentGames.length > 2;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
@@ -283,8 +276,8 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="container mx-auto px-3 md:px-4 py-6 md:py-12 max-w-7xl">
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+      <div className="container mx-auto px-3 md:px-4 py-6 md:py-12 max-w-3xl">
+        <div>
           {/* Upcoming Games */}
           <section>
             <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
@@ -372,96 +365,6 @@ export default function Home() {
                       <>
                         <ChevronDown className="mr-2 h-4 w-4" />
                         Show More Games
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* Recent Games with Scores */}
-          <section>
-            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-              <Trophy className="h-6 w-6 md:h-8 md:w-8 text-[hsl(150,60%,45%)]" />
-              <h3 className="text-xl md:text-3xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-recent-header">
-                Recent Results
-              </h3>
-            </div>
-            {isLoading ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  Loading results...
-                </CardContent>
-              </Card>
-            ) : recentGames.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  No completed games yet. Check back after the first game!
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {recentGames.map((game) => {
-                  const lakersScore = game.isHome === "home" ? game.homeScore : game.awayScore;
-                  const opponentScore = game.isHome === "home" ? game.awayScore : game.homeScore;
-                  const won = lakersScore !== null && opponentScore !== null && lakersScore > opponentScore;
-
-                  return (
-                    <Card key={game.id} className="hover-elevate transition-all" data-testid={`card-recent-${game.id}`}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div
-                              className="inline-block px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
-                              style={{ backgroundColor: getSportColor(game.sport) }}
-                              data-testid={`badge-sport-recent-${game.id}`}
-                            >
-                              {game.sport}
-                            </div>
-                            <CardTitle className="text-xl">
-                              {game.isHome === "home" ? "vs" : "@"} {game.opponent}
-                            </CardTitle>
-                          </div>
-                          {lakersScore !== null && opponentScore !== null && (
-                            <div className="text-right">
-                              <div
-                                className={`text-2xl font-bold ${won ? "text-[hsl(150,60%,45%)]" : "text-muted-foreground"}`}
-                                data-testid={`score-${game.id}`}
-                              >
-                                {lakersScore} - {opponentScore}
-                              </div>
-                              <div className={`text-sm font-semibold ${won ? "text-[hsl(150,60%,45%)]" : "text-muted-foreground"}`}>
-                                {won ? "WIN" : "LOSS"}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-sm text-muted-foreground" data-testid={`text-date-recent-${game.id}`}>
-                          {format(parseLocalDate(game.date), "MMMM d, yyyy")}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-                {hasMoreRecent && (
-                  <Button
-                    variant="ghost"
-                    className="w-full mt-2"
-                    onClick={() => setShowAllRecent(!showAllRecent)}
-                    data-testid="button-toggle-recent"
-                  >
-                    {showAllRecent ? (
-                      <>
-                        <ChevronUp className="mr-2 h-4 w-4" />
-                        Show Less
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="mr-2 h-4 w-4" />
-                        Show More Results
                       </>
                     )}
                   </Button>
