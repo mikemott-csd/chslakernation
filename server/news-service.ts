@@ -1,8 +1,9 @@
 import { storage } from "./storage";
 import type { InsertNewsArticle } from "@shared/schema";
 
-const GOOGLE_NEWS_RSS_URL = "https://news.google.com/rss/search?q=colchester+lakers+vermont+high+school+sports&hl=en-US&gl=US&ceid=US:en";
-const GOOGLE_NEWS_BACKUP_URL = "https://news.google.com/rss/search?q=colchester+vermont+athletics&hl=en-US&gl=US&ceid=US:en";
+const GOOGLE_NEWS_BFP_URL = "https://news.google.com/rss/search?q=site:burlingtonfreepress.com+colchester+high+school+sports&hl=en-US&gl=US&ceid=US:en";
+const GOOGLE_NEWS_BFP_BACKUP_URL = "https://news.google.com/rss/search?q=site:burlingtonfreepress.com+colchester+vermont+athletics&hl=en-US&gl=US&ceid=US:en";
+const GOOGLE_NEWS_BFP_GENERAL_URL = "https://news.google.com/rss/search?q=site:burlingtonfreepress.com+vermont+high+school+sports&hl=en-US&gl=US&ceid=US:en";
 
 interface ParsedArticle {
   title: string;
@@ -38,7 +39,6 @@ const SPORTS_KEYWORDS = [
   "championship",
   "tournament",
   "sports",
-  "scores",
   "game",
   "season",
 ];
@@ -59,33 +59,60 @@ function isColchesterRelated(title: string): boolean {
     return true;
   }
   
+  return false;
+}
+
+function isVermontSportsRelated(title: string): boolean {
+  const titleLower = title.toLowerCase();
+  
   if (titleLower.includes("vermont") && titleLower.includes("high school")) {
     const hasSportsContext = SPORTS_KEYWORDS.some(kw => titleLower.includes(kw));
-    if (hasSportsContext) {
-      return true;
-    }
+    return hasSportsContext;
   }
   
   return false;
 }
 
+async function resolveGoogleNewsUrl(googleUrl: string): Promise<string> {
+  try {
+    const response = await fetch(googleUrl, {
+      method: 'HEAD',
+      redirect: 'follow',
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+    
+    const finalUrl = response.url;
+    if (finalUrl && finalUrl.includes('burlingtonfreepress.com')) {
+      return finalUrl;
+    }
+    
+    return googleUrl;
+  } catch (error) {
+    return googleUrl;
+  }
+}
+
 async function fetchGoogleNewsRSS(url: string): Promise<ParsedArticle[]> {
   try {
+    console.log(`[News Sync] Fetching from: ${url}`);
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "application/rss+xml, application/xml, text/xml",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/rss+xml, application/xml, text/xml, */*",
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch RSS: ${response.status}`);
+      console.error(`[News Sync] RSS fetch failed with status: ${response.status}`);
+      return [];
     }
 
     const xml = await response.text();
     return parseRSSFeed(xml);
   } catch (error) {
-    console.error("[News Sync] Error fetching Google News RSS:", error);
+    console.error("[News Sync] Error fetching RSS:", error);
     return [];
   }
 }
@@ -119,25 +146,22 @@ function parseRSSFeed(xml: string): ParsedArticle[] {
     const title = extractTagContent(itemContent, 'title');
     const link = extractTagContent(itemContent, 'link');
     const pubDate = extractTagContent(itemContent, 'pubDate');
-    const source = extractTagContent(itemContent, 'source');
     
     if (title && link) {
       const decodedTitle = decodeHtmlEntities(title);
-      const googleNewsUrl = link;
-      const articleSource = source ? source : "Burlington Free Press";
       
       let publishedAt: Date | undefined;
       if (pubDate) {
         publishedAt = new Date(pubDate);
       }
       
-      const cleanTitle = decodedTitle.replace(/ - [^-]+$/, '').trim();
+      const cleanTitle = decodedTitle.replace(/ - Burlington Free Press$/, '').replace(/ - [^-]+$/, '').trim();
       
       articles.push({
         title: cleanTitle,
-        url: googleNewsUrl,
+        url: link,
         publishedAt,
-        source: articleSource,
+        source: "Burlington Free Press",
       });
     }
   }
@@ -161,8 +185,10 @@ export async function fetchBurlingtonFreePressArticles(): Promise<ParsedArticle[
   const allArticles: ParsedArticle[] = [];
   const seenTitles = new Set<string>();
   
-  console.log("[News Sync] Fetching news from Google News RSS...");
-  const primaryArticles = await fetchGoogleNewsRSS(GOOGLE_NEWS_RSS_URL);
+  console.log("[News Sync] Fetching Burlington Free Press articles about Colchester athletics...");
+  
+  const primaryArticles = await fetchGoogleNewsRSS(GOOGLE_NEWS_BFP_URL);
+  console.log(`[News Sync] Primary search returned ${primaryArticles.length} articles`);
   
   for (const article of primaryArticles) {
     const normalizedTitle = article.title.toLowerCase().trim();
@@ -172,8 +198,8 @@ export async function fetchBurlingtonFreePressArticles(): Promise<ParsedArticle[
     }
   }
   
-  console.log("[News Sync] Fetching backup news source...");
-  const backupArticles = await fetchGoogleNewsRSS(GOOGLE_NEWS_BACKUP_URL);
+  const backupArticles = await fetchGoogleNewsRSS(GOOGLE_NEWS_BFP_BACKUP_URL);
+  console.log(`[News Sync] Backup search returned ${backupArticles.length} articles`);
   
   for (const article of backupArticles) {
     const normalizedTitle = article.title.toLowerCase().trim();
@@ -183,25 +209,64 @@ export async function fetchBurlingtonFreePressArticles(): Promise<ParsedArticle[
     }
   }
   
-  const relevantArticles = allArticles.filter(article => isColchesterRelated(article.title));
+  if (allArticles.length < 5) {
+    console.log("[News Sync] Fetching general Vermont high school sports from Burlington Free Press...");
+    const generalArticles = await fetchGoogleNewsRSS(GOOGLE_NEWS_BFP_GENERAL_URL);
+    console.log(`[News Sync] General search returned ${generalArticles.length} articles`);
+    
+    for (const article of generalArticles) {
+      const normalizedTitle = article.title.toLowerCase().trim();
+      if (!seenTitles.has(normalizedTitle)) {
+        seenTitles.add(normalizedTitle);
+        allArticles.push(article);
+      }
+    }
+  }
   
-  relevantArticles.sort((a, b) => {
+  const colchesterArticles = allArticles.filter(article => isColchesterRelated(article.title));
+  const otherArticles = allArticles.filter(article => !isColchesterRelated(article.title));
+  
+  const sortedColchester = colchesterArticles.sort((a, b) => {
     const dateA = a.publishedAt?.getTime() || 0;
     const dateB = b.publishedAt?.getTime() || 0;
     return dateB - dateA;
   });
   
-  console.log(`[News Sync] Found ${relevantArticles.length} Colchester-related articles out of ${allArticles.length} total`);
-  return relevantArticles.slice(0, 10);
+  const sortedOther = otherArticles.sort((a, b) => {
+    const dateA = a.publishedAt?.getTime() || 0;
+    const dateB = b.publishedAt?.getTime() || 0;
+    return dateB - dateA;
+  });
+  
+  const finalArticles = [...sortedColchester, ...sortedOther].slice(0, 10);
+  
+  console.log(`[News Sync] Found ${sortedColchester.length} Colchester-specific articles and ${sortedOther.length} other Burlington Free Press articles`);
+  
+  console.log("[News Sync] Attempting to resolve direct Burlington Free Press URLs...");
+  const resolvedArticles: ParsedArticle[] = [];
+  
+  for (const article of finalArticles) {
+    try {
+      const resolvedUrl = await resolveGoogleNewsUrl(article.url);
+      resolvedArticles.push({
+        ...article,
+        url: resolvedUrl,
+      });
+    } catch (error) {
+      resolvedArticles.push(article);
+    }
+  }
+  
+  return resolvedArticles;
 }
 
 export async function syncNewsArticles(): Promise<{ added: number; updated: number }> {
-  console.log("[News Sync] Starting weekly news sync for Colchester Athletics...");
+  console.log("[News Sync] Starting news sync for Colchester Athletics from Burlington Free Press...");
   
   const articles = await fetchBurlingtonFreePressArticles();
   
   if (articles.length === 0) {
-    console.log("[News Sync] No new Colchester articles found, keeping existing articles");
+    console.log("[News Sync] No articles found, keeping existing articles");
     return { added: 0, updated: 0 };
   }
   
@@ -224,7 +289,7 @@ export async function syncNewsArticles(): Promise<{ added: number; updated: numb
     }
   }
   
-  console.log(`[News Sync] Completed: ${added} articles refreshed`);
+  console.log(`[News Sync] Completed: ${added} articles refreshed from Burlington Free Press`);
   return { added, updated: 0 };
 }
 
@@ -235,34 +300,6 @@ export async function seedNewsIfEmpty(): Promise<void> {
     return;
   }
 
-  console.log("[News] Seeding initial news articles...");
-  
-  const initialArticles: InsertNewsArticle[] = [
-    {
-      title: "Vermont high school sports scores, results, stats",
-      url: "https://www.burlingtonfreepress.com/story/sports/high-school/",
-      publishedAt: new Date(),
-    },
-    {
-      title: "Colchester Lakers football captures Vermont state championship",
-      url: "https://www.burlingtonfreepress.com/story/sports/high-school/colchester-lakers-football/",
-      publishedAt: new Date(),
-    },
-    {
-      title: "Colchester basketball preview: Lakers ready for new season",
-      url: "https://www.burlingtonfreepress.com/story/sports/high-school/colchester-basketball/",
-      publishedAt: new Date(),
-    },
-    {
-      title: "Vermont high school football all-state teams announced",
-      url: "https://www.burlingtonfreepress.com/story/sports/high-school/all-state-football/",
-      publishedAt: new Date(),
-    },
-  ];
-
-  for (const article of initialArticles) {
-    await storage.upsertNewsArticle(article);
-  }
-  
-  console.log(`[News] Seeded ${initialArticles.length} initial articles`);
+  console.log("[News] No articles found, fetching from Burlington Free Press...");
+  await syncNewsArticles();
 }
