@@ -32,9 +32,20 @@ function getGoogleDriveClient() {
 
   let credentials;
   try {
+    // Try parsing directly first
     credentials = JSON.parse(credentialsJson);
   } catch (error) {
-    throw new Error('Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON');
+    // Try cleaning the string - sometimes secrets have escaped newlines
+    try {
+      const cleanedJson = credentialsJson
+        .replace(/\\n/g, '\n')
+        .replace(/\\"/g, '"')
+        .trim();
+      credentials = JSON.parse(cleanedJson);
+    } catch (innerError) {
+      console.error('[PhotoSync] JSON parse error. First 100 chars:', credentialsJson.substring(0, 100));
+      throw new Error('Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON - check the format of your service account key');
+    }
   }
 
   const auth = new google.auth.GoogleAuth({
