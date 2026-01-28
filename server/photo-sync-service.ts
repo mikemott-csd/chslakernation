@@ -1,6 +1,8 @@
 import { google } from 'googleapis';
 import { type InsertPhoto } from "@shared/schema";
 import { storage } from "./storage";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface PhotoSyncResult {
   success: boolean;
@@ -24,27 +26,43 @@ interface GoogleDriveFile {
  * Get authenticated Google Drive client using service account
  */
 function getGoogleDriveClient() {
-  const credentialsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  
-  if (!credentialsJson) {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON environment variable not configured');
-  }
-
   let credentials;
-  try {
-    // Try parsing directly first
-    credentials = JSON.parse(credentialsJson);
-  } catch (error) {
-    // Try cleaning the string - sometimes secrets have escaped newlines
+  
+  // First try loading from the attached JSON file (most reliable)
+  const jsonFilePath = path.join(process.cwd(), 'attached_assets', 'csd-ai-club-8aaa80cbab14_1769630091354.json');
+  if (fs.existsSync(jsonFilePath)) {
     try {
-      const cleanedJson = credentialsJson
-        .replace(/\\n/g, '\n')
-        .replace(/\\"/g, '"')
-        .trim();
-      credentials = JSON.parse(cleanedJson);
-    } catch (innerError) {
-      console.error('[PhotoSync] JSON parse error. First 100 chars:', credentialsJson.substring(0, 100));
-      throw new Error('Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON - check the format of your service account key');
+      const fileContent = fs.readFileSync(jsonFilePath, 'utf-8');
+      credentials = JSON.parse(fileContent);
+      console.log('[PhotoSync] Loaded credentials from attached JSON file');
+    } catch (fileError) {
+      console.error('[PhotoSync] Failed to load from file:', fileError);
+    }
+  }
+  
+  // If file loading failed, try environment variable
+  if (!credentials) {
+    const credentialsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    
+    if (!credentialsJson) {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON environment variable not configured');
+    }
+
+    try {
+      // Try parsing directly first
+      credentials = JSON.parse(credentialsJson);
+    } catch (error) {
+      // Try cleaning the string - sometimes secrets have escaped newlines
+      try {
+        const cleanedJson = credentialsJson
+          .replace(/\\n/g, '\n')
+          .replace(/\\"/g, '"')
+          .trim();
+        credentials = JSON.parse(cleanedJson);
+      } catch (innerError) {
+        console.error('[PhotoSync] JSON parse error. First 100 chars:', credentialsJson.substring(0, 100));
+        throw new Error('Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON - check the format of your service account key');
+      }
     }
   }
 
