@@ -281,7 +281,20 @@ export async function fetchBurlingtonFreePressArticles(): Promise<ParsedArticle[
     return dateB - dateA;
   });
   
-  const finalArticles = [...sortedColchester, ...sortedOther].slice(0, 10);
+  // Mix Colchester and general articles, prioritizing recency while keeping some Colchester preference
+  // Take at least 4 Colchester articles if available, then fill with newest from combined pool
+  const recentColchester = sortedColchester.slice(0, 4);
+  const remainingColchester = sortedColchester.slice(4);
+  
+  // Combine remaining articles and sort by date
+  const combinedRemaining = [...remainingColchester, ...sortedOther].sort((a, b) => {
+    const dateA = a.publishedAt?.getTime() || 0;
+    const dateB = b.publishedAt?.getTime() || 0;
+    return dateB - dateA;
+  });
+  
+  // Final list: 4 newest Colchester + 6 newest from remaining pool
+  const finalArticles = [...recentColchester, ...combinedRemaining].slice(0, 10);
   
   console.log(`[News Sync] Found ${sortedColchester.length} Colchester-specific articles and ${sortedOther.length} other Burlington Free Press articles`);
   
