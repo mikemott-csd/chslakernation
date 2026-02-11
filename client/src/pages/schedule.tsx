@@ -200,36 +200,36 @@ export default function Schedule() {
               Lakers
             </h1>
           </div>
-          <nav className="flex gap-1 md:gap-4 items-center">
+          <nav className="flex gap-1 md:gap-3 items-center">
             <Link href="/">
-              <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-home-mobile">
+              <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-home-mobile">
                 <HomeIcon className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-home">
+              <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-home">
                 Home
               </Button>
             </Link>
             <Link href="/schedule">
-              <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-schedule-mobile">
+              <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-schedule-mobile">
                 <Calendar className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-schedule">
+              <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-schedule">
                 Schedule
               </Button>
             </Link>
             <Link href="/gallery">
-              <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-gallery-mobile">
+              <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-gallery-mobile">
                 <Image className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-gallery">
+              <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-gallery">
                 Gallery
               </Button>
             </Link>
             <Link href="/subscribe">
-              <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="button-get-notifications-mobile">
+              <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="button-get-notifications-mobile">
                 <Bell className="h-5 w-5" />
               </Button>
-              <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hidden md:flex" data-testid="button-get-notifications">
+              <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white/40 text-white hidden md:flex" data-testid="button-get-notifications">
                 <Bell className="mr-2 h-4 w-4" />
                 Get Notifications
               </Button>
@@ -266,9 +266,9 @@ export default function Schedule() {
                 }}
                 variant={isActive ? "default" : "outline"}
                 className={`
-                  rounded-full transition-all duration-200 flex-shrink-0 text-xs md:text-sm
+                  rounded-full transition-all duration-200 flex-shrink-0 text-xs md:text-sm font-semibold
                   ${isActive 
-                    ? `${colors.bg} ${colors.text} shadow-md` 
+                    ? `${colors.bg} ${colors.text}` 
                     : `bg-white ${colors.border} border-2 text-foreground`
                   }
                 `}

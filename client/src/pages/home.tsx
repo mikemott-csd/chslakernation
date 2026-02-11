@@ -162,36 +162,36 @@ export default function Home() {
             Lakers
           </h1>
         </Link>
-        <nav className="flex gap-1 md:gap-4 items-center">
+        <nav className="flex gap-1 md:gap-3 items-center">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-home-mobile">
+            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-home-mobile">
               <HomeIcon className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-home">
+            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-home">
               Home
             </Button>
           </Link>
           <Link href="/schedule">
-            <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-schedule-mobile">
+            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-schedule-mobile">
               <Calendar className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-schedule">
+            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-schedule">
               Schedule
             </Button>
           </Link>
           <Link href="/gallery">
-            <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-gallery-mobile">
+            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-gallery-mobile">
               <Image className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-gallery">
+            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-gallery">
               Gallery
             </Button>
           </Link>
           <Link href="/subscribe">
-            <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="button-get-notifications-mobile">
+            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="button-get-notifications-mobile">
               <Bell className="h-5 w-5" />
             </Button>
-            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hidden md:flex" data-testid="button-get-notifications">
+            <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white/40 text-white hidden md:flex" data-testid="button-get-notifications">
               <Bell className="mr-2 h-4 w-4" />
               Get Notifications
             </Button>
@@ -234,7 +234,7 @@ export default function Home() {
                   Follow Colchester High School athletics and never miss a game
                 </p>
                 <Link href="/schedule">
-                  <Button size="default" className="bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule-mobile">
+                  <Button size="default" className="bg-white text-[hsl(210,85%,35%)] border-white/80 font-semibold" data-testid="button-view-schedule-mobile">
                     <Calendar className="mr-2 h-4 w-4" />
                     View Full Schedule
                   </Button>
@@ -275,7 +275,7 @@ export default function Home() {
                   Follow Colchester High School athletics and never miss a game
                 </p>
                 <Link href="/schedule">
-                  <Button size="default" className="text-lg bg-[hsl(210,85%,35%)] border-[hsl(210,85%,30%)]" data-testid="button-view-schedule">
+                  <Button size="lg" className="text-lg bg-white text-[hsl(210,85%,35%)] border-white/80 font-semibold" data-testid="button-view-schedule">
                     <Calendar className="mr-2 h-5 w-5" />
                     View Full Schedule
                   </Button>
@@ -361,7 +361,7 @@ export default function Home() {
                 ))}
                 {hasMoreUpcoming && (
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     className="w-full mt-2"
                     onClick={() => setShowAllUpcoming(!showAllUpcoming)}
                     data-testid="button-toggle-upcoming"
@@ -453,7 +453,7 @@ export default function Home() {
                 Stay connected with CHS Laker Nation!
               </p>
               <Link href="/subscribe">
-                <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] border-0" data-testid="button-subscribe-cta">
+                <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] border-white/80 font-semibold" data-testid="button-subscribe-cta">
                   <Bell className="mr-2 h-5 w-5" />
                   Subscribe to Notifications
                 </Button>
