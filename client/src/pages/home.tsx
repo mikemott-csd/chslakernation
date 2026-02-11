@@ -46,13 +46,10 @@ export default function Home() {
     queryKey: ["/api/photos"],
   });
 
-  // Get hero images from synced photos
   const heroImages = useMemo(() => {
-    // Filter to photos with valid downloadUrl
-    const validPhotos = photos.filter(photo => photo.downloadUrl);
+    const validPhotos = photos.filter(photo => photo.googleDriveId);
     
     if (validPhotos.length > 0) {
-      // Use the last 10 synced photos (most recent first based on sync/created time)
       const recentPhotos = [...validPhotos]
         .sort((a, b) => {
           const dateA = a.syncedAt ? new Date(a.syncedAt).getTime() : (a.createdTime ? new Date(a.createdTime).getTime() : 0);
@@ -60,11 +57,9 @@ export default function Home() {
           return dateB - dateA;
         })
         .slice(0, 10);
-      // Use full-size image (downloadUrl) for hero carousel
-      return recentPhotos.map(photo => photo.downloadUrl as string);
+      return recentPhotos.map(photo => `/api/photos/${photo.googleDriveId}/image`);
     }
     
-    // No fallback - return empty array if no photos
     return [];
   }, [photos]);
 
@@ -210,19 +205,26 @@ export default function Home() {
         <div className="block md:hidden">
           <AspectRatio ratio={4/3}>
             <div className="relative w-full h-full bg-gradient-to-br from-[hsl(210,85%,35%)] to-[hsl(210,85%,20%)]">
-              {heroImages.length > 0 && heroImages.map((img, index) => (
-                <div
-                  key={index}
-                  className="absolute inset-0 transition-opacity duration-1000"
-                  style={{ opacity: currentImageIndex === index ? 1 : 0 }}
-                >
-                  <img
-                    src={img}
-                    alt="Lakers Athletics"
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
-              ))}
+              {heroImages.length > 0 && heroImages.map((img, index) => {
+                const isActive = currentImageIndex === index;
+                const nextIndex = (currentImageIndex + 1) % heroImages.length;
+                const shouldRender = isActive || index === nextIndex;
+                if (!shouldRender) return null;
+                return (
+                  <div
+                    key={img}
+                    className="absolute inset-0 transition-opacity duration-1000"
+                    style={{ opacity: isActive ? 1 : 0 }}
+                  >
+                    <img
+                      src={img}
+                      alt="Lakers Athletics"
+                      className="w-full h-full object-cover object-center"
+                      loading={isActive ? "eager" : "lazy"}
+                    />
+                  </div>
+                );
+              })}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
                 <h2 className="text-3xl sm:text-4xl font-bold mb-2" data-testid="text-hero-title">
@@ -244,19 +246,26 @@ export default function Home() {
         <div className="hidden md:block">
           <AspectRatio ratio={16/9}>
             <div className="relative w-full h-full bg-gradient-to-br from-[hsl(210,85%,35%)] to-[hsl(210,85%,20%)]">
-              {heroImages.length > 0 && heroImages.map((img, index) => (
-                <div
-                  key={index}
-                  className="absolute inset-0 transition-opacity duration-1000"
-                  style={{ opacity: currentImageIndex === index ? 1 : 0 }}
-                >
-                  <img
-                    src={img}
-                    alt="Lakers Athletics"
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
-              ))}
+              {heroImages.length > 0 && heroImages.map((img, index) => {
+                const isActive = currentImageIndex === index;
+                const nextIndex = (currentImageIndex + 1) % heroImages.length;
+                const shouldRender = isActive || index === nextIndex;
+                if (!shouldRender) return null;
+                return (
+                  <div
+                    key={img}
+                    className="absolute inset-0 transition-opacity duration-1000"
+                    style={{ opacity: isActive ? 1 : 0 }}
+                  >
+                    <img
+                      src={img}
+                      alt="Lakers Athletics"
+                      className="w-full h-full object-cover object-center"
+                      loading={isActive ? "eager" : "lazy"}
+                    />
+                  </div>
+                );
+              })}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
                 <h2 className="text-6xl font-bold mb-4" data-testid="text-hero-title-desktop">
