@@ -68,34 +68,34 @@ export default function Gallery() {
         </div>
         <nav className="flex gap-1 md:gap-4 items-center">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-home-mobile">
+            <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-home-mobile">
               <HomeIcon className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-home">
+            <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-home">
               Home
             </Button>
           </Link>
           <Link href="/schedule">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-schedule-mobile">
+            <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-schedule-mobile">
               <Calendar className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-schedule">
+            <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-schedule">
               Schedule
             </Button>
           </Link>
           <Link href="/gallery">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="link-gallery-mobile">
+            <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="link-gallery-mobile">
               <Image className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" className="text-white hover:bg-white/20 hidden md:flex" data-testid="link-gallery">
+            <Button variant="ghost" className="text-white hidden md:flex" data-testid="link-gallery">
               Gallery
             </Button>
           </Link>
           <Link href="/subscribe">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 md:hidden" data-testid="button-get-notifications-mobile">
+            <Button variant="ghost" size="icon" className="text-white md:hidden" data-testid="button-get-notifications-mobile">
               <Bell className="h-5 w-5" />
             </Button>
-            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hover:bg-white/20 hidden md:flex" data-testid="button-get-notifications">
+            <Button variant="outline" className="bg-white/10 backdrop-blur-sm border-white text-white hidden md:flex" data-testid="button-get-notifications">
               <Bell className="mr-2 h-4 w-4" />
               Get Notifications
             </Button>
@@ -186,7 +186,7 @@ export default function Gallery() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-2 z-10 text-white hover:bg-white/20"
+                className="absolute top-2 right-2 z-10 text-white"
                 onClick={closeLightbox}
                 data-testid="button-close-lightbox"
               >
@@ -198,7 +198,7 @@ export default function Gallery() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 text-white"
                   onClick={goToPrevious}
                   data-testid="button-prev-photo"
                 >
@@ -210,7 +210,7 @@ export default function Gallery() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 text-white"
                   onClick={goToNext}
                   data-testid="button-next-photo"
                 >
