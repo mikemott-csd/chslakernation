@@ -246,7 +246,7 @@ export default function Gallery() {
       </Dialog>
 
       {/* Footer */}
-      <footer className="bg-[hsl(215,25%,20%)] text-white py-8 mt-12">
+      <footer className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] text-white py-8 mt-12 shadow-inner">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm opacity-80">
             © 2025 Colchester High School Lakers Athletics. Go Lakers!
