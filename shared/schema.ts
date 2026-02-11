@@ -162,3 +162,22 @@ export const insertSentNotificationSchema = createInsertSchema(sentNotifications
 
 export type InsertSentNotification = z.infer<typeof insertSentNotificationSchema>;
 export type SentNotification = typeof sentNotifications.$inferSelect;
+
+// Push Notification Subscriptions Schema - FCM tokens for web push
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  endpoint: text("endpoint").notNull().unique(),
+  fcmToken: text("fcm_token").notNull(),
+  sports: text("sports").array().notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;

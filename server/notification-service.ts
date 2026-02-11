@@ -1,5 +1,6 @@
 import { storage } from './storage';
 import { emailService } from './email-service';
+import { sendPushNotification } from './firebase-admin';
 import { addHours, isSameDay, startOfDay, isAfter, isBefore, parseISO } from 'date-fns';
 
 /**
@@ -229,6 +230,73 @@ export async function checkAndSendNotifications(): Promise<NotificationCheck> {
           console.log(`[Notifications] Sent game day reminder for ${game.sport} vs ${game.opponent} to ${subscriber.email}`);
         }
       }
+    }
+
+    // Send push notifications to all matching push subscribers
+    try {
+      const pushSubscriptions = await storage.getAllPushSubscriptions();
+      if (pushSubscriptions.length > 0) {
+        for (const game of games) {
+          const gameDate = typeof game.date === 'string' ? parseISO(game.date) : game.date;
+          const gameDateTime = new Date(gameDate);
+          
+          const timeMatch = game.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+          if (timeMatch) {
+            let hours = parseInt(timeMatch[1]);
+            const minutes = parseInt(timeMatch[2]);
+            const isPM = timeMatch[3].toUpperCase() === 'PM';
+            if (isPM && hours !== 12) hours += 12;
+            if (!isPM && hours === 12) hours = 0;
+            gameDateTime.setHours(hours, minutes, 0, 0);
+          }
+
+          const timeDiffHours = (gameDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+          const needs24Hour = timeDiffHours > 21 && timeDiffHours <= 27;
+          const needsMorning = isSameDay(gameDateTime, now) && isAfter(now, morningStart) && isBefore(now, morningEnd);
+
+          if (!needs24Hour && !needsMorning) continue;
+
+          const matchingPushSubs = pushSubscriptions.filter(sub => sub.sports.includes(game.sport));
+          
+          for (const pushSub of matchingPushSubs) {
+            const notifType = needs24Hour ? '24hour-push' : 'gameday-push';
+            
+            let shouldSend = false;
+            try {
+              shouldSend = await storage.tryRecordNotificationAtomically(game.id, pushSub.id, notifType);
+            } catch {
+              continue;
+            }
+            
+            if (!shouldSend) continue;
+
+            const locationText = game.isHome === 'home' ? `Home - ${game.location}` : `Away - ${game.location}`;
+            const title = needs24Hour 
+              ? `Game Tomorrow: ${game.sport}`
+              : `Game Today: ${game.sport}`;
+            const body = `Lakers vs ${game.opponent} at ${game.time} | ${locationText}`;
+
+            const success = await sendPushNotification(pushSub.fcmToken, title, body, {
+              gameId: game.id,
+              sport: game.sport,
+              url: '/schedule',
+            });
+
+            if (success) {
+              await storage.markNotificationSent(game.id, pushSub.id, notifType);
+              result.emailsSent++;
+              console.log(`[Notifications] Push sent for ${game.sport} vs ${game.opponent} to token ${pushSub.fcmToken.substring(0, 20)}...`);
+            } else {
+              await storage.deleteNotificationRecord(game.id, pushSub.id, notifType);
+              await storage.deletePushSubscriptionByToken(pushSub.fcmToken);
+              console.log(`[Notifications] Removed invalid push subscription: ${pushSub.fcmToken.substring(0, 20)}...`);
+            }
+          }
+        }
+      }
+    } catch (pushError) {
+      console.error('[Notifications] Push notification error:', pushError);
+      result.errors.push(`Push notification error: ${pushError}`);
     }
 
     console.log(`[Notifications] Check complete: ${result.emailsSent} emails sent, ${result.skippedDuplicates} duplicates skipped for ${result.gamesIn24Hours} 24-hour reminders and ${result.gamesMorningOf} game day reminders`);

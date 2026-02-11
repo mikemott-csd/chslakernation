@@ -9,6 +9,7 @@ import Subscribe from "@/pages/subscribe";
 import Unsubscribe from "@/pages/unsubscribe";
 import Gallery from "@/pages/gallery";
 import NotFound from "@/pages/not-found";
+import InstallPrompt from "@/components/InstallPrompt";
 
 function Router() {
   return (
@@ -29,6 +30,7 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Router />
+        <InstallPrompt />
       </TooltipProvider>
     </QueryClientProvider>
   );

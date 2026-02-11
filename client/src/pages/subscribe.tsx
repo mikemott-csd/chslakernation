@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -12,7 +12,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
-import { ArrowLeft, Check, Home as HomeIcon, Calendar, Bell, Image } from "lucide-react";
+import { ArrowLeft, Check, Home as HomeIcon, Calendar, Bell, Image, Smartphone, BellRing } from "lucide-react";
+import { isPushSupported, requestPushPermission } from "@/lib/firebase";
 
 const SPORTS = ["Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey"] as const;
 
@@ -25,7 +26,77 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function Subscribe() {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushSports, setPushSports] = useState<string[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setPushSupported(isPushSupported());
+    const savedPush = localStorage.getItem('lakers-push-enabled');
+    const savedSports = localStorage.getItem('lakers-push-sports');
+    if (savedPush === 'true') setPushEnabled(true);
+    if (savedSports) {
+      try { setPushSports(JSON.parse(savedSports)); } catch {}
+    }
+  }, []);
+
+  const handleEnablePush = async (selectedSports: string[]) => {
+    if (selectedSports.length === 0) {
+      toast({ title: "Select at least one sport", description: "Choose which sports you want push notifications for.", variant: "destructive" });
+      return;
+    }
+    setPushLoading(true);
+    try {
+      const token = await requestPushPermission();
+      if (!token) {
+        toast({ title: "Permission denied", description: "Please allow notifications in your browser settings to receive push alerts.", variant: "destructive" });
+        setPushLoading(false);
+        return;
+      }
+      await apiRequest("/api/push-subscriptions", {
+        method: "POST",
+        body: JSON.stringify({ fcmToken: token, sports: selectedSports }),
+        headers: { "Content-Type": "application/json" },
+      });
+      setPushEnabled(true);
+      setPushSports(selectedSports);
+      localStorage.setItem('lakers-push-token', token);
+      localStorage.setItem('lakers-push-enabled', 'true');
+      localStorage.setItem('lakers-push-sports', JSON.stringify(selectedSports));
+      toast({ title: "Push notifications enabled!", description: "You'll receive alerts on this device for upcoming games." });
+    } catch (error) {
+      toast({ title: "Failed to enable push", description: "Please try again later.", variant: "destructive" });
+    }
+    setPushLoading(false);
+  };
+
+  const handleDisablePush = async () => {
+    setPushLoading(true);
+    try {
+      const savedToken = localStorage.getItem('lakers-push-token');
+      if (savedToken) {
+        await apiRequest("/api/push-subscriptions", {
+          method: "DELETE",
+          body: JSON.stringify({ fcmToken: savedToken }),
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      setPushEnabled(false);
+      setPushSports([]);
+      localStorage.removeItem('lakers-push-enabled');
+      localStorage.removeItem('lakers-push-token');
+      localStorage.removeItem('lakers-push-sports');
+      toast({ title: "Push notifications disabled", description: "You will no longer receive push alerts on this device." });
+    } catch {
+      setPushEnabled(false);
+      localStorage.removeItem('lakers-push-enabled');
+      localStorage.removeItem('lakers-push-token');
+      localStorage.removeItem('lakers-push-sports');
+    }
+    setPushLoading(false);
+  };
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -305,10 +376,90 @@ export default function Subscribe() {
           </CardContent>
         </Card>
 
+        {pushSupported && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Smartphone className="h-5 w-5" />
+                Push Notifications
+              </CardTitle>
+              <CardDescription>
+                Get instant push alerts on this device — even when the browser is closed. Works best when you add the app to your home screen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pushEnabled ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                    <BellRing className="h-5 w-5" />
+                    <span className="font-medium" data-testid="text-push-status">Push notifications are enabled</span>
+                  </div>
+                  {pushSports.length > 0 && (
+                    <p className="text-sm text-muted-foreground" data-testid="text-push-sports">
+                      Receiving alerts for: {pushSports.join(", ")}
+                    </p>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleDisablePush}
+                    disabled={pushLoading}
+                    data-testid="button-disable-push"
+                  >
+                    {pushLoading ? "Disabling..." : "Disable Push Notifications"}
+                  </Button>
+                </div>
+              ) : (
+                <PushSportSelector
+                  sports={SPORTS}
+                  onEnable={handleEnablePush}
+                  loading={pushLoading}
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <p className="text-sm text-muted-foreground text-center mt-6">
           You can unsubscribe at any time using the link in any notification email.
         </p>
       </div>
+    </div>
+  );
+}
+
+function PushSportSelector({ sports, onEnable, loading }: { sports: readonly string[]; onEnable: (sports: string[]) => void; loading: boolean }) {
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const toggle = (sport: string) => {
+    setSelected(prev => prev.includes(sport) ? prev.filter(s => s !== sport) : [...prev, sport]);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        {sports.map((sport) => (
+          <div key={sport} className="flex flex-row items-center space-x-3">
+            <Checkbox
+              checked={selected.includes(sport)}
+              onCheckedChange={() => toggle(sport)}
+              data-testid={`push-checkbox-${sport.toLowerCase().replace(/\s+/g, '-')}`}
+            />
+            <label className="font-normal cursor-pointer text-sm" onClick={() => toggle(sport)}>
+              {sport}
+            </label>
+          </div>
+        ))}
+      </div>
+      <Button
+        className="w-full"
+        onClick={() => onEnable(selected)}
+        disabled={loading || selected.length === 0}
+        data-testid="button-enable-push"
+      >
+        <BellRing className="mr-2 h-4 w-4" />
+        {loading ? "Enabling..." : "Enable Push Notifications"}
+      </Button>
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertSubscriptionSchema } from "@shared/schema";
+import { insertSubscriptionSchema, insertPushSubscriptionSchema } from "@shared/schema";
+import { sendPushNotification } from "./firebase-admin";
 import { sendWelcomeEmail, checkMailjetStatus, sendUnsubscribeConfirmation } from "./email-service";
 import { syncFromGoogleDrive } from "./sync-service";
 import { syncNewsArticles } from "./news-service";
@@ -440,6 +441,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Failed to fetch photo sync logs:', error);
       res.status(500).json({ message: "Failed to fetch photo sync logs" });
     }
+  });
+
+  app.post("/api/push-subscriptions", async (req, res) => {
+    try {
+      const { fcmToken, sports } = req.body;
+      
+      if (!fcmToken || !sports || !Array.isArray(sports) || sports.length === 0) {
+        return res.status(400).json({ message: "fcmToken and sports array are required" });
+      }
+
+      const existing = await storage.getPushSubscriptionByToken(fcmToken);
+      if (existing) {
+        const updated = await storage.updatePushSubscription(existing.id, {
+          sports,
+        });
+        return res.json({ subscription: updated, message: "Push subscription updated" });
+      }
+
+      const subscription = await storage.createPushSubscription({
+        endpoint: fcmToken,
+        fcmToken,
+        sports,
+      });
+      res.status(201).json({ subscription, message: "Push subscription created" });
+    } catch (error) {
+      console.error('Push subscription error:', error);
+      res.status(500).json({ message: "Failed to save push subscription" });
+    }
+  });
+
+  app.delete("/api/push-subscriptions", async (req, res) => {
+    try {
+      const { fcmToken } = req.body;
+      if (!fcmToken) {
+        return res.status(400).json({ message: "fcmToken is required" });
+      }
+
+      await storage.deletePushSubscriptionByToken(fcmToken);
+      res.json({ message: "Push subscription removed" });
+    } catch (error) {
+      console.error('Push unsubscribe error:', error);
+      res.status(500).json({ message: "Failed to remove push subscription" });
+    }
+  });
+
+  app.get("/api/firebase-config", (_req, res) => {
+    res.json({
+      apiKey: process.env.FIREBASE_API_KEY || '',
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
+      projectId: process.env.FIREBASE_PROJECT_ID || '',
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+      appId: process.env.FIREBASE_APP_ID || '',
+    });
+  });
+
+  app.get("/api/vapid-key", (_req, res) => {
+    res.json({ vapidKey: process.env.FIREBASE_VAPID_KEY || '' });
   });
 
   const httpServer = createServer(app);

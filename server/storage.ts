@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, type NewsArticle, type InsertNewsArticle, type Photo, type InsertPhoto, type PhotoSyncLog, type InsertPhotoSyncLog, type SentNotification, type InsertSentNotification, subscriptions, games, syncLogs, newsArticles, photos, photoSyncLogs, sentNotifications } from "@shared/schema";
+import { type User, type InsertUser, type Game, type InsertGame, type Subscription, type InsertSubscription, type SyncLog, type InsertSyncLog, type NewsArticle, type InsertNewsArticle, type Photo, type InsertPhoto, type PhotoSyncLog, type InsertPhotoSyncLog, type SentNotification, type InsertSentNotification, type PushSubscription, type InsertPushSubscription, subscriptions, games, syncLogs, newsArticles, photos, photoSyncLogs, sentNotifications, pushSubscriptions } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, notInArray } from "drizzle-orm";
@@ -51,6 +51,16 @@ export interface IStorage {
   tryRecordNotificationAtomically(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean>;
   markNotificationSent(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean>;
   deleteNotificationRecord(gameId: string, subscriptionId: string, notificationType: string): Promise<boolean>;
+
+  // Push subscription operations
+  getAllPushSubscriptions(): Promise<PushSubscription[]>;
+  getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined>;
+  getPushSubscriptionByToken(fcmToken: string): Promise<PushSubscription | undefined>;
+  createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
+  updatePushSubscription(id: string, update: Partial<InsertPushSubscription>): Promise<PushSubscription | undefined>;
+  deletePushSubscription(id: string): Promise<boolean>;
+  deletePushSubscriptionByEndpoint(endpoint: string): Promise<boolean>;
+  deletePushSubscriptionByToken(fcmToken: string): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -700,6 +710,49 @@ export class DbStorage implements IStorage {
         eq(sentNotifications.notificationType, notificationType)
       )
     ).returning();
+    return result.length > 0;
+  }
+
+  // Push subscription operations
+  async getAllPushSubscriptions(): Promise<PushSubscription[]> {
+    return await db.select().from(pushSubscriptions);
+  }
+
+  async getPushSubscriptionByEndpoint(endpoint: string): Promise<PushSubscription | undefined> {
+    const result = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+    return result[0];
+  }
+
+  async createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {
+    const result = await db.insert(pushSubscriptions).values(sub).returning();
+    return result[0];
+  }
+
+  async updatePushSubscription(id: string, update: Partial<InsertPushSubscription>): Promise<PushSubscription | undefined> {
+    const result = await db.update(pushSubscriptions)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(pushSubscriptions.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deletePushSubscription(id: string): Promise<boolean> {
+    const result = await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async deletePushSubscriptionByEndpoint(endpoint: string): Promise<boolean> {
+    const result = await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint)).returning();
+    return result.length > 0;
+  }
+
+  async getPushSubscriptionByToken(fcmToken: string): Promise<PushSubscription | undefined> {
+    const result = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.fcmToken, fcmToken));
+    return result[0];
+  }
+
+  async deletePushSubscriptionByToken(fcmToken: string): Promise<boolean> {
+    const result = await db.delete(pushSubscriptions).where(eq(pushSubscriptions.fcmToken, fcmToken)).returning();
     return result.length > 0;
   }
 }
