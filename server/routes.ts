@@ -335,10 +335,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Proxy endpoint for photo thumbnails (serves images through backend)
+  // Proxy endpoint for photo thumbnails (with server + browser caching)
   app.get("/api/photos/:fileId/thumbnail", async (req, res) => {
     try {
       const { fileId } = req.params;
+      const etag = `"thumb-${fileId}"`;
+      if (req.headers['if-none-match'] === etag) {
+        return res.status(304).end();
+      }
+
       const result = await getThumbnail(fileId);
       
       if (!result) {
@@ -346,7 +351,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.set('Content-Type', result.mimeType);
-      res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
+      res.set('ETag', etag);
       res.send(result.buffer);
     } catch (error) {
       console.error('Failed to fetch thumbnail:', error);
@@ -354,10 +360,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Proxy endpoint for full-size photos (serves images through backend)
+  // Proxy endpoint for full-size photos (with server + browser caching)
   app.get("/api/photos/:fileId/image", async (req, res) => {
     try {
       const { fileId } = req.params;
+      const etag = `"img-${fileId}"`;
+      if (req.headers['if-none-match'] === etag) {
+        return res.status(304).end();
+      }
+
       const result = await downloadDriveFile(fileId);
       
       if (!result) {
@@ -365,7 +376,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.set('Content-Type', result.mimeType);
-      res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+      res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
+      res.set('ETag', etag);
       res.send(result.buffer);
     } catch (error) {
       console.error('Failed to fetch image:', error);

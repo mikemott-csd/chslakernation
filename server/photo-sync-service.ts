@@ -1,8 +1,36 @@
-import { google } from 'googleapis';
+import { google, type drive_v3 } from 'googleapis';
 import { type InsertPhoto } from "@shared/schema";
 import { storage } from "./storage";
 import * as fs from 'fs';
 import * as path from 'path';
+
+interface CachedImage {
+  buffer: Buffer;
+  mimeType: string;
+  cachedAt: number;
+}
+
+const IMAGE_CACHE = new Map<string, CachedImage>();
+const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
+const MAX_CACHE_SIZE = 200; // max cached images
+
+function getCachedImage(key: string): CachedImage | null {
+  const cached = IMAGE_CACHE.get(key);
+  if (!cached) return null;
+  if (Date.now() - cached.cachedAt > CACHE_TTL) {
+    IMAGE_CACHE.delete(key);
+    return null;
+  }
+  return cached;
+}
+
+function setCachedImage(key: string, buffer: Buffer, mimeType: string) {
+  if (IMAGE_CACHE.size >= MAX_CACHE_SIZE) {
+    const oldestKey = IMAGE_CACHE.keys().next().value;
+    if (oldestKey) IMAGE_CACHE.delete(oldestKey);
+  }
+  IMAGE_CACHE.set(key, { buffer, mimeType, cachedAt: Date.now() });
+}
 
 export interface PhotoSyncResult {
   success: boolean;
@@ -22,13 +50,16 @@ interface GoogleDriveFile {
   createdTime?: string;
 }
 
+let _driveClient: drive_v3.Drive | null = null;
+
 /**
- * Get authenticated Google Drive client using service account
+ * Get authenticated Google Drive client using service account (cached singleton)
  */
-function getGoogleDriveClient() {
+function getGoogleDriveClient(): drive_v3.Drive {
+  if (_driveClient) return _driveClient;
+
   let credentials;
   
-  // First try loading from the attached JSON file (most reliable)
   const jsonFilePath = path.join(process.cwd(), 'attached_assets', 'csd-ai-club-8aaa80cbab14_1769630091354.json');
   if (fs.existsSync(jsonFilePath)) {
     try {
@@ -40,7 +71,6 @@ function getGoogleDriveClient() {
     }
   }
   
-  // If file loading failed, try environment variable
   if (!credentials) {
     const credentialsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     
@@ -49,10 +79,8 @@ function getGoogleDriveClient() {
     }
 
     try {
-      // Try parsing directly first
       credentials = JSON.parse(credentialsJson);
     } catch (error) {
-      // Try cleaning the string - sometimes secrets have escaped newlines
       try {
         const cleanedJson = credentialsJson
           .replace(/\\n/g, '\n')
@@ -71,7 +99,8 @@ function getGoogleDriveClient() {
     scopes: ['https://www.googleapis.com/auth/drive.readonly'],
   });
 
-  return google.drive({ version: 'v3', auth });
+  _driveClient = google.drive({ version: 'v3', auth });
+  return _driveClient;
 }
 
 /**
@@ -149,14 +178,16 @@ function generateViewUrl(fileId: string): string {
 }
 
 /**
- * Download a file from Google Drive
- * Returns the file as a buffer with content type
+ * Download a file from Google Drive (with in-memory caching)
  */
 export async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffer; mimeType: string } | null> {
+  const cacheKey = `full:${fileId}`;
+  const cached = getCachedImage(cacheKey);
+  if (cached) return { buffer: cached.buffer, mimeType: cached.mimeType };
+
   try {
     const drive = getGoogleDriveClient();
     
-    // Get file metadata first (with shared drive support)
     const metaResponse = await drive.files.get({
       fileId,
       fields: 'mimeType',
@@ -165,13 +196,13 @@ export async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffe
     
     const mimeType = metaResponse.data.mimeType || 'image/jpeg';
     
-    // Download the file (with shared drive support)
     const response = await drive.files.get(
       { fileId, alt: 'media', supportsAllDrives: true },
       { responseType: 'arraybuffer' }
     );
     
     const buffer = Buffer.from(response.data as ArrayBuffer);
+    setCachedImage(cacheKey, buffer, mimeType);
     return { buffer, mimeType };
   } catch (error) {
     console.error(`[PhotoSync] Failed to download file ${fileId}:`, error);
@@ -180,14 +211,16 @@ export async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffe
 }
 
 /**
- * Get a thumbnail from Google Drive
- * Returns the thumbnail as a buffer
+ * Get a thumbnail from Google Drive (with in-memory caching)
  */
 export async function getThumbnail(fileId: string, size: number = 400): Promise<{ buffer: Buffer; mimeType: string } | null> {
+  const cacheKey = `thumb:${fileId}:${size}`;
+  const cached = getCachedImage(cacheKey);
+  if (cached) return { buffer: cached.buffer, mimeType: cached.mimeType };
+
   try {
     const drive = getGoogleDriveClient();
     
-    // Get file with thumbnail link (with shared drive support)
     const response = await drive.files.get({
       fileId,
       fields: 'thumbnailLink',
@@ -196,23 +229,20 @@ export async function getThumbnail(fileId: string, size: number = 400): Promise<
     
     let thumbnailUrl = response.data.thumbnailLink;
     if (!thumbnailUrl) {
-      // If no thumbnail, return the full image
       return downloadDriveFile(fileId);
     }
     
-    // Modify the thumbnail URL to get a larger size
     thumbnailUrl = thumbnailUrl.replace(/=s\d+/, `=s${size}`);
     
-    // Fetch the thumbnail
     const thumbnailResponse = await fetch(thumbnailUrl);
     if (!thumbnailResponse.ok) {
-      // Fall back to full image if thumbnail fetch fails
       return downloadDriveFile(fileId);
     }
     
     const buffer = Buffer.from(await thumbnailResponse.arrayBuffer());
     const mimeType = thumbnailResponse.headers.get('content-type') || 'image/jpeg';
     
+    setCachedImage(cacheKey, buffer, mimeType);
     return { buffer, mimeType };
   } catch (error) {
     console.error(`[PhotoSync] Failed to get thumbnail for ${fileId}:`, error);
