@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { startSyncJob, startNotificationJob, startNewsSyncJob, startPhotoSyncJob } from "./cron";
 import { storage } from "./storage";
 import { seedNewsIfEmpty, syncNewsArticles } from "./news-service";
+import { ensurePhotosDownloaded } from "./photo-sync-service";
 
 const app = express();
 app.use(express.json());
@@ -99,5 +100,14 @@ app.use((req, res, next) => {
         console.error("[Startup] Initial news sync failed:", error);
       }
     }, 5000);
+    
+    // Download any photos that aren't cached locally yet (runs in background)
+    setTimeout(async () => {
+      try {
+        await ensurePhotosDownloaded();
+      } catch (error) {
+        console.error("[Startup] Photo download failed:", error);
+      }
+    }, 8000);
   });
 })();

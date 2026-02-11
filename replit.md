@@ -56,7 +56,7 @@ The application features a responsive design with a strong emphasis on Colcheste
 - **Google Drive Sync**: Hourly automatic synchronization of game schedules from a public Google Drive Excel file. Supports various date/time formats and case-insensitive "Home/Away" parsing.
 - **Photo Gallery**: Displays photos synced from Google Drive folder (ID: `1wU0xYomfpuH8U7LTTDrZtMGthmAa_Uo8`). Features:
   - Hourly automatic sync from Google Drive (runs at minute 30)
-  - Images proxied through backend (`/api/photos/:fileId/thumbnail` and `/api/photos/:fileId/image`) to avoid permission issues
+  - **Disk-based image caching**: Photos (thumbnails + full-size) are downloaded to `photo-cache/` directory during sync and served directly from disk via `res.sendFile()`. No live Google Drive proxying needed. On startup, `ensurePhotosDownloaded()` pre-fetches any missing photos. Removed photos are cleaned up from disk during sync.
   - Responsive grid layout with lightbox viewer for full-size images
   - Service account: `csd-ai-lakers-photo-sync@csd-ai-club.iam.gserviceaccount.com` (requires Viewer access to folder)
   - Supports shared drives with `supportsAllDrives` option

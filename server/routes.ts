@@ -6,7 +6,7 @@ import { sendPushNotification } from "./firebase-admin";
 import { sendWelcomeEmail, checkMailjetStatus, sendUnsubscribeConfirmation } from "./email-service";
 import { syncFromGoogleDrive } from "./sync-service";
 import { syncNewsArticles } from "./news-service";
-import { syncPhotosFromGoogleDrive, downloadDriveFile, getThumbnail } from "./photo-sync-service";
+import { syncPhotosFromGoogleDrive, getLocalThumbnail, getLocalFullImage } from "./photo-sync-service";
 import { triggerManualNotificationCheck } from "./cron";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -336,53 +336,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Proxy endpoint for photo thumbnails (with server + browser caching)
   app.get("/api/photos/:fileId/thumbnail", async (req, res) => {
     try {
       const { fileId } = req.params;
-      const etag = `"thumb-${fileId}"`;
-      if (req.headers['if-none-match'] === etag) {
-        return res.status(304).end();
-      }
-
-      const result = await getThumbnail(fileId);
+      const result = getLocalThumbnail(fileId);
       
       if (!result) {
         return res.status(404).json({ message: "Thumbnail not found" });
       }
       
       res.set('Content-Type', result.mimeType);
-      res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
-      res.set('ETag', etag);
-      res.send(result.buffer);
+      res.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+      res.sendFile(result.filePath);
     } catch (error) {
-      console.error('Failed to fetch thumbnail:', error);
-      res.status(500).json({ message: "Failed to fetch thumbnail" });
+      console.error('Failed to serve thumbnail:', error);
+      res.status(500).json({ message: "Failed to serve thumbnail" });
     }
   });
 
-  // Proxy endpoint for full-size photos (with server + browser caching)
   app.get("/api/photos/:fileId/image", async (req, res) => {
     try {
       const { fileId } = req.params;
-      const etag = `"img-${fileId}"`;
-      if (req.headers['if-none-match'] === etag) {
-        return res.status(304).end();
-      }
-
-      const result = await downloadDriveFile(fileId);
+      const result = getLocalFullImage(fileId);
       
       if (!result) {
         return res.status(404).json({ message: "Image not found" });
       }
       
       res.set('Content-Type', result.mimeType);
-      res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
-      res.set('ETag', etag);
-      res.send(result.buffer);
+      res.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+      res.sendFile(result.filePath);
     } catch (error) {
-      console.error('Failed to fetch image:', error);
-      res.status(500).json({ message: "Failed to fetch image" });
+      console.error('Failed to serve image:', error);
+      res.status(500).json({ message: "Failed to serve image" });
     }
   });
 

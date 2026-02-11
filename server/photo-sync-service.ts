@@ -4,33 +4,19 @@ import { storage } from "./storage";
 import * as fs from 'fs';
 import * as path from 'path';
 
-interface CachedImage {
-  buffer: Buffer;
-  mimeType: string;
-  cachedAt: number;
-}
+const PHOTO_CACHE_DIR = path.join(process.cwd(), 'photo-cache');
+const THUMB_DIR = path.join(PHOTO_CACHE_DIR, 'thumbnails');
+const FULL_DIR = path.join(PHOTO_CACHE_DIR, 'full');
 
-const IMAGE_CACHE = new Map<string, CachedImage>();
-const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
-const MAX_CACHE_SIZE = 200; // max cached images
-
-function getCachedImage(key: string): CachedImage | null {
-  const cached = IMAGE_CACHE.get(key);
-  if (!cached) return null;
-  if (Date.now() - cached.cachedAt > CACHE_TTL) {
-    IMAGE_CACHE.delete(key);
-    return null;
+function ensureCacheDirs() {
+  for (const dir of [PHOTO_CACHE_DIR, THUMB_DIR, FULL_DIR]) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
   }
-  return cached;
 }
 
-function setCachedImage(key: string, buffer: Buffer, mimeType: string) {
-  if (IMAGE_CACHE.size >= MAX_CACHE_SIZE) {
-    const oldestKey = IMAGE_CACHE.keys().next().value;
-    if (oldestKey) IMAGE_CACHE.delete(oldestKey);
-  }
-  IMAGE_CACHE.set(key, { buffer, mimeType, cachedAt: Date.now() });
-}
+ensureCacheDirs();
 
 export interface PhotoSyncResult {
   success: boolean;
@@ -52,9 +38,6 @@ interface GoogleDriveFile {
 
 let _driveClient: drive_v3.Drive | null = null;
 
-/**
- * Get authenticated Google Drive client using service account (cached singleton)
- */
 function getGoogleDriveClient(): drive_v3.Drive {
   if (_driveClient) return _driveClient;
 
@@ -103,16 +86,12 @@ function getGoogleDriveClient(): drive_v3.Drive {
   return _driveClient;
 }
 
-/**
- * List all image files in a Google Drive folder (including subfolders)
- */
 async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> {
   const drive = getGoogleDriveClient();
   
   const allFiles: GoogleDriveFile[] = [];
   const foldersToProcess: string[] = [folderId];
   
-  // First, verify we can access the folder (with shared drive support)
   try {
     const folderInfo = await drive.files.get({
       fileId: folderId,
@@ -125,13 +104,11 @@ async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> 
     throw new Error(`Cannot access Google Drive folder: ${error.message}`);
   }
 
-  // Process folders recursively
   while (foldersToProcess.length > 0) {
     const currentFolderId = foldersToProcess.shift()!;
     let pageToken: string | undefined;
 
     do {
-      // List all files in current folder (images and subfolders) with shared drive support
       const response = await drive.files.list({
         q: `'${currentFolderId}' in parents and trashed = false`,
         fields: 'nextPageToken, files(id, name, mimeType, thumbnailLink, webViewLink, webContentLink, createdTime)',
@@ -144,11 +121,9 @@ async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> 
       if (response.data.files) {
         for (const file of response.data.files) {
           if (file.mimeType === 'application/vnd.google-apps.folder') {
-            // Add subfolder to process list
             console.log(`[PhotoSync] Found subfolder: "${file.name}"`);
             foldersToProcess.push(file.id!);
           } else if (file.mimeType?.startsWith('image/')) {
-            // Add image file
             allFiles.push(file as GoogleDriveFile);
           }
         }
@@ -162,39 +137,43 @@ async function listPhotosInFolder(folderId: string): Promise<GoogleDriveFile[]> 
   return allFiles;
 }
 
-/**
- * Generate a proxied thumbnail URL that goes through our server
- * This allows the server to fetch private images using the service account
- */
-function generateThumbnailUrl(fileId: string): string {
-  return `/api/photos/${fileId}/thumbnail`;
+function getExtension(mimeType: string): string {
+  const map: Record<string, string> = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
+    'image/bmp': '.bmp',
+    'image/svg+xml': '.svg',
+  };
+  return map[mimeType] || '.jpg';
 }
 
-/**
- * Generate a proxied full image URL that goes through our server
- */
-function generateViewUrl(fileId: string): string {
-  return `/api/photos/${fileId}/image`;
+function getThumbPath(fileId: string, mimeType: string): string {
+  return path.join(THUMB_DIR, `${fileId}${getExtension(mimeType)}`);
 }
 
-/**
- * Download a file from Google Drive (with in-memory caching)
- */
-export async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffer; mimeType: string } | null> {
-  const cacheKey = `full:${fileId}`;
-  const cached = getCachedImage(cacheKey);
-  if (cached) return { buffer: cached.buffer, mimeType: cached.mimeType };
+function getFullPath(fileId: string, mimeType: string): string {
+  return path.join(FULL_DIR, `${fileId}${getExtension(mimeType)}`);
+}
+
+function findCachedFile(dir: string, fileId: string): string | null {
+  const extensions = ['.jpg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+  for (const ext of extensions) {
+    const filePath = path.join(dir, `${fileId}${ext}`);
+    if (fs.existsSync(filePath)) {
+      return filePath;
+    }
+  }
+  return null;
+}
+
+async function downloadAndSaveFullImage(fileId: string, mimeType: string): Promise<boolean> {
+  const filePath = getFullPath(fileId, mimeType);
+  if (fs.existsSync(filePath)) return true;
 
   try {
     const drive = getGoogleDriveClient();
-    
-    const metaResponse = await drive.files.get({
-      fileId,
-      fields: 'mimeType',
-      supportsAllDrives: true,
-    });
-    
-    const mimeType = metaResponse.data.mimeType || 'image/jpeg';
     
     const response = await drive.files.get(
       { fileId, alt: 'media', supportsAllDrives: true },
@@ -202,21 +181,18 @@ export async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffe
     );
     
     const buffer = Buffer.from(response.data as ArrayBuffer);
-    setCachedImage(cacheKey, buffer, mimeType);
-    return { buffer, mimeType };
+    fs.writeFileSync(filePath, buffer);
+    console.log(`[PhotoSync] Saved full image: ${fileId} (${(buffer.length / 1024).toFixed(0)}KB)`);
+    return true;
   } catch (error) {
-    console.error(`[PhotoSync] Failed to download file ${fileId}:`, error);
-    return null;
+    console.error(`[PhotoSync] Failed to download full image ${fileId}:`, error);
+    return false;
   }
 }
 
-/**
- * Get a thumbnail from Google Drive (with in-memory caching)
- */
-export async function getThumbnail(fileId: string, size: number = 400): Promise<{ buffer: Buffer; mimeType: string } | null> {
-  const cacheKey = `thumb:${fileId}:${size}`;
-  const cached = getCachedImage(cacheKey);
-  if (cached) return { buffer: cached.buffer, mimeType: cached.mimeType };
+async function downloadAndSaveThumbnail(fileId: string, mimeType: string, size: number = 400): Promise<boolean> {
+  const filePath = getThumbPath(fileId, mimeType);
+  if (fs.existsSync(filePath)) return true;
 
   try {
     const drive = getGoogleDriveClient();
@@ -228,31 +204,120 @@ export async function getThumbnail(fileId: string, size: number = 400): Promise<
     });
     
     let thumbnailUrl = response.data.thumbnailLink;
-    if (!thumbnailUrl) {
-      return downloadDriveFile(fileId);
+    
+    if (thumbnailUrl) {
+      thumbnailUrl = thumbnailUrl.replace(/=s\d+/, `=s${size}`);
+      const thumbnailResponse = await fetch(thumbnailUrl);
+      if (thumbnailResponse.ok) {
+        const buffer = Buffer.from(await thumbnailResponse.arrayBuffer());
+        fs.writeFileSync(filePath, buffer);
+        console.log(`[PhotoSync] Saved thumbnail: ${fileId} (${(buffer.length / 1024).toFixed(0)}KB)`);
+        return true;
+      }
     }
     
-    thumbnailUrl = thumbnailUrl.replace(/=s\d+/, `=s${size}`);
-    
-    const thumbnailResponse = await fetch(thumbnailUrl);
-    if (!thumbnailResponse.ok) {
-      return downloadDriveFile(fileId);
-    }
-    
-    const buffer = Buffer.from(await thumbnailResponse.arrayBuffer());
-    const mimeType = thumbnailResponse.headers.get('content-type') || 'image/jpeg';
-    
-    setCachedImage(cacheKey, buffer, mimeType);
-    return { buffer, mimeType };
+    return await downloadAndSaveFullImage(fileId, mimeType);
   } catch (error) {
-    console.error(`[PhotoSync] Failed to get thumbnail for ${fileId}:`, error);
-    return null;
+    console.error(`[PhotoSync] Failed to download thumbnail ${fileId}:`, error);
+    return false;
   }
 }
 
-/**
- * Sync photos from Google Drive folder to database
- */
+export function getLocalThumbnail(fileId: string): { filePath: string; mimeType: string } | null {
+  const cached = findCachedFile(THUMB_DIR, fileId);
+  if (cached) {
+    const ext = path.extname(cached).toLowerCase();
+    const mimeMap: Record<string, string> = {
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+      '.png': 'image/png', '.gif': 'image/gif',
+      '.webp': 'image/webp', '.bmp': 'image/bmp',
+      '.svg': 'image/svg+xml',
+    };
+    return { filePath: cached, mimeType: mimeMap[ext] || 'image/jpeg' };
+  }
+  return null;
+}
+
+export function getLocalFullImage(fileId: string): { filePath: string; mimeType: string } | null {
+  const cached = findCachedFile(FULL_DIR, fileId);
+  if (cached) {
+    const ext = path.extname(cached).toLowerCase();
+    const mimeMap: Record<string, string> = {
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+      '.png': 'image/png', '.gif': 'image/gif',
+      '.webp': 'image/webp', '.bmp': 'image/bmp',
+      '.svg': 'image/svg+xml',
+    };
+    return { filePath: cached, mimeType: mimeMap[ext] || 'image/jpeg' };
+  }
+  return null;
+}
+
+export async function ensurePhotosDownloaded(): Promise<void> {
+  console.log('[PhotoSync] Checking for photos that need to be downloaded to disk...');
+  const photos = await storage.getAllPhotos();
+  
+  if (photos.length === 0) {
+    console.log('[PhotoSync] No photos in database to download');
+    return;
+  }
+
+  let downloaded = 0;
+  let alreadyCached = 0;
+  let failed = 0;
+
+  for (const photo of photos) {
+    const driveId = photo.googleDriveId;
+    const mime = photo.mimeType;
+
+    const thumbExists = findCachedFile(THUMB_DIR, driveId) !== null;
+    const fullExists = findCachedFile(FULL_DIR, driveId) !== null;
+
+    if (thumbExists && fullExists) {
+      alreadyCached++;
+      continue;
+    }
+
+    try {
+      if (!thumbExists) {
+        await downloadAndSaveThumbnail(driveId, mime);
+      }
+      if (!fullExists) {
+        await downloadAndSaveFullImage(driveId, mime);
+      }
+      downloaded++;
+    } catch (error) {
+      console.error(`[PhotoSync] Failed to download photo ${driveId}:`, error);
+      failed++;
+    }
+
+    if (downloaded % 5 === 0 && downloaded > 0) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+
+  console.log(`[PhotoSync] Download check complete: ${alreadyCached} already cached, ${downloaded} newly downloaded, ${failed} failed`);
+}
+
+function cleanupRemovedPhotos(activeGoogleDriveIds: string[]) {
+  const activeSet = new Set(activeGoogleDriveIds);
+  
+  for (const dir of [THUMB_DIR, FULL_DIR]) {
+    try {
+      const files = fs.readdirSync(dir);
+      for (const file of files) {
+        const fileId = path.basename(file, path.extname(file));
+        if (!activeSet.has(fileId)) {
+          fs.unlinkSync(path.join(dir, file));
+          console.log(`[PhotoSync] Cleaned up removed photo file: ${file}`);
+        }
+      }
+    } catch (error) {
+      console.error(`[PhotoSync] Error cleaning up directory ${dir}:`, error);
+    }
+  }
+}
+
 export async function syncPhotosFromGoogleDrive(triggeredBy: 'manual' | 'cron'): Promise<PhotoSyncResult> {
   const folderId = process.env.GOOGLE_DRIVE_PHOTOS_FOLDER_ID;
   
@@ -279,7 +344,6 @@ export async function syncPhotosFromGoogleDrive(triggeredBy: 'manual' | 'cron'):
   try {
     console.log(`[PhotoSync] Starting sync from Google Drive folder: ${folderId}`);
     
-    // List all photos in the folder
     const drivePhotos = await listPhotosInFolder(folderId);
     console.log(`[PhotoSync] Found ${drivePhotos.length} photos in Google Drive folder`);
 
@@ -287,7 +351,6 @@ export async function syncPhotosFromGoogleDrive(triggeredBy: 'manual' | 'cron'):
     const drivePhotoIds: string[] = [];
     const errors: string[] = [];
 
-    // Upsert each photo
     for (const driveFile of drivePhotos) {
       try {
         drivePhotoIds.push(driveFile.id);
@@ -298,9 +361,9 @@ export async function syncPhotosFromGoogleDrive(triggeredBy: 'manual' | 'cron'):
           googleDriveId: driveFile.id,
           name: driveFile.name,
           mimeType: driveFile.mimeType,
-          thumbnailUrl: generateThumbnailUrl(driveFile.id),
+          thumbnailUrl: `/api/photos/${driveFile.id}/thumbnail`,
           webViewUrl: driveFile.webViewLink || `https://drive.google.com/file/d/${driveFile.id}/view`,
-          downloadUrl: generateViewUrl(driveFile.id),
+          downloadUrl: `/api/photos/${driveFile.id}/image`,
           createdTime: driveFile.createdTime ? new Date(driveFile.createdTime) : null,
         };
 
@@ -309,6 +372,9 @@ export async function syncPhotosFromGoogleDrive(triggeredBy: 'manual' | 'cron'):
         if (!existingPhoto) {
           photosAdded++;
         }
+
+        await downloadAndSaveThumbnail(driveFile.id, driveFile.mimeType);
+        await downloadAndSaveFullImage(driveFile.id, driveFile.mimeType);
       } catch (error) {
         const errMsg = `Failed to sync photo ${driveFile.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
         errors.push(errMsg);
@@ -316,13 +382,13 @@ export async function syncPhotosFromGoogleDrive(triggeredBy: 'manual' | 'cron'):
       }
     }
 
-    // Remove photos that are no longer in Google Drive
     const photosRemoved = await storage.deletePhotosByGoogleDriveIds(drivePhotoIds);
     if (photosRemoved > 0) {
       console.log(`[PhotoSync] Removed ${photosRemoved} photos no longer in Google Drive`);
     }
 
-    // Build success message
+    cleanupRemovedPhotos(drivePhotoIds);
+
     let message = '';
     if (photosAdded === 0 && photosRemoved === 0) {
       message = `Photos up to date (${drivePhotos.length} total)`;
@@ -337,7 +403,6 @@ export async function syncPhotosFromGoogleDrive(triggeredBy: 'manual' | 'cron'):
       message += ` - ${errors.length} errors`;
     }
 
-    // Log success
     await storage.createPhotoSyncLog({
       photosAdded,
       photosRemoved,
