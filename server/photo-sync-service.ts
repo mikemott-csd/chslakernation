@@ -168,9 +168,23 @@ function findCachedFile(dir: string, fileId: string): string | null {
   return null;
 }
 
+function isValidBrowserImage(buffer: Buffer): boolean {
+  if (buffer.length < 4) return false;
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return true;
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return true;
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return true;
+  if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) return true;
+  return false;
+}
+
 async function downloadAndSaveFullImage(fileId: string, mimeType: string): Promise<boolean> {
   const filePath = getFullPath(fileId, mimeType);
-  if (fs.existsSync(filePath)) return true;
+  if (fs.existsSync(filePath)) {
+    const existing = fs.readFileSync(filePath);
+    if (isValidBrowserImage(existing)) return true;
+    console.log(`[PhotoSync] Cached file ${fileId} is not a valid browser image, re-downloading...`);
+    fs.unlinkSync(filePath);
+  }
 
   try {
     const drive = getGoogleDriveClient();
@@ -181,9 +195,36 @@ async function downloadAndSaveFullImage(fileId: string, mimeType: string): Promi
     );
     
     const buffer = Buffer.from(response.data as ArrayBuffer);
-    fs.writeFileSync(filePath, buffer);
-    console.log(`[PhotoSync] Saved full image: ${fileId} (${(buffer.length / 1024).toFixed(0)}KB)`);
-    return true;
+    
+    if (isValidBrowserImage(buffer)) {
+      fs.writeFileSync(filePath, buffer);
+      console.log(`[PhotoSync] Saved full image: ${fileId} (${(buffer.length / 1024).toFixed(0)}KB)`);
+      return true;
+    }
+    
+    console.log(`[PhotoSync] File ${fileId} is RAW/non-browser format, fetching high-res thumbnail instead...`);
+    const thumbResponse = await drive.files.get({
+      fileId,
+      fields: 'thumbnailLink',
+      supportsAllDrives: true,
+    });
+    
+    let thumbnailUrl = thumbResponse.data.thumbnailLink;
+    if (thumbnailUrl) {
+      thumbnailUrl = thumbnailUrl.replace(/=s\d+/, '=s1600');
+      const imgResponse = await fetch(thumbnailUrl);
+      if (imgResponse.ok) {
+        const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+        if (isValidBrowserImage(imgBuffer)) {
+          fs.writeFileSync(filePath, imgBuffer);
+          console.log(`[PhotoSync] Saved high-res thumbnail as full image for ${fileId} (${(imgBuffer.length / 1024).toFixed(0)}KB)`);
+          return true;
+        }
+      }
+    }
+    
+    console.error(`[PhotoSync] Could not obtain browser-compatible image for ${fileId}`);
+    return false;
   } catch (error) {
     console.error(`[PhotoSync] Failed to download full image ${fileId}:`, error);
     return false;
