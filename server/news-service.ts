@@ -73,66 +73,161 @@ function isVermontSportsRelated(title: string): boolean {
   return false;
 }
 
-/**
- * Decode Google News article URL to get the original article URL
- * Google News encodes the original URL in a base64-like format in the path
- */
-function decodeGoogleNewsUrl(googleUrl: string): string | null {
+async function getDecodingParams(base64Str: string): Promise<{ signature: string; timestamp: string } | null> {
+  const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+  const urls = [
+    `https://news.google.com/articles/${base64Str}`,
+    `https://news.google.com/rss/articles/${base64Str}`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        headers: { "User-Agent": UA },
+        redirect: "follow",
+      });
+      if (!response.ok) continue;
+
+      const html = await response.text();
+
+      const sigMatch = html.match(/data-n-a-sg="([^"]+)"/);
+      const tsMatch = html.match(/data-n-a-ts="([^"]+)"/);
+
+      if (sigMatch && tsMatch) {
+        return { signature: sigMatch[1], timestamp: tsMatch[1] };
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+async function fetchDecodedUrl(base64Str: string, signature: string, timestamp: string): Promise<string | null> {
   try {
-    // Extract the encoded part from the URL
-    // Format: https://news.google.com/rss/articles/ENCODED_STRING?oc=5
-    const match = googleUrl.match(/\/articles\/([^?]+)/);
-    if (!match) return null;
-    
-    const encoded = match[1];
-    
-    // Google News uses a modified base64 encoding
-    // The encoded string starts with "CBMi" followed by length byte and the URL
-    // Try to decode it
-    const decoded = Buffer.from(encoded, 'base64').toString('utf-8');
-    
-    // Look for URLs in the decoded string
-    const urlMatch = decoded.match(/https?:\/\/[^\s\x00-\x1f]+/);
-    if (urlMatch) {
-      let url = urlMatch[0];
-      // Clean up any trailing garbage characters
-      url = url.replace(/[\x00-\x1f]+.*$/, '');
-      if (url.includes('burlingtonfreepress.com')) {
-        return url;
+    const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+
+    const payload = [
+      "Fbv4je",
+      JSON.stringify([
+        "garturlreq",
+        [["X", "X", ["X", "X"], null, null, 1, 1, "US:en", null, 1, null, null, null, null, null, 0, 1],
+        "X", "X", 1, [1, 1, 1], 1, 1, null, 0, 0, null, 0],
+        base64Str,
+        parseInt(timestamp),
+        signature,
+      ]),
+    ];
+
+    const body = "f.req=" + encodeURIComponent(JSON.stringify([[payload]]));
+
+    const response = await fetch(
+      "https://news.google.com/_/DotsSplashUi/data/batchexecute",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+          "User-Agent": UA,
+        },
+        body,
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`[News Sync] batchexecute HTTP ${response.status}`);
+      return null;
+    }
+
+    const text = await response.text();
+    const parts = text.split("\n\n");
+
+    if (parts.length >= 2) {
+      try {
+        const parsed = JSON.parse(parts[1]);
+        const innerData = parsed[0]?.[2];
+        if (innerData) {
+          const decoded = JSON.parse(innerData);
+          const url = decoded[1];
+          if (url && typeof url === "string" && url.startsWith("http")) {
+            return url;
+          }
+        }
+      } catch {
+        // fallback regex
       }
     }
-    
+
+    const urlMatch = text.match(/https?:\/\/[^\s"\\]+burlingtonfreepress\.com[^\s"\\]*/);
+    if (urlMatch) {
+      return urlMatch[0].replace(/\\"/g, '');
+    }
+
     return null;
   } catch (error) {
+    console.error("[News Sync] batchexecute decode failed:", error);
     return null;
   }
 }
 
 async function resolveGoogleNewsUrl(googleUrl: string): Promise<string> {
-  // First try to decode the URL directly from the Google News format
-  const decodedUrl = decodeGoogleNewsUrl(googleUrl);
-  if (decodedUrl) {
-    console.log(`[News Sync] Decoded direct URL: ${decodedUrl}`);
-    return decodedUrl;
-  }
-  
-  // Fallback: try HTTP redirect (usually doesn't work for Google News)
   try {
-    const response = await fetch(googleUrl, {
-      method: 'HEAD',
-      redirect: 'follow',
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-    });
-    
-    const finalUrl = response.url;
-    if (finalUrl && finalUrl.includes('burlingtonfreepress.com')) {
-      return finalUrl;
+    const url = new URL(googleUrl);
+    const path = url.pathname.split("/");
+
+    if (url.hostname !== "news.google.com") {
+      return googleUrl;
     }
-    
+
+    const articlesIdx = path.indexOf("articles");
+    if (articlesIdx === -1 || articlesIdx >= path.length - 1) {
+      return googleUrl;
+    }
+
+    const base64 = path[articlesIdx + 1];
+
+    const binaryStr = Buffer.from(base64, 'base64').toString('binary');
+    const prefix = Buffer.from([0x08, 0x13, 0x22]).toString('binary');
+    let str = binaryStr;
+    if (str.startsWith(prefix)) {
+      str = str.substring(prefix.length);
+    }
+
+    const suffix = Buffer.from([0xd2, 0x01, 0x00]).toString('binary');
+    if (str.endsWith(suffix)) {
+      str = str.substring(0, str.length - suffix.length);
+    }
+
+    const bytes = Uint8Array.from(str, (c) => c.charCodeAt(0));
+    const len = bytes[0];
+    if (len >= 0x80) {
+      str = str.substring(2, len + 2);
+    } else {
+      str = str.substring(1, len + 1);
+    }
+
+    if (str.startsWith("AU_yqL")) {
+      console.log(`[News Sync] New-style encoded URL, fetching decoding params...`);
+      const params = await getDecodingParams(base64);
+      if (params) {
+        console.log(`[News Sync] Got signature & timestamp, decoding via batchexecute...`);
+        const decoded = await fetchDecodedUrl(base64, params.signature, params.timestamp);
+        if (decoded) {
+          console.log(`[News Sync] Decoded URL: ${decoded}`);
+          return decoded;
+        }
+      }
+      console.log(`[News Sync] Could not decode, keeping Google News URL`);
+      return googleUrl;
+    }
+
+    if (str.startsWith("http")) {
+      console.log(`[News Sync] Decoded URL via base64: ${str}`);
+      return str;
+    }
+
     return googleUrl;
   } catch (error) {
+    console.error("[News Sync] URL decode error:", error);
     return googleUrl;
   }
 }
@@ -308,6 +403,9 @@ export async function fetchBurlingtonFreePressArticles(): Promise<ParsedArticle[
         ...article,
         url: resolvedUrl,
       });
+      if (article.url.includes('news.google.com')) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
     } catch (error) {
       resolvedArticles.push(article);
     }
