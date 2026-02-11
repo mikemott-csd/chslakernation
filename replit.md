@@ -23,7 +23,9 @@ The application features a responsive design with a strong emphasis on Colcheste
 ### Technical Implementations
 - **Frontend**: React with TypeScript, TanStack Query for data fetching, and Wouter for routing.
 - **Backend**: Express.js with a PostgreSQL database.
-- **Database**: PostgreSQL (Replit built-in) managed with Drizzle ORM for persistent storage of games, subscriptions, and sync logs.
+- **Database**: PostgreSQL (Replit built-in) managed with Drizzle ORM for persistent storage of games, subscriptions, sync logs, and push subscriptions.
+- **PWA (Progressive Web App)**: Manifest at `client/public/manifest.json`, service worker at `client/public/firebase-messaging-sw.js`. Registered in `client/src/main.tsx`. Offline caching for app shell. Install prompt component in `client/src/components/InstallPrompt.tsx`.
+- **Push Notifications (Firebase Cloud Messaging)**: Cross-platform push via FCM. Client module at `client/src/lib/firebase.ts`, server admin SDK at `server/firebase-admin.ts`. Push subscriptions stored in `push_subscriptions` table with `fcmToken` as the unique identifier. Integrated into existing notification cron job to send push alongside email reminders.
 - **Date Handling**: `date-fns` library for robust date and time manipulation.
 - **Scheduling**: `node-cron` for automated tasks like Google Drive sync, email notifications, and weekly news updates.
 - **Score Tracking**: Database fields `homeScore`, `awayScore`, and a `final` boolean flag for completed games.
@@ -64,11 +66,29 @@ The application features a responsive design with a strong emphasis on Colcheste
 ### System Design Choices
 The application follows a client-server architecture. The frontend handles user interaction and displays data fetched from the backend. The backend manages data persistence, business logic, external integrations (Google Drive, Mailjet), and scheduled tasks. Data models are defined using TypeScript for type safety across the stack. The system prioritizes data integrity through database-backed logging and deduplication during synchronization.
 
+## Required Secrets (Environment Variables)
+All secrets must be configured in the Replit Secrets tab. If any are missing, the corresponding feature will not work.
+
+| Secret | Purpose | Used By |
+|--------|---------|---------|
+| `FIREBASE_API_KEY` | Firebase client-side API key | Push notifications (client config) |
+| `FIREBASE_AUTH_DOMAIN` | Firebase auth domain (e.g., `project.firebaseapp.com`) | Push notifications (client config) |
+| `FIREBASE_PROJECT_ID` | Firebase project ID | Push notifications (client + server) |
+| `FIREBASE_MESSAGING_SENDER_ID` | FCM sender ID | Push notifications (client config) |
+| `FIREBASE_APP_ID` | Firebase app ID | Push notifications (client config) |
+| `FIREBASE_VAPID_KEY` | VAPID public key for web push | Push subscription (client-side) |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Firebase Admin SDK credentials (full JSON) | Sending push notifications (server) |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Google service account for Drive API | Photo gallery sync, game schedule sync |
+| `MAILJET_API_KEY` | Mailjet API key | Email notifications |
+| `MAILJET_SECRET_KEY` | Mailjet secret key | Email notifications |
+
 ## External Dependencies
 
--   **PostgreSQL**: Primary database for storing game schedules, user subscriptions, sync logs, and news articles.
--   **Mailjet**: Email service provider for sending game notifications and subscription management emails. Configured via `MAILJET_API_KEY` and `MAILJET_SECRET_KEY` environment variables.
+-   **PostgreSQL**: Primary database for storing game schedules, user subscriptions, sync logs, push subscriptions, and news articles.
+-   **Firebase Cloud Messaging (FCM)**: Cross-platform push notification delivery. Configured via 7 Firebase secrets listed above. Client config served via `/api/firebase-config` and `/api/vapid-key` endpoints.
+-   **Mailjet**: Email service provider for sending game notifications and subscription management emails.
 -   **Google Drive (via Excel)**: Used as the source for game schedule data, automatically synchronized via a public Excel file URL set in `SYNC_GOOGLE_DRIVE_URL`.
+-   **Google Drive (Photos)**: Photo gallery synced from a shared Google Drive folder using a service account.
 -   **Wouter**: A lightweight React router for client-side navigation.
 -   **TanStack Query**: For efficient data fetching, caching, and state management in the React frontend.
 -   **Drizzle ORM**: TypeScript ORM for interacting with the PostgreSQL database.
