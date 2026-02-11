@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Calendar, Bell, Image, X, Home as HomeIcon, ChevronLeft, ChevronRight, Camera, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import type { Photo } from "@shared/schema";
-import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
+import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
 
 export default function Gallery() {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);

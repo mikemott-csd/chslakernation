@@ -10,7 +10,7 @@ import { parseLocalDate } from "@/lib/dateUtils";
 import type { Game, NewsArticle, Photo } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
+import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
 
 const sportColors: Record<string, string> = {
   "Football": "hsl(210, 85%, 35%)",

@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
+import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
 import { Check, X, Loader2, Home as HomeIcon, Calendar, Bell } from "lucide-react";
 import { Link } from "wouter";
 

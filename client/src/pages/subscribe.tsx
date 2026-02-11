@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import logoUrl from "@assets/Champ_(1)_(1)_1764791051222.png";
+import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
 import { ArrowLeft, Check, Home as HomeIcon, Calendar, Bell, Image } from "lucide-react";
 
 const SPORTS = ["Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey"] as const;
