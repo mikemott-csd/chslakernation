@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Calendar, Bell, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image } from "lucide-react";
+import { Calendar, Bell, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image, LayoutDashboard, Columns3, List } from "lucide-react";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateUtils";
 import type { Game, NewsArticle, Photo } from "@shared/schema";
@@ -462,6 +462,34 @@ export default function Home() {
           </Card>
         </section>
       </div>
+
+      <section className="container mx-auto px-4 py-6 mt-8">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-sm text-muted-foreground mb-3">Preview alternative landing page layouts:</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/preview/dashboard">
+                <Button variant="outline" data-testid="link-preview-dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard Layout
+                </Button>
+              </Link>
+              <Link href="/preview/columns">
+                <Button variant="outline" data-testid="link-preview-columns">
+                  <Columns3 className="mr-2 h-4 w-4" />
+                  Three-Column Layout
+                </Button>
+              </Link>
+              <Link href="/preview/feed">
+                <Button variant="outline" data-testid="link-preview-feed">
+                  <List className="mr-2 h-4 w-4" />
+                  Feed Layout
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Footer */}
       <footer className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] text-white py-8 mt-12 shadow-inner">
