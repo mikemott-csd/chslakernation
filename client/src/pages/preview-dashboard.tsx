@@ -118,8 +118,8 @@ export default function PreviewDashboard() {
     <div className="min-h-screen bg-[#000814] text-white font-sans">
       <nav className="flex items-center justify-between gap-3 px-4 md:px-8 py-4 border-b border-white/5 bg-[#000814]/80 backdrop-blur-md sticky top-0 z-50">
         <Link href="/" className="flex items-center gap-3 transition-opacity" data-testid="link-dashboard-banner-home">
-          <div className="h-10 w-10 bg-[#002366] border-2 border-[#4CBB17] rounded-lg flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(76,187,23,0.3)]">
-            <img src={logoUrl} alt="CHS Lakers" className="h-8 w-8 object-contain" data-testid="img-dashboard-logo" />
+          <div className="h-12 w-12 md:h-14 md:w-14 bg-[#002366] border-2 border-[#4CBB17] rounded-lg flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(76,187,23,0.3)]">
+            <img src={logoUrl} alt="CHS Lakers" className="h-10 w-10 md:h-12 md:w-12 object-contain" data-testid="img-dashboard-logo" />
           </div>
           <span className="font-black italic tracking-tighter text-xl md:text-2xl" data-testid="text-dashboard-header">
             LAKER<span className="text-[#4CBB17]">NATION</span>
