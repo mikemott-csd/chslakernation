@@ -1,0 +1,27 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Sensitive credentials and secrets
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+.env
+.env.*
+
+# Attached assets (may contain pasted credentials)
+attached_assets/*.txt
+attached_assets/*.json
+
+# Photo cache (large binary files, downloaded at runtime)
+photo-cache/
+
+# Replit internals
+.cache
+.config
+.local
