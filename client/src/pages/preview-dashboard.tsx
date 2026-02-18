@@ -2,9 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Bell, Clock, MapPin, Newspaper, ExternalLink, UserCheck, Home as HomeIcon, Menu, Image, Trophy, Users, Activity } from "lucide-react";
+import { Calendar, Bell, Clock, MapPin, Newspaper, ExternalLink, UserCheck, Home as HomeIcon, Image, Trophy, Users, Activity, ChevronRight } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { parseLocalDate } from "@/lib/dateUtils";
 import type { Game, NewsArticle, Photo } from "@shared/schema";
@@ -28,6 +27,7 @@ const getSportColor = (sport: string) => sportColors[sport] || "hsl(210, 15%, 50
 
 export default function PreviewDashboard() {
   const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
+  const [heroImgLoaded, setHeroImgLoaded] = useState(false);
   const { toast } = useToast();
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
@@ -103,253 +103,275 @@ export default function PreviewDashboard() {
   }).length;
 
   const uniqueSports = new Set(games.map(g => g.sport)).size;
-
   const nextGame = allUpcomingGames[0];
   const daysUntilNext = nextGame ? differenceInDays(parseLocalDate(nextGame.date), now) : null;
 
+  const heroPhotoUrl = photos.length > 0
+    ? `/api/photos/${photos[0].googleDriveId}/full`
+    : null;
+
+  const latestResult = recentResults[0];
+  const latestLakersScore = latestResult ? (latestResult.isHome === "home" ? latestResult.homeScore : latestResult.awayScore) : null;
+  const latestOpponentScore = latestResult ? (latestResult.isHome === "home" ? latestResult.awayScore : latestResult.homeScore) : null;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
-      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between gap-2 px-3 md:px-8 shadow-md">
-        <Link href="/" className="flex items-center gap-2 md:gap-4 hover:opacity-90 transition-opacity" data-testid="link-dashboard-banner-home">
-          <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-18 w-auto object-contain rounded" data-testid="img-dashboard-logo" />
-          <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-dashboard-header">
-            CHS Laker Nation
-          </h1>
-          <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-dashboard-header-mobile">
-            Lakers
-          </h1>
+    <div className="min-h-screen bg-[#000814] text-white font-sans">
+      <nav className="flex items-center justify-between gap-3 px-4 md:px-8 py-4 border-b border-white/5 bg-[#000814]/80 backdrop-blur-md sticky top-0 z-50">
+        <Link href="/" className="flex items-center gap-3 transition-opacity" data-testid="link-dashboard-banner-home">
+          <div className="h-10 w-10 bg-[#002366] border-2 border-[#4CBB17] rounded-lg flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(76,187,23,0.3)]">
+            <img src={logoUrl} alt="CHS Lakers" className="h-8 w-8 object-contain" data-testid="img-dashboard-logo" />
+          </div>
+          <span className="font-black italic tracking-tighter text-xl md:text-2xl" data-testid="text-dashboard-header">
+            LAKER<span className="text-[#4CBB17]">NATION</span>
+          </span>
         </Link>
-        <nav className="flex gap-1 md:gap-3 items-center">
-          <Link href="/">
-            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-dashboard-home-mobile">
-              <HomeIcon className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-dashboard-home">
-              Home
-            </Button>
-          </Link>
-          <Link href="/schedule">
-            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-dashboard-schedule-mobile">
-              <Calendar className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-dashboard-schedule">
-              Schedule
-            </Button>
-          </Link>
-          <Link href="/gallery">
-            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-dashboard-gallery-mobile">
-              <Image className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-dashboard-gallery">
-              Gallery
-            </Button>
-          </Link>
+        <div className="flex items-center gap-2 md:gap-6">
+          <div className="hidden md:flex gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+            <Link href="/" className="text-[#4CBB17]" data-testid="link-dashboard-home">Dashboard</Link>
+            <Link href="/schedule" className="hover:text-white transition" data-testid="link-dashboard-schedule">Schedules</Link>
+            <Link href="/gallery" className="hover:text-white transition" data-testid="link-dashboard-gallery">Gallery</Link>
+          </div>
           <Link href="/subscribe">
-            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="button-dashboard-notifications-mobile">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white/40 text-white hidden md:flex" data-testid="button-dashboard-notifications">
-              <Bell className="mr-2 h-4 w-4" />
-              Get Notifications
+            <Button variant="outline" className="bg-white/5 border-white/10 text-white text-[10px] font-black uppercase tracking-[0.15em] rounded-full" data-testid="button-dashboard-notifications">
+              <Bell className="mr-2 h-3 w-3" />
+              <span className="hidden md:inline">Get Alerts</span>
+              <span className="md:hidden">Alerts</span>
             </Button>
           </Link>
-        </nav>
-      </header>
-
-      <section className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] py-6 md:py-10 text-center text-white">
-        <h2 className="text-2xl md:text-4xl font-bold mb-1" data-testid="text-dashboard-hero-title">Go Lakers!</h2>
-        <p className="text-sm md:text-lg opacity-90" data-testid="text-dashboard-hero-subtitle">Colchester High School Athletics Dashboard</p>
-      </section>
-
-      <div className="container mx-auto px-3 md:px-4 py-6 md:py-8 max-w-5xl">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-          <Card data-testid="card-stat-upcoming">
-            <CardContent className="p-4 text-center">
-              <Clock className="h-6 w-6 mx-auto mb-2 text-[hsl(210,85%,35%)]" />
-              <p className="text-2xl font-bold text-[hsl(215,25%,20%)]">{allUpcomingGames.length}</p>
-              <p className="text-xs text-muted-foreground">Upcoming</p>
-            </CardContent>
-          </Card>
-          <Card data-testid="card-stat-record">
-            <CardContent className="p-4 text-center">
-              <Trophy className="h-6 w-6 mx-auto mb-2 text-[hsl(150,60%,45%)]" />
-              <p className="text-2xl font-bold text-[hsl(215,25%,20%)]">{wins}-{losses}</p>
-              <p className="text-xs text-muted-foreground">Record</p>
-            </CardContent>
-          </Card>
-          <Card data-testid="card-stat-sports">
-            <CardContent className="p-4 text-center">
-              <Activity className="h-6 w-6 mx-auto mb-2 text-[hsl(340,70%,55%)]" />
-              <p className="text-2xl font-bold text-[hsl(215,25%,20%)]">{uniqueSports}</p>
-              <p className="text-xs text-muted-foreground">Sports</p>
-            </CardContent>
-          </Card>
-          <Card data-testid="card-stat-next-game">
-            <CardContent className="p-4 text-center">
-              <Calendar className="h-6 w-6 mx-auto mb-2 text-[hsl(25,75%,50%)]" />
-              <p className="text-2xl font-bold text-[hsl(215,25%,20%)]">
-                {daysUntilNext != null ? (daysUntilNext === 0 ? "Today" : `${daysUntilNext}d`) : "--"}
-              </p>
-              <p className="text-xs text-muted-foreground">Next Game</p>
-            </CardContent>
-          </Card>
+          <div className="flex md:hidden gap-1">
+            <Link href="/">
+              <Button variant="ghost" size="icon" className="text-slate-400" data-testid="link-dashboard-home-mobile">
+                <HomeIcon className="h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/schedule">
+              <Button variant="ghost" size="icon" className="text-slate-400" data-testid="link-dashboard-schedule-mobile">
+                <Calendar className="h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/gallery">
+              <Button variant="ghost" size="icon" className="text-slate-400" data-testid="link-dashboard-gallery-mobile">
+                <Image className="h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
         </div>
+      </nav>
 
-        <div className="grid md:grid-cols-2 gap-4 md:gap-6">
-          <Card data-testid="card-dashboard-upcoming">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-[hsl(210,85%,35%)]" />
-                <CardTitle className="text-lg">Upcoming Games</CardTitle>
+      <main className="max-w-7xl mx-auto p-4 md:p-6">
+        {nextGame ? (
+          <div className="relative group overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-[#001D4D] border border-white/10 h-[300px] md:h-[420px] flex items-center" data-testid="card-dashboard-featured">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#000814] via-[#000814]/70 to-transparent z-10" />
+            {heroPhotoUrl && (
+              <img
+                src={heroPhotoUrl}
+                alt="Lakers Athletics"
+                className={`absolute right-0 top-0 h-full w-2/3 md:w-1/2 object-cover opacity-0 grayscale group-hover:grayscale-0 transition-all duration-700 ${heroImgLoaded ? 'opacity-30' : ''}`}
+                onLoad={() => setHeroImgLoaded(true)}
+              />
+            )}
+            <div className="relative z-20 pl-6 md:pl-12 space-y-3 md:space-y-4 max-w-lg">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#4CBB17] text-black rounded-full text-[10px] font-black uppercase tracking-widest">
+                <span className="w-2 h-2 bg-black rounded-full animate-pulse" />
+                {daysUntilNext === 0 ? "Game Day" : daysUntilNext === 1 ? "Tomorrow" : `In ${daysUntilNext} Days`}
               </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>
-              ) : allUpcomingGames.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No upcoming games</p>
-              ) : (
-                <div className="space-y-2">
-                  {allUpcomingGames.slice(0, 8).map((game) => (
-                    <div
-                      key={game.id}
-                      className="flex items-center gap-2 py-2 border-b last:border-b-0"
-                      data-testid={`row-dashboard-upcoming-${game.id}`}
-                    >
-                      <span
-                        className="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white flex-shrink-0"
-                        style={{ backgroundColor: getSportColor(game.sport) }}
-                        data-testid={`badge-dashboard-sport-${game.id}`}
-                      >
-                        {game.sport}
-                      </span>
-                      <span className="text-sm font-medium truncate flex-1" data-testid={`text-dashboard-opponent-${game.id}`}>
-                        {game.isHome === "home" ? "vs" : "@"} {game.opponent}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {format(parseLocalDate(game.date), "M/d")}
-                      </span>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {game.time}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Link href="/schedule" className="block mt-3">
-                <Button variant="outline" size="sm" className="w-full" data-testid="button-dashboard-view-schedule">
-                  View Full Schedule
+              <h1 className="text-4xl md:text-7xl font-black italic uppercase leading-none tracking-tighter" data-testid="text-dashboard-featured-title">
+                Lakers <br /><span className="text-[#4CBB17]">{nextGame.isHome === "home" ? "vs" : "@"}</span> {nextGame.opponent}
+              </h1>
+              <p className="text-base md:text-xl text-slate-300 font-medium" data-testid="text-dashboard-featured-details">
+                {nextGame.sport} &bull; {nextGame.location} &bull; {nextGame.time}
+              </p>
+              <div className="flex flex-wrap gap-3 pt-2 md:pt-4">
+                <Button
+                  className="bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-xl"
+                  onClick={() => {
+                    if (!goingGames.has(nextGame.id)) {
+                      attendanceMutation.mutate(nextGame.id);
+                    }
+                  }}
+                  disabled={goingGames.has(nextGame.id) || attendanceMutation.isPending}
+                  data-testid="button-dashboard-featured-going"
+                >
+                  {goingGames.has(nextGame.id) ? "You're Going!" : "I'm Going"}
                 </Button>
-              </Link>
-            </CardContent>
-          </Card>
+                <Link href="/schedule">
+                  <Button variant="outline" className="bg-white/10 backdrop-blur-md border-white/20 text-white font-black uppercase text-[10px] tracking-widest rounded-xl" data-testid="button-dashboard-featured-details">
+                    Game Details
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[2rem] md:rounded-[2.5rem] bg-[#001D4D] border border-white/10 p-10 md:p-16 text-center" data-testid="card-dashboard-featured-empty">
+            <h1 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter mb-2">
+              LAKER<span className="text-[#4CBB17]">NATION</span>
+            </h1>
+            <p className="text-slate-400 text-lg">Colchester High School Athletics</p>
+          </div>
+        )}
 
-          <div className="space-y-4 md:space-y-6">
-            <Card data-testid="card-dashboard-results">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-[hsl(150,60%,45%)]" />
-                  <CardTitle className="text-lg">Recent Results</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {recentResults.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No results yet</p>
-                ) : (
-                  <div className="space-y-2">
-                    {recentResults.slice(0, 4).map((game) => {
-                      const lakersScore = game.isHome === "home" ? game.homeScore : game.awayScore;
-                      const opponentScore = game.isHome === "home" ? game.awayScore : game.homeScore;
-                      const isWin = lakersScore != null && opponentScore != null && lakersScore > opponentScore;
-                      return (
-                        <div
-                          key={game.id}
-                          className="flex items-center gap-2 py-2 border-b last:border-b-0"
-                          data-testid={`row-dashboard-result-${game.id}`}
-                        >
-                          <span
-                            className="inline-block px-2 py-0.5 rounded-full text-xs font-medium text-white flex-shrink-0"
-                            style={{ backgroundColor: getSportColor(game.sport) }}
-                          >
-                            {game.sport}
-                          </span>
-                          <span className="text-sm truncate flex-1">
-                            {game.isHome === "home" ? "vs" : "@"} {game.opponent}
-                          </span>
-                          <span className="text-sm font-bold flex-shrink-0" data-testid={`text-dashboard-score-${game.id}`}>
-                            {lakersScore}-{opponentScore}
-                          </span>
-                          <Badge
-                            variant={isWin ? "default" : "secondary"}
-                            className="text-xs no-default-active-elevate"
-                            data-testid={`badge-dashboard-result-${game.id}`}
-                          >
-                            {isWin ? "W" : "L"}
-                          </Badge>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card data-testid="card-dashboard-news">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Newspaper className="h-5 w-5 text-[hsl(210,85%,35%)]" />
-                  <CardTitle className="text-lg">Latest News</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {newsArticles.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No news articles</p>
-                ) : (
-                  <div className="space-y-2">
-                    {newsArticles.slice(0, 4).map((article, idx) => (
-                      <a
-                        key={article.id}
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-start justify-between gap-2 py-2 border-b last:border-b-0 text-[hsl(215,25%,20%)] hover:text-[hsl(210,85%,35%)] transition-colors"
-                        data-testid={`link-dashboard-news-${idx}`}
-                      >
-                        <span className="text-sm font-medium line-clamp-2 flex-1">{article.title}</span>
-                        <ExternalLink className="h-3 w-3 flex-shrink-0 mt-1 text-muted-foreground" />
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-5 md:mt-6">
+          <div className="bg-white/5 border border-white/10 p-5 md:p-6 rounded-2xl" data-testid="card-stat-upcoming">
+            <p className="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-3">Upcoming</p>
+            <p className="text-3xl md:text-4xl font-black italic text-white">{allUpcomingGames.length}</p>
+            <p className="text-xs text-slate-500 mt-1">games scheduled</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-5 md:p-6 rounded-2xl" data-testid="card-stat-record">
+            <p className="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-3">Record</p>
+            <p className="text-3xl md:text-4xl font-black italic">
+              <span className="text-[#4CBB17]">{wins}</span>
+              <span className="text-slate-600">-</span>
+              <span className="text-white">{losses}</span>
+            </p>
+            <p className="text-xs text-slate-500 mt-1">win-loss</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-5 md:p-6 rounded-2xl" data-testid="card-stat-sports">
+            <p className="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-3">Active</p>
+            <p className="text-3xl md:text-4xl font-black italic text-white">{uniqueSports}</p>
+            <p className="text-xs text-slate-500 mt-1">sports</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-5 md:p-6 rounded-2xl" data-testid="card-stat-next-game">
+            <p className="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-3">Next Game</p>
+            <p className="text-3xl md:text-4xl font-black italic text-[#4CBB17]">
+              {daysUntilNext != null ? (daysUntilNext === 0 ? "NOW" : `${daysUntilNext}d`) : "--"}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">{daysUntilNext === 0 ? "game day" : "countdown"}</p>
           </div>
         </div>
 
-        <section className="mt-8 md:mt-12">
-          <Card className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] text-white border-0">
-            <CardContent className="p-8 md:p-12 text-center">
-              <Bell className="h-16 w-16 mx-auto mb-4" />
-              <h3 className="text-2xl md:text-3xl font-bold mb-4">Never Miss a Game</h3>
-              <p className="text-lg mb-6 max-w-2xl mx-auto opacity-90">
-                Subscribe to get email notifications 24 hours before each game and on game day morning.
-                Stay connected with CHS Laker Nation!
-              </p>
-              <Link href="/subscribe">
-                <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] border-white/80 font-semibold" data-testid="button-dashboard-subscribe-cta">
-                  <Bell className="mr-2 h-5 w-5" />
-                  Subscribe to Notifications
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </section>
-      </div>
+        <div className="grid md:grid-cols-3 gap-4 md:gap-6 mt-5 md:mt-6">
+          {latestResult && (
+            <div className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-2xl transition-colors" data-testid="card-dashboard-latest-result">
+              <h3 className="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-5">Latest Result</h3>
+              <div className="flex justify-between gap-2 items-center font-black italic text-xl md:text-2xl uppercase">
+                <span>Lakers</span>
+                <span className="text-[#4CBB17]">{latestLakersScore}</span>
+              </div>
+              <div className="flex justify-between gap-2 items-center font-black italic text-xl md:text-2xl uppercase opacity-40 mt-1">
+                <span className="truncate">{latestResult.opponent}</span>
+                <span>{latestOpponentScore}</span>
+              </div>
+              <div className="mt-4 text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                {latestResult.sport} &bull; Final
+              </div>
+            </div>
+          )}
 
-      <footer className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] text-white py-8 mt-12 shadow-inner">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm opacity-80">
-            &copy; 2025 CHS Laker Nation. Go Lakers!
+          <div className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-2xl" data-testid="card-dashboard-upcoming-compact">
+            <h3 className="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-5">Next Up</h3>
+            {allUpcomingGames.slice(0, 3).map((game) => (
+              <div key={game.id} className="flex items-center justify-between gap-2 py-2 border-b border-white/5 last:border-b-0" data-testid={`row-dashboard-upcoming-${game.id}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold truncate">{game.isHome === "home" ? "vs" : "@"} {game.opponent}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wide">{game.sport}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-xs font-bold text-slate-300">{format(parseLocalDate(game.date), "MMM d")}</p>
+                  <p className="text-[10px] text-slate-500">{game.time}</p>
+                </div>
+              </div>
+            ))}
+            <Link href="/schedule" className="block mt-4">
+              <Button variant="outline" size="sm" className="w-full bg-white/5 border-white/10 text-slate-300 font-black uppercase text-[10px] tracking-widest rounded-xl" data-testid="button-dashboard-view-schedule">
+                All Games
+                <ChevronRight className="ml-1 h-3 w-3" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-2xl" data-testid="card-dashboard-news">
+            <h3 className="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-5">News</h3>
+            {newsArticles.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-4">No news yet</p>
+            ) : (
+              <div className="space-y-3">
+                {newsArticles.slice(0, 3).map((article, idx) => (
+                  <a
+                    key={article.id}
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block py-2 border-b border-white/5 last:border-b-0 group"
+                    data-testid={`link-dashboard-news-${idx}`}
+                  >
+                    <p className="text-sm font-medium text-slate-200 line-clamp-2 group-hover:text-[#4CBB17] transition-colors">{article.title}</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wide mt-1">
+                      Burlington Free Press
+                      {article.publishedAt && ` \u2022 ${new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                    </p>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {recentResults.length > 1 && (
+          <div className="bg-white/5 border border-white/10 p-6 md:p-8 rounded-2xl mt-5 md:mt-6" data-testid="card-dashboard-results">
+            <h3 className="text-slate-500 font-black uppercase text-[10px] tracking-widest mb-5">Recent Results</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {recentResults.slice(1, 5).map((game) => {
+                const lakersScore = game.isHome === "home" ? game.homeScore : game.awayScore;
+                const opponentScore = game.isHome === "home" ? game.awayScore : game.homeScore;
+                const isWin = lakersScore != null && opponentScore != null && lakersScore > opponentScore;
+                return (
+                  <div
+                    key={game.id}
+                    className="flex items-center justify-between gap-3 py-3 px-4 bg-white/[0.03] rounded-xl border border-white/5"
+                    data-testid={`row-dashboard-result-${game.id}`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span
+                        className="w-1 h-8 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: isWin ? '#4CBB17' : 'rgba(255,255,255,0.15)' }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate">
+                          {game.isHome === "home" ? "vs" : "@"} {game.opponent}
+                        </p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide">{game.sport}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-lg font-black italic" data-testid={`text-dashboard-score-${game.id}`}>
+                        <span className={isWin ? "text-[#4CBB17]" : "text-white"}>{lakersScore}</span>
+                        <span className="text-slate-600">-</span>
+                        <span className="text-slate-400">{opponentScore}</span>
+                      </span>
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${isWin ? 'bg-[#4CBB17]/20 text-[#4CBB17]' : 'bg-white/5 text-slate-500'}`} data-testid={`badge-dashboard-result-${game.id}`}>
+                        {isWin ? "W" : "L"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="relative overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-gradient-to-r from-[#002366] to-[#001D4D] border border-[#4CBB17]/30 mt-8 md:mt-10 p-8 md:p-12 text-center" data-testid="card-dashboard-cta">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(76,187,23,0.15),_transparent_70%)]" />
+          <div className="relative z-10">
+            <Bell className="h-12 w-12 md:h-16 md:w-16 mx-auto mb-4 text-[#4CBB17]" />
+            <h3 className="text-2xl md:text-3xl font-black italic uppercase tracking-tighter mb-3">Never Miss a Game</h3>
+            <p className="text-base md:text-lg text-slate-300 mb-6 max-w-2xl mx-auto">
+              Get notifications 24 hours before each game and on game day morning.
+            </p>
+            <Link href="/subscribe">
+              <Button className="bg-[#4CBB17] text-black font-black uppercase text-xs tracking-widest rounded-xl" size="lg" data-testid="button-dashboard-subscribe-cta">
+                <Bell className="mr-2 h-4 w-4" />
+                Subscribe Now
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t border-white/5 py-8 mt-12">
+        <div className="max-w-7xl mx-auto px-6 text-center">
+          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+            &copy; 2025 CHS Laker Nation &bull; Go Lakers!
           </p>
         </div>
       </footer>
