@@ -10,6 +10,7 @@ import type { Game, NewsArticle, Photo } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Untitled_design_1771440870559.png";
+import heroStaticUrl from "@assets/Gemini_Generated_Image_uyffn8uyffn8uyff_1771441141726.png";
 
 const sportColors: Record<string, string> = {
   "Football": "hsl(210, 85%, 35%)",
@@ -27,7 +28,6 @@ const getSportColor = (sport: string) => sportColors[sport] || "hsl(210, 15%, 50
 
 export default function PreviewDashboard() {
   const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
-  const [heroImgLoaded, setHeroImgLoaded] = useState(false);
   const { toast } = useToast();
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
@@ -106,10 +106,6 @@ export default function PreviewDashboard() {
   const nextGame = allUpcomingGames[0];
   const daysUntilNext = nextGame ? differenceInDays(parseLocalDate(nextGame.date), now) : null;
 
-  const heroPhotoUrl = photos.length > 0
-    ? `/api/photos/${photos[0].googleDriveId}/full`
-    : null;
-
   const latestResult = recentResults[0];
   const latestLakersScore = latestResult ? (latestResult.isHome === "home" ? latestResult.homeScore : latestResult.awayScore) : null;
   const latestOpponentScore = latestResult ? (latestResult.isHome === "home" ? latestResult.awayScore : latestResult.homeScore) : null;
@@ -161,15 +157,12 @@ export default function PreviewDashboard() {
       <main className="max-w-7xl mx-auto p-4 md:p-6">
         {nextGame ? (
           <div className="relative group overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-[#001D4D] border border-white/10 h-[300px] md:h-[420px] flex items-center" data-testid="card-dashboard-featured">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#000814] via-[#000814]/70 to-transparent z-10" />
-            {heroPhotoUrl && (
-              <img
-                src={heroPhotoUrl}
-                alt="Lakers Athletics"
-                className={`absolute right-0 top-0 h-full w-2/3 md:w-1/2 object-cover opacity-0 grayscale group-hover:grayscale-0 transition-all duration-700 ${heroImgLoaded ? 'opacity-30' : ''}`}
-                onLoad={() => setHeroImgLoaded(true)}
-              />
-            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#000814] via-[#000814]/60 to-transparent z-10" />
+            <img
+              src={heroStaticUrl}
+              alt="Lakers Athletics"
+              className="absolute right-0 top-0 h-full w-full object-cover opacity-40 grayscale group-hover:grayscale-0 transition-all duration-700"
+            />
             <div className="relative z-20 pl-6 md:pl-12 space-y-3 md:space-y-4 max-w-lg">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#4CBB17] text-black rounded-full text-[10px] font-black uppercase tracking-widest">
                 <span className="w-2 h-2 bg-black rounded-full animate-pulse" />
