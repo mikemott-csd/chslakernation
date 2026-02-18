@@ -14,9 +14,8 @@ vite.config.ts.*
 .env
 .env.*
 
-# Attached assets (may contain pasted credentials)
-attached_assets/*.txt
-attached_assets/*.json
+# Attached assets (user uploads, pasted content, generated images)
+attached_assets/
 
 # Photo cache (large binary files, downloaded at runtime)
 photo-cache/
