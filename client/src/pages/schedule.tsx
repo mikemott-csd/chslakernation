@@ -182,7 +182,7 @@ export default function Schedule() {
   const paddingDays = Array(firstDayOfWeek).fill(null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
+    <div className="min-h-screen bg-transparent">
       {/* Branded Header with Gradient */}
       <header className="w-full bg-gradient-to-r from-primary via-primary to-[#1e3a5f] shadow-md">
         <div className="max-w-7xl mx-auto px-3 md:px-6 h-16 md:h-24 flex items-center justify-between gap-2 md:gap-4">
@@ -269,7 +269,7 @@ export default function Schedule() {
                   rounded-full transition-all duration-200 flex-shrink-0 text-xs md:text-sm font-semibold
                   ${isActive 
                     ? `${colors.bg} ${colors.text}` 
-                    : `bg-white ${colors.border} border-2 text-foreground`
+                    : `bg-black/30 ${colors.border} border-2 text-foreground`
                   }
                 `}
                 data-testid={`button-filter-${sport.toLowerCase().replace(' ', '-')}`}
@@ -350,9 +350,9 @@ export default function Schedule() {
                         className={`
                           aspect-square rounded-md flex flex-col items-center justify-center
                           transition-all duration-150 relative p-0.5 md:p-1
-                          ${isCurrentDay ? 'bg-[hsl(210,85%,95%)] border border-[hsl(210,85%,35%)]' : ''}
-                          ${isSelected ? 'ring-2 ring-primary ring-offset-1 md:ring-offset-2 bg-[hsl(210,85%,90%)]' : ''}
-                          ${hasGames && !isSelected ? 'bg-[hsl(150,60%,95%)] hover:bg-[hsl(150,60%,90%)] cursor-pointer' : hasGames ? 'cursor-pointer' : 'cursor-default'}
+                          ${isCurrentDay ? 'bg-primary/20 border border-primary' : ''}
+                          ${isSelected ? 'ring-2 ring-primary ring-offset-1 md:ring-offset-2 bg-primary/30' : ''}
+                          ${hasGames && !isSelected ? 'bg-accent/20 hover:bg-accent/30 cursor-pointer' : hasGames ? 'cursor-pointer' : 'cursor-default'}
                           ${!isSameMonth(day, currentMonth) ? 'text-muted-foreground/30' : 'text-foreground'}
                         `}
                         data-testid={`button-calendar-day-${format(day, 'yyyy-MM-dd')}`}

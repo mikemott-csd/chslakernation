@@ -123,76 +123,75 @@
 }
 
 .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
+  --button-outline: rgba(255,255,255, .12);
+  --badge-outline: rgba(255,255,255, .06);
 
-  --opaque-button-border-intensity: 9;  /* In terms of percentages */
+  --opaque-button-border-intensity: 9;
 
-  /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --elevate-1: rgba(255,255,255, .05);
+  --elevate-2: rgba(255,255,255, .10);
 
-  --background: 215 25% 12%;
+  --background: 0 0% 0%;
 
-  --foreground: 210 20% 95%;
+  --foreground: 195 80% 90%;
 
-  --border: 215 20% 22%;
+  --border: 195 50% 18%;
 
-  --card: 215 22% 15%;
+  --card: 210 40% 6%;
 
-  --card-foreground: 210 20% 95%;
+  --card-foreground: 195 80% 90%;
 
-  --card-border: 215 20% 20%;
+  --card-border: 195 60% 16%;
 
-  --sidebar: 215 24% 18%;
+  --sidebar: 210 40% 5%;
 
-  --sidebar-foreground: 210 20% 95%;
+  --sidebar-foreground: 195 80% 90%;
 
-  --sidebar-border: 215 22% 24%;
+  --sidebar-border: 195 50% 14%;
 
-  --sidebar-primary: 210 80% 30%;
+  --sidebar-primary: 210 85% 50%;
 
   --sidebar-primary-foreground: 210 20% 98%;
 
-  --sidebar-accent: 215 22% 22%;
+  --sidebar-accent: 195 40% 12%;
 
-  --sidebar-accent-foreground: 210 20% 95%;
+  --sidebar-accent-foreground: 195 80% 90%;
 
-  --sidebar-ring: 210 80% 40%;
+  --sidebar-ring: 195 80% 55%;
 
-  --popover: 215 24% 16%;
+  --popover: 210 40% 5%;
 
-  --popover-foreground: 210 20% 95%;
+  --popover-foreground: 195 80% 90%;
 
-  --popover-border: 215 20% 22%;
+  --popover-border: 195 50% 16%;
 
-  --primary: 210 80% 30%;
+  --primary: 210 85% 50%;
 
   --primary-foreground: 210 20% 98%;
 
-  --secondary: 215 20% 24%;
+  --secondary: 210 30% 12%;
 
-  --secondary-foreground: 210 20% 95%;
+  --secondary-foreground: 195 80% 90%;
 
-  --muted: 215 18% 20%;
+  --muted: 210 30% 10%;
 
-  --muted-foreground: 215 12% 65%;
+  --muted-foreground: 195 40% 55%;
 
-  --accent: 150 55% 35%;
+  --accent: 150 70% 45%;
 
   --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 65% 35%;
+  --destructive: 0 65% 40%;
 
   --destructive-foreground: 0 0% 98%;
 
-  --input: 215 20% 35%;
-  --ring: 210 80% 40%;
-  --chart-1: 210 75% 55%;
-  --chart-2: 150 55% 60%;
+  --input: 195 40% 18%;
+  --ring: 195 80% 55%;
+  --chart-1: 195 80% 55%;
+  --chart-2: 150 70% 55%;
   --chart-3: 25 70% 60%;
   --chart-4: 340 65% 65%;
-  --chart-5: 215 65% 50%;
+  --chart-5: 210 75% 55%;
 
   --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.20);
   --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.25);
@@ -238,7 +237,39 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased text-foreground;
+    background: transparent;
+  }
+
+  .dark body {
+    background: transparent;
+  }
+
+  .dark [data-slot="card"],
+  .dark .rounded-lg.border,
+  .dark .rounded-md.border {
+    background: rgba(0, 12, 22, 0.78) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-color: rgba(0, 160, 220, 0.18) !important;
+  }
+
+  .dark header {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .dark footer {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .dark [data-slot="popover-content"],
+  .dark [role="dialog"] {
+    background: rgba(0, 12, 22, 0.92) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-color: rgba(0, 160, 220, 0.22) !important;
   }
 }
 

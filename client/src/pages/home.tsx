@@ -150,7 +150,7 @@ export default function Home() {
   const hasMoreUpcoming = allUpcomingGames.length > 2;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
+    <div className="min-h-screen bg-transparent">
       {/* Header */}
       <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
         <Link href="/" className="flex items-center gap-2 md:gap-4 hover:opacity-90 transition-opacity" data-testid="link-banner-home">

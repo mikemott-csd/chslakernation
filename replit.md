@@ -19,6 +19,7 @@ The application features a responsive design with a strong emphasis on Colcheste
 - **Interactive Calendar**: Card-based design with Lakers Blue header, navigation arrows, and game indicators (colored dots) for days with scheduled events.
 - **Upcoming Games List**: Scrollable game cards displaying sport badges, date/time, opponent, location, attendance count, and "I'm going" button.
 - **Dynamic Home Page**: Features auto-rotating hero images (Lakers-themed sports photos), a "Recent Results" section with scores and WIN/LOSS indicators, and an "Upcoming Games Preview" (next 5 games).
+- **Futuristic Animated Background**: Full-screen HTML5 canvas (`client/src/components/HoneycombBackground.tsx`) fixed behind all pages with three animated layers: (1) black honeycomb grid with glowing blue-to-green gradient lines that pulse over time, (2) animated water waves in the lower 65% of the screen with rippling sine-wave bands, (3) a Nessie-style lake monster with 3 humps, neck, and glowing eye that swims left/right across the screen. Dark mode is forced globally; all page backgrounds are transparent so the canvas shows through. Cards and panels use glassmorphism (rgba dark background + backdrop-filter blur).
 
 ### Technical Implementations
 - **Frontend**: React with TypeScript, TanStack Query for data fetching, and Wouter for routing.

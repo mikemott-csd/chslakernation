@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -10,6 +11,7 @@ import Unsubscribe from "@/pages/unsubscribe";
 import Gallery from "@/pages/gallery";
 import NotFound from "@/pages/not-found";
 import InstallPrompt from "@/components/InstallPrompt";
+import HoneycombBackground from "@/components/HoneycombBackground";
 
 function Router() {
   return (
@@ -25,9 +27,15 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+    document.documentElement.style.background = "#000";
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <HoneycombBackground />
         <Toaster />
         <Router />
         <InstallPrompt />

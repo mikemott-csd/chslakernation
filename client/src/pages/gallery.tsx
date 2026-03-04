@@ -54,7 +54,7 @@ export default function Gallery() {
   const allImagesFailed = photos.length > 0 && workingPhotos.length === 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(210,20%,98%)] to-white">
+    <div className="min-h-screen bg-transparent">
       {/* Header */}
       <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
         <div className="flex items-center gap-2 md:gap-4">
