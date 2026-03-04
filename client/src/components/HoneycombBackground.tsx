@@ -9,222 +9,161 @@ export default function HoneycombBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const SCALE = 3;
+    const DAMP = 0.988;
+    const REFRACT = 0.14;
+
+    // Mutable state object so resize can update everything the animate loop sees
+    const state = {
+      simW: 0,
+      simH: 0,
+      cur: new Float32Array(0),
+      prev: new Float32Array(0),
+    };
+
     let animationId: number;
     let time = 0;
+    let ambientTimer = 0;
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    function init() {
+      const w = Math.ceil(window.innerWidth / SCALE);
+      const h = Math.ceil(window.innerHeight / SCALE);
+      state.simW = w;
+      state.simH = h;
+      canvas.width = w;
+      canvas.height = h;
+      state.cur = new Float32Array(w * h);
+      state.prev = new Float32Array(w * h);
+    }
+
+    init();
+    window.addEventListener("resize", init);
+
+    // Inject ripple energy into the prev buffer (read on next step)
+    function splash(cx: number, cy: number, radius: number, strength: number) {
+      const { simW, simH, prev } = state;
+      const r2 = radius * radius;
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          if (dx * dx + dy * dy <= r2) {
+            const nx = Math.max(1, Math.min(simW - 2, cx + dx));
+            const ny = Math.max(1, Math.min(simH - 2, cy + dy));
+            prev[ny * simW + nx] += strength;
+          }
+        }
+      }
+    }
+
+    let lastSimX = -1;
+    let lastSimY = -1;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const { simW, simH } = state;
+      const sx = Math.floor((e.clientX / window.innerWidth) * simW);
+      const sy = Math.floor((e.clientY / window.innerHeight) * simH);
+      if (sx !== lastSimX || sy !== lastSimY) {
+        splash(sx, sy, 5, 380);
+        lastSimX = sx;
+        lastSimY = sy;
+      }
     };
-    resize();
-    window.addEventListener("resize", resize);
 
-    const hexSize = 42;
-    const hexW = hexSize * 1.5;
-    const hexH = Math.sqrt(3) * hexSize;
+    const onTouchMove = (e: TouchEvent) => {
+      const { simW, simH } = state;
+      const t = e.touches[0];
+      const sx = Math.floor((t.clientX / window.innerWidth) * simW);
+      const sy = Math.floor((t.clientY / window.innerHeight) * simH);
+      splash(sx, sy, 5, 380);
+    };
 
-    function drawHex(x: number, y: number, phase: number) {
-      const pulse = 0.25 + 0.18 * Math.sin(phase + time * 0.6);
-      const glow = 6 + 4 * Math.sin(phase + time * 0.4);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
 
-      const grad = ctx!.createLinearGradient(x - hexSize, y - hexSize, x + hexSize, y + hexSize);
-      grad.addColorStop(0, `rgba(0, 160, 255, ${pulse})`);
-      grad.addColorStop(0.5, `rgba(0, 230, 180, ${pulse * 1.1})`);
-      grad.addColorStop(1, `rgba(0, 255, 120, ${pulse * 0.9})`);
-
-      ctx!.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i - Math.PI / 6;
-        const px = x + hexSize * Math.cos(angle);
-        const py = y + hexSize * Math.sin(angle);
-        i === 0 ? ctx!.moveTo(px, py) : ctx!.lineTo(px, py);
+    function doAmbientSplash() {
+      const { simW, simH } = state;
+      if (time - ambientTimer > 3 + Math.random() * 4) {
+        ambientTimer = time;
+        const ax = 2 + Math.floor(Math.random() * (simW - 4));
+        const ay = 2 + Math.floor(Math.random() * (simH - 4));
+        splash(ax, ay, 2, 100 + Math.random() * 80);
       }
-      ctx!.closePath();
-
-      ctx!.shadowBlur = glow;
-      ctx!.shadowColor = "rgba(0, 210, 255, 0.7)";
-      ctx!.strokeStyle = grad;
-      ctx!.lineWidth = 1;
-      ctx!.stroke();
-    }
-
-    let monsterX = -250;
-    let monsterDir = 1;
-    const monsterSpeed = 0.7;
-
-    function drawMonster(mx: number, waterY: number, t: number) {
-      const bob = Math.sin(t * 1.1) * 5;
-      const baseY = waterY - 4 + bob;
-
-      ctx!.save();
-      if (monsterDir < 0) {
-        ctx!.translate(mx, 0);
-        ctx!.scale(-1, 1);
-        ctx!.translate(-mx, 0);
-      }
-
-      ctx!.shadowBlur = 18;
-      ctx!.shadowColor = "rgba(0, 255, 150, 0.9)";
-
-      const bodyColor = "rgba(0, 170, 100, 0.92)";
-      const glowColor = "rgba(0, 255, 160, 0.7)";
-
-      const humps = [
-        { x: mx - 70, ry: 20, rx: 28 },
-        { x: mx, ry: 28, rx: 36 },
-        { x: mx + 72, ry: 22, rx: 30 },
-      ];
-
-      humps.forEach(({ x, ry, rx }) => {
-        ctx!.beginPath();
-        ctx!.ellipse(x, baseY - ry * 0.3, rx, ry, 0, Math.PI, 0);
-        ctx!.fillStyle = bodyColor;
-        ctx!.fill();
-        ctx!.strokeStyle = glowColor;
-        ctx!.lineWidth = 1.5;
-        ctx!.stroke();
-      });
-
-      const neckX = mx + 108;
-      const neckBaseY = baseY + 8;
-      const neckTipX = mx + 122;
-      const neckTipY = baseY - 65;
-
-      ctx!.beginPath();
-      ctx!.moveTo(neckX - 8, neckBaseY);
-      ctx!.bezierCurveTo(neckX - 4, neckBaseY - 30, neckTipX - 10, neckTipY + 20, neckTipX, neckTipY);
-      ctx!.bezierCurveTo(neckTipX + 8, neckTipY + 20, neckX + 6, neckBaseY - 30, neckX + 6, neckBaseY);
-      ctx!.closePath();
-      ctx!.fillStyle = bodyColor;
-      ctx!.fill();
-      ctx!.strokeStyle = glowColor;
-      ctx!.lineWidth = 1.5;
-      ctx!.stroke();
-
-      ctx!.beginPath();
-      ctx!.ellipse(neckTipX + 10, neckTipY - 4, 16, 11, Math.PI / 6, 0, Math.PI * 2);
-      ctx!.fillStyle = bodyColor;
-      ctx!.fill();
-      ctx!.strokeStyle = glowColor;
-      ctx!.lineWidth = 1.5;
-      ctx!.stroke();
-
-      ctx!.beginPath();
-      ctx!.arc(neckTipX + 20, neckTipY - 8, 4, 0, Math.PI * 2);
-      ctx!.fillStyle = "rgba(0, 255, 220, 1)";
-      ctx!.shadowBlur = 10;
-      ctx!.shadowColor = "rgba(0, 255, 200, 1)";
-      ctx!.fill();
-
-      ctx!.beginPath();
-      ctx!.arc(neckTipX + 21, neckTipY - 8, 2, 0, Math.PI * 2);
-      ctx!.fillStyle = "#000";
-      ctx!.shadowBlur = 0;
-      ctx!.fill();
-
-      ctx!.beginPath();
-      ctx!.moveTo(neckTipX + 26, neckTipY - 2);
-      ctx!.lineTo(neckTipX + 32, neckTipY - 1);
-      ctx!.lineTo(neckTipX + 26, neckTipY + 2);
-      ctx!.fillStyle = bodyColor;
-      ctx!.fill();
-
-      ctx!.restore();
-    }
-
-    function drawWater(t: number): number {
-      const w = canvas!.width;
-      const h = canvas!.height;
-      const waterY = h * 0.65;
-
-      ctx!.shadowBlur = 0;
-
-      for (let layer = 0; layer < 4; layer++) {
-        const alpha = 0.07 - layer * 0.012;
-        const speed = 0.45 + layer * 0.25;
-        const amp = 14 - layer * 2.5;
-        const yOff = layer * 25;
-        const freq1 = 0.009 + layer * 0.002;
-        const freq2 = 0.016 + layer * 0.003;
-
-        ctx!.beginPath();
-        ctx!.moveTo(0, h);
-        for (let x = 0; x <= w; x += 4) {
-          const y =
-            waterY +
-            yOff +
-            amp * Math.sin(x * freq1 + t * speed) +
-            amp * 0.5 * Math.sin(x * freq2 + t * speed * 1.4 + 1.2);
-          ctx!.lineTo(x, y);
-        }
-        ctx!.lineTo(w, h);
-        ctx!.closePath();
-
-        const wg = ctx!.createLinearGradient(0, waterY, 0, h);
-        wg.addColorStop(0, `rgba(0, 120, 220, ${alpha * 3.5})`);
-        wg.addColorStop(0.4, `rgba(0, 160, 190, ${alpha * 2})`);
-        wg.addColorStop(1, `rgba(0, 60, 100, ${alpha})`);
-        ctx!.fillStyle = wg;
-        ctx!.fill();
-
-        ctx!.beginPath();
-        for (let x = 0; x <= w; x += 4) {
-          const y =
-            waterY +
-            yOff +
-            amp * Math.sin(x * freq1 + t * speed) +
-            amp * 0.5 * Math.sin(x * freq2 + t * speed * 1.4 + 1.2);
-          x === 0 ? ctx!.moveTo(x, y) : ctx!.lineTo(x, y);
-        }
-
-        ctx!.shadowBlur = layer === 0 ? 12 : 5;
-        ctx!.shadowColor =
-          layer === 0
-            ? "rgba(0, 210, 255, 0.6)"
-            : "rgba(0, 255, 160, 0.25)";
-        ctx!.strokeStyle =
-          layer === 0
-            ? `rgba(0, 210, 255, 0.55)`
-            : `rgba(0, 255, 150, 0.2)`;
-        ctx!.lineWidth = layer === 0 ? 1.5 : 0.8;
-        ctx!.stroke();
-        ctx!.shadowBlur = 0;
-      }
-
-      return waterY;
     }
 
     const animate = () => {
       time += 0.016;
-      const w = canvas!.width;
-      const h = canvas!.height;
 
-      ctx!.fillStyle = "#000000";
-      ctx!.fillRect(0, 0, w, h);
-      ctx!.shadowBlur = 0;
+      const { simW: w, simH: h } = state;
+      let { cur, prev } = state;
 
-      const cols = Math.ceil(w / hexW) + 3;
-      const rows = Math.ceil(h / hexH) + 3;
-
-      for (let col = -1; col < cols; col++) {
-        for (let row = -1; row < rows; row++) {
-          const x = col * hexW;
-          const y = row * hexH + (col % 2 !== 0 ? hexH / 2 : 0);
-          const phase = col * 0.4 + row * 0.7;
-          drawHex(x, y, phase);
+      // --- Wave simulation step ---
+      for (let y = 1; y < h - 1; y++) {
+        const row = y * w;
+        for (let x = 1; x < w - 1; x++) {
+          const i = row + x;
+          const val =
+            (prev[i - 1] + prev[i + 1] + prev[i - w] + prev[i + w]) * 0.5 -
+            cur[i];
+          cur[i] = val * DAMP;
         }
       }
 
-      ctx!.shadowBlur = 0;
+      // Swap buffers
+      state.cur = prev;
+      state.prev = cur;
+      // After swap: state.prev = newly computed, state.cur = old prev (2 frames ago)
+      prev = state.prev;
+      cur = state.cur;
 
-      const waterY = drawWater(time);
+      doAmbientSplash();
 
-      monsterX += monsterSpeed * monsterDir;
-      if (monsterX > w + 280) monsterDir = -1;
-      if (monsterX < -280) monsterDir = 1;
+      // --- Render via ImageData ---
+      const imageData = ctx.createImageData(w, h);
+      const data = imageData.data;
 
-      drawMonster(monsterX, waterY, time);
+      for (let y = 0; y < h; y++) {
+        const yNorm = y / h;
+        // Deep lake: dark navy-teal gradient top→bottom
+        // Top (0): rgb(0, 60, 110) — teal-blue, simulating light above surface
+        // Bottom (1): rgb(0, 12, 35) — very dark navy
+        const baseR = 0;
+        const baseG = Math.round(60 - yNorm * 48);
+        const baseB = Math.round(110 - yNorm * 75);
 
+        const row = y * w;
+        for (let x = 0; x < w; x++) {
+          const i = row + x;
+          const height = prev[i];
+
+          // Refraction: compute surface normal gradient
+          const ndx = x > 0 && x < w - 1 ? prev[i + 1] - prev[i - 1] : 0;
+          const ndy = y > 0 && y < h - 1 ? prev[i + w] - prev[i - w] : 0;
+
+          // Offset source sample position
+          const srcX = Math.max(0, Math.min(w - 1, (x + ndx * REFRACT) | 0));
+          const srcY = Math.max(0, Math.min(h - 1, (y + ndy * REFRACT) | 0));
+          const srcYNorm = srcY / h;
+
+          // Background color at refracted position
+          const rg = Math.round(60 - srcYNorm * 48);
+          const rb = Math.round(110 - srcYNorm * 75);
+
+          // Caustic shimmer (subtle animated light patterns)
+          const caustic =
+            4 * Math.sin(x * 0.06 + time * 1.0) * Math.sin(y * 0.05 + time * 0.7) +
+            2 * Math.sin(x * 0.11 + time * 0.6) * Math.sin(y * 0.08 + time * 1.2);
+
+          // Height-based brightness: ripple crests catch light
+          const bright = height * 0.28 + caustic;
+
+          const pi = i << 2;
+          data[pi]     = Math.max(0, Math.min(255, baseR + bright * 0.4));
+          data[pi + 1] = Math.max(0, Math.min(255, rg + bright));
+          data[pi + 2] = Math.max(0, Math.min(255, rb + bright * 0.8));
+          data[pi + 3] = 255;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
       animationId = requestAnimationFrame(animate);
     };
 
@@ -232,7 +171,9 @@ export default function HoneycombBackground() {
 
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", init);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, []);
 
