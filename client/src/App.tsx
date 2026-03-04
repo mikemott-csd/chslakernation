@@ -8,9 +8,6 @@ import Schedule from "@/pages/schedule";
 import Subscribe from "@/pages/subscribe";
 import Unsubscribe from "@/pages/unsubscribe";
 import Gallery from "@/pages/gallery";
-import PreviewDashboard from "@/pages/preview-dashboard";
-import PreviewColumns from "@/pages/preview-columns";
-import PreviewFeed from "@/pages/preview-feed";
 import NotFound from "@/pages/not-found";
 import InstallPrompt from "@/components/InstallPrompt";
 
@@ -22,9 +19,6 @@ function Router() {
       <Route path="/subscribe" component={Subscribe} />
       <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path="/gallery" component={Gallery} />
-      <Route path="/preview/dashboard" component={PreviewDashboard} />
-      <Route path="/preview/columns" component={PreviewColumns} />
-      <Route path="/preview/feed" component={PreviewFeed} />
       <Route component={NotFound} />
     </Switch>
   );
