@@ -242,7 +242,7 @@ export default function Schedule() {
       <main className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-8">
         {/* Page Title */}
         <div className="mb-4 md:mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold text-[hsl(215,25%,20%)] mb-1 md:mb-2">
+          <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-1 md:mb-2">
             Game Schedule
           </h1>
           <p className="text-sm md:text-base text-muted-foreground">
@@ -384,7 +384,7 @@ export default function Schedule() {
           {/* Upcoming Games List - 2 columns */}
           <div className="lg:col-span-2">
             <Card className="p-3 md:p-6 shadow-lg border-2 mb-4 md:mb-6">
-              <h2 className="text-lg md:text-2xl font-bold text-[hsl(215,25%,20%)]">
+              <h2 className="text-lg md:text-2xl font-bold text-foreground">
                 {selectedDate ? `Games on ${format(selectedDate, "MMM d")}` : "Upcoming Games"}
               </h2>
             </Card>

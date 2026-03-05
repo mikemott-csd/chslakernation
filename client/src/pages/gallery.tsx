@@ -106,8 +106,8 @@ export default function Gallery() {
       <div className="container mx-auto px-3 md:px-4 py-6 md:py-12 max-w-7xl">
         {/* Page Title */}
         <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
-          <Camera className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,35%)]" />
-          <h2 className="text-2xl md:text-4xl font-bold text-[hsl(215,25%,20%)]" data-testid="text-gallery-title">
+          <Camera className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,68%)]" />
+          <h2 className="text-2xl md:text-4xl font-bold text-foreground" data-testid="text-gallery-title">
             Photo Gallery
           </h2>
         </div>
