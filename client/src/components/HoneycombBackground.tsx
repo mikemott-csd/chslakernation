@@ -64,59 +64,59 @@ export default function HoneycombBackground() {
       const y = rand(0, H);
       if (type === "plankton") {
         const [fill, shadow] = PLANKTON_COLORS[Math.floor(Math.random() * PLANKTON_COLORS.length)];
-        const alpha = rand(0.25, 0.65);
+        const alpha = rand(0.12, 0.32);
         return {
           x, y, baseX: x, baseY: y,
           vx: 0, vy: 0,
-          radius: rand(0.8, 2.2),
+          radius: rand(0.8, 1.8),
           color: fill.replace("A", String(alpha)),
           shadowColor: shadow,
-          shadowBlur: rand(4, 10),
+          shadowBlur: rand(3, 7),
           alpha,
           phase: rand(0, Math.PI * 2),
-          phaseSpeed: rand(0.003, 0.012),
-          driftAmpX: rand(10, 35),
-          driftAmpY: rand(8, 25),
-          driftFreqX: rand(0.0003, 0.0008),
-          driftFreqY: rand(0.0004, 0.001),
+          phaseSpeed: rand(0.001, 0.005),
+          driftAmpX: rand(6, 18),
+          driftAmpY: rand(5, 14),
+          driftFreqX: rand(0.00008, 0.00018),
+          driftFreqY: rand(0.0001, 0.00022),
           type,
         };
       } else if (type === "orb") {
         const [fill, shadow] = ORB_COLORS[Math.floor(Math.random() * ORB_COLORS.length)];
-        const alpha = rand(0.45, 0.85);
+        const alpha = rand(0.22, 0.45);
         return {
           x, y, baseX: x, baseY: y,
           vx: 0, vy: 0,
-          radius: rand(2.5, 6),
+          radius: rand(2.5, 5),
           color: fill.replace("A", String(alpha)),
           shadowColor: shadow,
-          shadowBlur: rand(12, 28),
+          shadowBlur: rand(10, 20),
           alpha,
           phase: rand(0, Math.PI * 2),
-          phaseSpeed: rand(0.008, 0.022),
-          driftAmpX: rand(20, 60),
-          driftAmpY: rand(15, 45),
-          driftFreqX: rand(0.0002, 0.0006),
-          driftFreqY: rand(0.0003, 0.0007),
+          phaseSpeed: rand(0.003, 0.009),
+          driftAmpX: rand(12, 35),
+          driftAmpY: rand(10, 28),
+          driftFreqX: rand(0.00006, 0.00014),
+          driftFreqY: rand(0.00008, 0.00016),
           type,
         };
       } else {
         const [fill, shadow] = BLOOM_COLORS[Math.floor(Math.random() * BLOOM_COLORS.length)];
-        const alpha = rand(0.55, 0.9);
+        const alpha = rand(0.2, 0.38);
         return {
           x, y, baseX: x, baseY: y,
           vx: 0, vy: 0,
-          radius: rand(9, 18),
+          radius: rand(8, 15),
           color: fill.replace("A", String(alpha)),
           shadowColor: shadow,
-          shadowBlur: rand(28, 60),
+          shadowBlur: rand(20, 42),
           alpha,
           phase: rand(0, Math.PI * 2),
-          phaseSpeed: rand(0.004, 0.01),
-          driftAmpX: rand(30, 80),
-          driftAmpY: rand(20, 60),
-          driftFreqX: rand(0.00015, 0.0004),
-          driftFreqY: rand(0.0002, 0.0005),
+          phaseSpeed: rand(0.002, 0.006),
+          driftAmpX: rand(18, 45),
+          driftAmpY: rand(12, 35),
+          driftFreqX: rand(0.00005, 0.00011),
+          driftFreqY: rand(0.00006, 0.00013),
           type,
         };
       }
@@ -128,9 +128,9 @@ export default function HoneycombBackground() {
       canvas.width = W;
       canvas.height = H;
       particles = [];
-      for (let i = 0; i < 200; i++) particles.push(makeParticle("plankton"));
-      for (let i = 0; i < 60; i++) particles.push(makeParticle("orb"));
-      for (let i = 0; i < 15; i++) particles.push(makeParticle("bloom"));
+      for (let i = 0; i < 45; i++) particles.push(makeParticle("plankton"));
+      for (let i = 0; i < 12; i++) particles.push(makeParticle("orb"));
+      for (let i = 0; i < 5; i++) particles.push(makeParticle("bloom"));
     }
 
     initParticles();
@@ -139,9 +139,9 @@ export default function HoneycombBackground() {
     // Mouse state
     let mouseX = -9999;
     let mouseY = -9999;
-    const REPULSE_RADIUS = 120;
-    const REPULSE_STRENGTH = 3.5;
-    const VEL_DAMP = 0.91;
+    const REPULSE_RADIUS = 70;
+    const REPULSE_STRENGTH = 0.5;
+    const VEL_DAMP = 0.96;
 
     const onMouseMove = (e: MouseEvent) => {
       mouseX = e.clientX;
@@ -155,13 +155,13 @@ export default function HoneycombBackground() {
     const onClickBurst = (e: MouseEvent) => {
       const bx = e.clientX;
       const by = e.clientY;
-      const BURST_R = 220;
+      const BURST_R = 160;
       particles.forEach((p) => {
         const dx = p.x - bx;
         const dy = p.y - by;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < BURST_R && dist > 0) {
-          const force = (1 - dist / BURST_R) * 9;
+          const force = (1 - dist / BURST_R) * 2.5;
           p.vx += (dx / dist) * force;
           p.vy += (dy / dist) * force;
         }
@@ -179,13 +179,13 @@ export default function HoneycombBackground() {
     const onTouchStart = (e: TouchEvent) => {
       const bx = e.touches[0].clientX;
       const by = e.touches[0].clientY;
-      const BURST_R = 220;
+      const BURST_R = 160;
       particles.forEach((p) => {
         const dx = p.x - bx;
         const dy = p.y - by;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < BURST_R && dist > 0) {
-          const force = (1 - dist / BURST_R) * 9;
+          const force = (1 - dist / BURST_R) * 2.5;
           p.vx += (dx / dist) * force;
           p.vy += (dy / dist) * force;
         }

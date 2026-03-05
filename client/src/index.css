@@ -133,7 +133,7 @@
 
   --background: 0 0% 0%;
 
-  --foreground: 195 80% 90%;
+  --foreground: 0 0% 98%;
 
   --border: 195 50% 18%;
 
@@ -175,7 +175,7 @@
 
   --muted: 210 30% 10%;
 
-  --muted-foreground: 195 40% 55%;
+  --muted-foreground: 200 30% 70%;
 
   --accent: 150 70% 45%;
 
@@ -248,10 +248,10 @@
   .dark [data-slot="card"],
   .dark .rounded-lg.border,
   .dark .rounded-md.border {
-    background: rgba(0, 12, 22, 0.78) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-color: rgba(0, 160, 220, 0.18) !important;
+    background: rgba(0, 8, 18, 0.92) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-color: rgba(0, 140, 200, 0.22) !important;
   }
 
   .dark header {
@@ -266,10 +266,10 @@
 
   .dark [data-slot="popover-content"],
   .dark [role="dialog"] {
-    background: rgba(0, 12, 22, 0.92) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-color: rgba(0, 160, 220, 0.22) !important;
+    background: rgba(0, 8, 18, 0.96) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-color: rgba(0, 140, 200, 0.25) !important;
   }
 }
 
