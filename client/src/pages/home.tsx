@@ -234,7 +234,7 @@ export default function Home() {
                   Follow Colchester High School athletics and never miss a game
                 </p>
                 <Link href="/schedule">
-                  <Button size="default" className="bg-white/20 backdrop-blur-sm text-white font-bold border border-blue-900" data-testid="button-view-schedule-mobile">
+                  <Button size="default" className="bg-white/20 backdrop-blur-sm text-white font-bold border border-white/50" data-testid="button-view-schedule-mobile">
                     <Calendar className="mr-2 h-4 w-4" />
                     View Full Schedule
                   </Button>
@@ -275,7 +275,7 @@ export default function Home() {
                   Follow Colchester High School athletics and never miss a game
                 </p>
                 <Link href="/schedule">
-                  <Button size="lg" className="text-lg bg-white/20 backdrop-blur-sm text-white font-bold border border-blue-900" data-testid="button-view-schedule">
+                  <Button size="lg" className="text-lg bg-white/20 backdrop-blur-sm text-white font-bold border border-white/50" data-testid="button-view-schedule">
                     <Calendar className="mr-2 h-5 w-5" />
                     View Full Schedule
                   </Button>
