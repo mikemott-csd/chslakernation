@@ -190,7 +190,7 @@ export default function Schedule() {
             <img 
               src={logoUrl} 
               alt="Colchester Lakers Logo" 
-              className="h-10 md:h-18 w-auto object-contain rounded"
+              className="h-10 md:h-16 w-auto object-contain rounded"
               data-testid="img-logo"
             />
             <h1 className="text-white text-base md:text-3xl font-bold hidden sm:block">
@@ -269,10 +269,10 @@ export default function Schedule() {
                   rounded-full transition-all duration-200 flex-shrink-0 text-xs md:text-sm font-semibold
                   ${isActive 
                     ? `${colors.bg} ${colors.text}` 
-                    : `bg-black/30 ${colors.border} border-2 text-foreground`
+                    : `bg-muted/50 ${colors.border} border-2 text-foreground`
                   }
                 `}
-                data-testid={`button-filter-${sport.toLowerCase().replace(' ', '-')}`}
+                data-testid={`button-filter-${sport.toLowerCase().replace(/\s+/g, '-')}`}
                 aria-pressed={isActive}
               >
                 {sport}
@@ -389,7 +389,7 @@ export default function Schedule() {
               </h2>
             </Card>
             
-            <div className="space-y-4 max-h-[600px] lg:max-h-[700px] overflow-y-auto pr-2 scrollbar-thin">
+            <div className="space-y-4 lg:max-h-[700px] lg:overflow-y-auto lg:pr-2 scrollbar-thin">
               {isLoading ? (
                 <div className="text-center py-12 text-muted-foreground" data-testid="loading-games">
                   Loading games...
@@ -443,7 +443,7 @@ export default function Schedule() {
 
                       {/* Date & Time */}
                       <div className="mb-3">
-                        <p className="text-2xl font-bold text-[#1e3a5f]" data-testid={`text-date-${game.id}`}>
+                        <p className="text-2xl font-bold text-foreground" data-testid={`text-date-${game.id}`}>
                           {format(parseLocalDate(game.date), "MMM d, yyyy")}
                         </p>
                         <p className="text-lg font-semibold text-foreground" data-testid={`text-time-${game.id}`}>
