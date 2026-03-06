@@ -246,9 +246,9 @@
   }
 
   .dark [data-slot="card"],
-  .dark .rounded-xl.border,
-  .dark .rounded-lg.border,
-  .dark .rounded-md.border {
+  .dark .rounded-xl.border:not(button):not([role="button"]):not([data-slot="button"]),
+  .dark .rounded-lg.border:not(button):not([role="button"]):not([data-slot="button"]),
+  .dark .rounded-md.border:not(button):not([role="button"]):not([data-slot="button"]) {
     background-color: rgba(3, 12, 35, 0.92) !important;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
