@@ -184,7 +184,7 @@ export default function Schedule() {
   return (
     <div className="min-h-screen bg-transparent">
       {/* Header */}
-      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
+      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(215,85%,42%)] to-[hsl(215,85%,30%)] flex items-center justify-between px-3 md:px-8 shadow-md">
         <div className="flex items-center gap-2 md:gap-4">
           <img
             src={logoUrl}

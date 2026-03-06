@@ -129,12 +129,12 @@ export default function HoneycombBackground() {
     window.addEventListener("resize", initAll);
 
     function drawBackground() {
-      // Deep lake abyss — lighter at the top (distant surface light), black at the bottom
+      // Deep royal blue — bright at top, dark but still clearly blue at bottom
       const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0,   "#001828");
-      grad.addColorStop(0.3, "#000f1c");
-      grad.addColorStop(0.7, "#000810");
-      grad.addColorStop(1,   "#000208");
+      grad.addColorStop(0,   "#002060");
+      grad.addColorStop(0.3, "#001540");
+      grad.addColorStop(0.7, "#000e2a");
+      grad.addColorStop(1,   "#000818");
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
 

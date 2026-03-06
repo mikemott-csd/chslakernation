@@ -140,7 +140,7 @@ export default function Subscribe() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-transparent">
-        <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
+        <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(215,85%,42%)] to-[hsl(215,85%,30%)] flex items-center justify-between px-3 md:px-8 shadow-md">
           <div className="flex items-center gap-2 md:gap-4">
             <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-16 rounded" data-testid="img-logo" />
             <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
@@ -224,7 +224,7 @@ export default function Subscribe() {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
+      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(215,85%,42%)] to-[hsl(215,85%,30%)] flex items-center justify-between px-3 md:px-8 shadow-md">
         <div className="flex items-center gap-2 md:gap-4">
           <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-16 rounded" data-testid="img-logo" />
           <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">

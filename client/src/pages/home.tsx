@@ -152,7 +152,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-transparent">
       {/* Header */}
-      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
+      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(215,85%,42%)] to-[hsl(215,85%,30%)] flex items-center justify-between px-3 md:px-8 shadow-md">
         <Link href="/" className="flex items-center gap-2 md:gap-4 hover:opacity-90 transition-opacity" data-testid="link-banner-home">
           <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-16 w-auto object-contain rounded" data-testid="img-logo" />
           <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
@@ -204,7 +204,7 @@ export default function Home() {
         {/* Mobile: 4:3 aspect ratio, Desktop: 16:9 aspect ratio */}
         <div className="block md:hidden">
           <AspectRatio ratio={4/3}>
-            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(210,85%,35%)] to-[hsl(210,85%,20%)]">
+            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(215,85%,42%)] to-[hsl(215,85%,25%)]">
               {heroImages.length > 0 && heroImages.map((img, index) => {
                 const isActive = currentImageIndex === index;
                 const nextIndex = (currentImageIndex + 1) % heroImages.length;
@@ -245,7 +245,7 @@ export default function Home() {
         </div>
         <div className="hidden md:block">
           <AspectRatio ratio={16/9}>
-            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(210,85%,35%)] to-[hsl(210,85%,20%)]">
+            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(215,85%,42%)] to-[hsl(215,85%,25%)]">
               {heroImages.length > 0 && heroImages.map((img, index) => {
                 const isActive = currentImageIndex === index;
                 const nextIndex = (currentImageIndex + 1) % heroImages.length;
@@ -444,7 +444,7 @@ export default function Home() {
 
         {/* Get Notifications CTA */}
         <section className="mt-12">
-          <Card className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] text-white border-0">
+          <Card className="bg-gradient-to-r from-[hsl(215,85%,42%)] to-[hsl(215,85%,30%)] text-white border-0">
             <CardContent className="p-8 md:p-12 text-center">
               <Bell className="h-16 w-16 mx-auto mb-4" />
               <h3 className="text-2xl md:text-3xl font-bold mb-4">Never Miss a Game</h3>
@@ -464,7 +464,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] text-white py-8 mt-12 shadow-inner">
+      <footer className="bg-gradient-to-r from-[hsl(215,85%,42%)] to-[hsl(215,85%,30%)] text-white py-8 mt-12 shadow-inner">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm opacity-80">
             © 2026 CHS Lakers Athletics. Go Lakers!
