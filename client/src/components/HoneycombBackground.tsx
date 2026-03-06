@@ -149,27 +149,23 @@ export default function HoneycombBackground() {
 
     function drawShafts(t: number) {
       shafts.forEach((s) => {
-        // Slowly drift the shaft left/right
         s.x = s.baseX + s.amp * Math.sin(t * s.phaseSpeed * 60 + s.phase);
 
-        const spread = s.width;
+        // Radial gradient anchored just above the canvas top — fades naturally
+        // in all directions with no hard edges or polygon shapes
         const depth = H * 0.65;
-
-        const grad = ctx.createLinearGradient(0, 0, 0, depth);
-        grad.addColorStop(0,   `rgba(120,175,230,${s.alpha})`);
-        grad.addColorStop(0.5, `rgba(80,140,200,${s.alpha * 0.5})`);
-        grad.addColorStop(1,   "rgba(40,100,170,0)");
+        const spread = depth * 1.1;
+        const originY = -depth * 0.08;
+        const radial = ctx.createRadialGradient(s.x, originY, 0, s.x, originY, spread);
+        radial.addColorStop(0,    `rgba(115,170,230,${s.alpha})`);
+        radial.addColorStop(0.35, `rgba(85,145,215,${s.alpha * 0.55})`);
+        radial.addColorStop(0.7,  `rgba(60,120,195,${s.alpha * 0.15})`);
+        radial.addColorStop(1,    "rgba(40,100,180,0)");
 
         ctx.save();
         ctx.globalAlpha = 1;
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(s.x - spread * 0.5, 0);
-        ctx.lineTo(s.x + spread * 0.5, 0);
-        ctx.lineTo(s.x + spread * 2.2, depth);
-        ctx.lineTo(s.x - spread * 2.2, depth);
-        ctx.closePath();
-        ctx.fill();
+        ctx.fillStyle = radial;
+        ctx.fillRect(0, 0, W, depth);
         ctx.restore();
       });
     }
