@@ -1,24 +1,37 @@
 import { useEffect, useRef } from "react";
 
-interface Particle {
+interface Sediment {
   x: number;
   y: number;
+  radius: number;
+  alpha: number;
   vx: number;
   vy: number;
+}
+
+interface Caustic {
+  x: number;
+  y: number;
   baseX: number;
   baseY: number;
   radius: number;
-  color: string;
-  shadowColor: string;
-  shadowBlur: number;
   alpha: number;
   phase: number;
   phaseSpeed: number;
-  driftAmpX: number;
-  driftAmpY: number;
-  driftFreqX: number;
-  driftFreqY: number;
-  type: "plankton" | "orb" | "bloom";
+  freqX: number;
+  freqY: number;
+  ampX: number;
+  ampY: number;
+}
+
+interface LightShaft {
+  x: number;
+  baseX: number;
+  width: number;
+  alpha: number;
+  phase: number;
+  phaseSpeed: number;
+  amp: number;
 }
 
 export default function HoneycombBackground() {
@@ -34,202 +47,161 @@ export default function HoneycombBackground() {
     let time = 0;
     let W = window.innerWidth;
     let H = window.innerHeight;
-    let particles: Particle[] = [];
 
-    // Blues matched to the site's hsl(210, 85%, 35%) navy palette
-    const PLANKTON_COLORS = [
-      ["rgba(100,160,255,A)", "rgba(100,160,255,1)"],
-      ["rgba(130,180,255,A)", "rgba(130,180,255,1)"],
-      ["rgba(80,140,230,A)",  "rgba(80,140,230,1)"],
-      ["rgba(150,195,255,A)", "rgba(150,195,255,1)"],
-      ["rgba(110,165,245,A)", "rgba(110,165,245,1)"],
-    ];
-    const ORB_COLORS = [
-      ["rgba(60,120,220,A)",  "rgba(60,120,220,1)"],
-      ["rgba(80,150,240,A)",  "rgba(80,150,240,1)"],
-      ["rgba(100,160,255,A)", "rgba(100,160,255,1)"],
-      ["rgba(50,110,200,A)",  "rgba(50,110,200,1)"],
-    ];
-    const BLOOM_COLORS = [
-      ["rgba(40,100,200,A)",  "rgba(40,100,200,1)"],
-      ["rgba(60,130,220,A)",  "rgba(60,130,220,1)"],
-      ["rgba(80,140,230,A)",  "rgba(80,140,230,1)"],
-    ];
+    let sediment: Sediment[] = [];
+    let caustics: Caustic[] = [];
+    let shafts: LightShaft[] = [];
 
     function rand(min: number, max: number) {
       return min + Math.random() * (max - min);
     }
 
-    function makeParticle(type: Particle["type"]): Particle {
-      const x = rand(0, W);
-      const y = rand(0, H);
-      if (type === "plankton") {
-        const [fill, shadow] = PLANKTON_COLORS[Math.floor(Math.random() * PLANKTON_COLORS.length)];
-        const alpha = rand(0.10, 0.25);
-        return {
-          x, y, baseX: x, baseY: y,
-          vx: 0, vy: 0,
-          radius: rand(0.8, 1.8),
-          color: fill.replace("A", String(alpha)),
-          shadowColor: shadow,
-          shadowBlur: rand(3, 7),
-          alpha,
-          phase: rand(0, Math.PI * 2),
-          phaseSpeed: rand(0.001, 0.005),
-          driftAmpX: rand(6, 18),
-          driftAmpY: rand(5, 14),
-          driftFreqX: rand(0.00008, 0.00018),
-          driftFreqY: rand(0.0001, 0.00022),
-          type,
-        };
-      } else if (type === "orb") {
-        const [fill, shadow] = ORB_COLORS[Math.floor(Math.random() * ORB_COLORS.length)];
-        const alpha = rand(0.18, 0.38);
-        return {
-          x, y, baseX: x, baseY: y,
-          vx: 0, vy: 0,
-          radius: rand(2.5, 5),
-          color: fill.replace("A", String(alpha)),
-          shadowColor: shadow,
-          shadowBlur: rand(10, 20),
-          alpha,
-          phase: rand(0, Math.PI * 2),
-          phaseSpeed: rand(0.003, 0.009),
-          driftAmpX: rand(12, 35),
-          driftAmpY: rand(10, 28),
-          driftFreqX: rand(0.00006, 0.00014),
-          driftFreqY: rand(0.00008, 0.00016),
-          type,
-        };
-      } else {
-        const [fill, shadow] = BLOOM_COLORS[Math.floor(Math.random() * BLOOM_COLORS.length)];
-        const alpha = rand(0.14, 0.26);
-        return {
-          x, y, baseX: x, baseY: y,
-          vx: 0, vy: 0,
-          radius: rand(8, 15),
-          color: fill.replace("A", String(alpha)),
-          shadowColor: shadow,
-          shadowBlur: rand(18, 36),
-          alpha,
-          phase: rand(0, Math.PI * 2),
-          phaseSpeed: rand(0.002, 0.006),
-          driftAmpX: rand(18, 45),
-          driftAmpY: rand(12, 35),
-          driftFreqX: rand(0.00005, 0.00011),
-          driftFreqY: rand(0.00006, 0.00013),
-          type,
-        };
-      }
-    }
-
-    function initParticles() {
+    function initAll() {
       W = window.innerWidth;
       H = window.innerHeight;
       canvas.width = W;
       canvas.height = H;
-      particles = [];
-      for (let i = 0; i < 40; i++) particles.push(makeParticle("plankton"));
-      for (let i = 0; i < 11; i++) particles.push(makeParticle("orb"));
-      for (let i = 0; i < 4; i++)  particles.push(makeParticle("bloom"));
+
+      // Sediment — tiny barely-visible particles drifting slowly
+      sediment = [];
+      const count = Math.min(120, Math.floor((W * H) / 8000));
+      for (let i = 0; i < count; i++) {
+        sediment.push({
+          x: rand(0, W),
+          y: rand(0, H),
+          radius: rand(0.4, 1.3),
+          alpha: rand(0.04, 0.13),
+          vx: rand(-0.12, 0.12),
+          vy: rand(-0.04, 0.1),
+        });
+      }
+
+      // Caustics — soft light patches near the top, like sunlight refracting through the surface
+      caustics = [];
+      for (let i = 0; i < 14; i++) {
+        const bx = rand(0, W);
+        const by = rand(0, H * 0.38);
+        caustics.push({
+          x: bx, y: by, baseX: bx, baseY: by,
+          radius: rand(40, 130),
+          alpha: rand(0.018, 0.045),
+          phase: rand(0, Math.PI * 2),
+          phaseSpeed: rand(0.0003, 0.0012),
+          freqX: rand(0.00004, 0.00010),
+          freqY: rand(0.00005, 0.00012),
+          ampX: rand(20, 60),
+          ampY: rand(10, 30),
+        });
+      }
+
+      // Light shafts — 2-3 wide, very faint diagonal beams from above
+      shafts = [];
+      for (let i = 0; i < 3; i++) {
+        const bx = rand(W * 0.15, W * 0.85);
+        shafts.push({
+          x: bx, baseX: bx,
+          width: rand(60, 160),
+          alpha: rand(0.016, 0.034),
+          phase: rand(0, Math.PI * 2),
+          phaseSpeed: rand(0.0002, 0.0006),
+          amp: rand(30, 80),
+        });
+      }
     }
 
-    initParticles();
-    window.addEventListener("resize", initParticles);
-
-    let mouseX = -9999;
-    let mouseY = -9999;
-    const REPULSE_RADIUS = 70;
-    const REPULSE_STRENGTH = 0.5;
-    const VEL_DAMP = 0.96;
-
-    const onMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    };
-    const onMouseLeave = () => {
-      mouseX = -9999;
-      mouseY = -9999;
-    };
-
-    const onClickBurst = (e: MouseEvent) => {
-      const bx = e.clientX;
-      const by = e.clientY;
-      const BURST_R = 160;
-      particles.forEach((p) => {
-        const dx = p.x - bx;
-        const dy = p.y - by;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < BURST_R && dist > 0) {
-          const force = (1 - dist / BURST_R) * 2.5;
-          p.vx += (dx / dist) * force;
-          p.vy += (dy / dist) * force;
-        }
-      });
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      mouseX = e.touches[0].clientX;
-      mouseY = e.touches[0].clientY;
-    };
-    const onTouchEnd = () => {
-      mouseX = -9999;
-      mouseY = -9999;
-    };
-    const onTouchStart = (e: TouchEvent) => {
-      const bx = e.touches[0].clientX;
-      const by = e.touches[0].clientY;
-      const BURST_R = 160;
-      particles.forEach((p) => {
-        const dx = p.x - bx;
-        const dy = p.y - by;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < BURST_R && dist > 0) {
-          const force = (1 - dist / BURST_R) * 2.5;
-          p.vx += (dx / dist) * force;
-          p.vy += (dy / dist) * force;
-        }
-      });
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseleave", onMouseLeave);
-    window.addEventListener("click", onClickBurst);
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("touchend", onTouchEnd);
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    initAll();
+    window.addEventListener("resize", initAll);
 
     function drawBackground() {
-      // Deep navy — radial gradient from dark navy center to near-black edges
-      const grad = ctx.createRadialGradient(W * 0.5, H * 0.45, 0, W * 0.5, H * 0.45, Math.max(W, H) * 0.75);
-      grad.addColorStop(0, "#001428");
-      grad.addColorStop(0.5, "#000d1e");
-      grad.addColorStop(1, "#000508");
+      // Deep lake abyss — lighter at the top (distant surface light), black at the bottom
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0,   "#001828");
+      grad.addColorStop(0.3, "#000f1c");
+      grad.addColorStop(0.7, "#000810");
+      grad.addColorStop(1,   "#000208");
       ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Subtle edge vignette — darker at corners
+      const vig = ctx.createRadialGradient(W * 0.5, H * 0.4, H * 0.1, W * 0.5, H * 0.4, Math.max(W, H) * 0.8);
+      vig.addColorStop(0,   "rgba(0,0,0,0)");
+      vig.addColorStop(0.7, "rgba(0,0,0,0.08)");
+      vig.addColorStop(1,   "rgba(0,0,0,0.38)");
+      ctx.fillStyle = vig;
       ctx.fillRect(0, 0, W, H);
     }
 
-    function drawParticle(p: Particle, t: number) {
-      const pulse = 0.85 + 0.15 * Math.sin(t * p.phaseSpeed * 60 + p.phase);
-      const drawAlpha = p.alpha * pulse;
+    function drawShafts(t: number) {
+      shafts.forEach((s) => {
+        // Slowly drift the shaft left/right
+        s.x = s.baseX + s.amp * Math.sin(t * s.phaseSpeed * 60 + s.phase);
 
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      ctx.globalAlpha = drawAlpha;
-      ctx.shadowBlur = p.shadowBlur * pulse;
-      ctx.shadowColor = p.shadowColor;
-      ctx.fillStyle = p.shadowColor;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
-      if (p.type !== "plankton") {
-        ctx.globalAlpha = drawAlpha * 0.45;
-        ctx.fillStyle = "rgba(210,225,255,1)";
+        const spread = s.width;
+        const depth = H * 0.65;
+
+        const grad = ctx.createLinearGradient(0, 0, 0, depth);
+        grad.addColorStop(0,   `rgba(120,175,230,${s.alpha})`);
+        grad.addColorStop(0.5, `rgba(80,140,200,${s.alpha * 0.5})`);
+        grad.addColorStop(1,   "rgba(40,100,170,0)");
+
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius * 0.35, 0, Math.PI * 2);
+        ctx.moveTo(s.x - spread * 0.5, 0);
+        ctx.lineTo(s.x + spread * 0.5, 0);
+        ctx.lineTo(s.x + spread * 2.2, depth);
+        ctx.lineTo(s.x - spread * 2.2, depth);
+        ctx.closePath();
         ctx.fill();
-      }
-      ctx.restore();
+        ctx.restore();
+      });
+    }
+
+    function drawCaustics(t: number) {
+      caustics.forEach((c) => {
+        c.x = c.baseX + c.ampX * Math.sin(t * c.freqX * 60 + c.phase);
+        c.y = c.baseY + c.ampY * Math.cos(t * c.freqY * 60 + c.phase * 1.4);
+
+        // Pulse alpha gently
+        const pulse = 0.7 + 0.3 * Math.sin(t * c.phaseSpeed * 60 + c.phase);
+
+        const grad = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.radius);
+        grad.addColorStop(0,   `rgba(140,195,240,${c.alpha * pulse})`);
+        grad.addColorStop(0.5, `rgba(100,160,220,${c.alpha * pulse * 0.4})`);
+        grad.addColorStop(1,   "rgba(60,120,190,0)");
+
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(c.x, c.y, c.radius, c.radius * 0.55, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function drawSediment() {
+      sediment.forEach((p) => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = "rgba(140,175,210,1)";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function updateSediment() {
+      sediment.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < -2)  p.x = W + 2;
+        if (p.x > W + 2) p.x = -2;
+        if (p.y < -2)  p.y = H + 2;
+        if (p.y > H + 2) p.y = -2;
+      });
     }
 
     const animate = () => {
@@ -237,43 +209,10 @@ export default function HoneycombBackground() {
       const t = time;
 
       drawBackground();
-
-      particles.forEach((p) => {
-        const driftX = p.driftAmpX * Math.sin(t * p.driftFreqX * 60 + p.phase);
-        const driftY = p.driftAmpY * Math.cos(t * p.driftFreqY * 60 + p.phase * 1.3);
-        const targetX = p.baseX + driftX;
-        const targetY = p.baseY + driftY;
-
-        const dx = p.x - mouseX;
-        const dy = p.y - mouseY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < REPULSE_RADIUS && dist > 0) {
-          const force = (1 - dist / REPULSE_RADIUS) * REPULSE_STRENGTH;
-          p.vx += (dx / dist) * force;
-          p.vy += (dy / dist) * force;
-        }
-
-        p.vx += (targetX - p.x) * 0.008;
-        p.vy += (targetY - p.y) * 0.008;
-        p.vx *= VEL_DAMP;
-        p.vy *= VEL_DAMP;
-        p.x += p.vx;
-        p.y += p.vy;
-
-        const margin = 40;
-        if (p.x < -margin) p.x = W + margin;
-        if (p.x > W + margin) p.x = -margin;
-        if (p.y < -margin) p.y = H + margin;
-        if (p.y > H + margin) p.y = -margin;
-      });
-
-      const blooms = particles.filter((p) => p.type === "bloom");
-      const orbs = particles.filter((p) => p.type === "orb");
-      const plankton = particles.filter((p) => p.type === "plankton");
-
-      blooms.forEach((p) => drawParticle(p, t));
-      orbs.forEach((p) => drawParticle(p, t));
-      plankton.forEach((p) => drawParticle(p, t));
+      drawShafts(t);
+      drawCaustics(t);
+      updateSediment();
+      drawSediment();
 
       animationId = requestAnimationFrame(animate);
     };
@@ -282,13 +221,7 @@ export default function HoneycombBackground() {
 
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener("resize", initParticles);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseleave", onMouseLeave);
-      window.removeEventListener("click", onClickBurst);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("resize", initAll);
     };
   }, []);
 
