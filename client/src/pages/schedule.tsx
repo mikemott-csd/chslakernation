@@ -183,59 +183,57 @@ export default function Schedule() {
 
   return (
     <div className="min-h-screen bg-transparent">
-      {/* Branded Header with Gradient */}
-      <header className="w-full bg-gradient-to-r from-primary via-primary to-[#1e3a5f] shadow-md">
-        <div className="max-w-7xl mx-auto px-3 md:px-6 h-16 md:h-24 flex items-center justify-between gap-2 md:gap-4">
-          <div className="flex items-center gap-2 md:gap-4">
-            <img 
-              src={logoUrl} 
-              alt="Colchester Lakers Logo" 
-              className="h-10 md:h-16 w-auto object-contain rounded"
-              data-testid="img-logo"
-            />
-            <h1 className="text-white text-base md:text-3xl font-bold hidden sm:block">
-              CHS Lakers Athletics
-            </h1>
-            <h1 className="text-white text-base font-bold sm:hidden">
-              Lakers
-            </h1>
-          </div>
-          <nav className="flex gap-1 md:gap-3 items-center">
-            <Link href="/">
-              <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-home-mobile">
-                <HomeIcon className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-home">
-                Home
-              </Button>
-            </Link>
-            <Link href="/schedule">
-              <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-schedule-mobile">
-                <Calendar className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-schedule">
-                Schedule
-              </Button>
-            </Link>
-            <Link href="/gallery">
-              <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-gallery-mobile">
-                <Image className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-gallery">
-                Gallery
-              </Button>
-            </Link>
-            <Link href="/subscribe">
-              <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="button-get-notifications-mobile">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white/40 text-white hidden md:flex" data-testid="button-get-notifications">
-                <Bell className="mr-2 h-4 w-4" />
-                Get Notifications
-              </Button>
-            </Link>
-          </nav>
+      {/* Header */}
+      <header className="h-16 md:h-24 bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] flex items-center justify-between px-3 md:px-8 shadow-md">
+        <div className="flex items-center gap-2 md:gap-4">
+          <img
+            src={logoUrl}
+            alt="CHS Lakers"
+            className="h-10 md:h-16 w-auto object-contain rounded"
+            data-testid="img-logo"
+          />
+          <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
+            CHS Lakers Athletics
+          </h1>
+          <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-header-mobile">
+            Lakers
+          </h1>
         </div>
+        <nav className="flex gap-1 md:gap-3 items-center">
+          <Link href="/">
+            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-home-mobile">
+              <HomeIcon className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-home">
+              Home
+            </Button>
+          </Link>
+          <Link href="/schedule">
+            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-schedule-mobile">
+              <Calendar className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-schedule">
+              Schedule
+            </Button>
+          </Link>
+          <Link href="/gallery">
+            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="link-gallery-mobile">
+              <Image className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" className="text-white border-white/20 bg-white/10 hidden md:flex" data-testid="link-gallery">
+              Gallery
+            </Button>
+          </Link>
+          <Link href="/subscribe">
+            <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="button-get-notifications-mobile">
+              <Bell className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white/40 text-white hidden md:flex" data-testid="button-get-notifications">
+              <Bell className="mr-2 h-4 w-4" />
+              Get Notifications
+            </Button>
+          </Link>
+        </nav>
       </header>
 
       {/* Main Content */}
