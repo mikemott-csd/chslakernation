@@ -191,7 +191,7 @@ export default function Home() {
             <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="button-get-notifications-mobile">
               <Bell className="h-5 w-5" />
             </Button>
-            <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white/40 text-white hidden md:flex" data-testid="button-get-notifications">
+            <Button variant="outline" className="bg-white text-[hsl(215,85%,36%)] border-white font-semibold hidden md:flex" data-testid="button-get-notifications">
               <Bell className="mr-2 h-4 w-4" />
               Get Notifications
             </Button>
@@ -453,7 +453,7 @@ export default function Home() {
                 Stay connected with CHS Lakers Athletics!
               </p>
               <Link href="/subscribe">
-                <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] border-white/80 font-semibold" data-testid="button-subscribe-cta">
+                <Button size="lg" className="bg-amber-400 text-slate-900 border-0 font-bold shadow-lg" data-testid="button-subscribe-cta">
                   <Bell className="mr-2 h-5 w-5" />
                   Subscribe to Notifications
                 </Button>
