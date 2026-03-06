@@ -7,6 +7,10 @@ interface Sediment {
   alpha: number;
   vx: number;
   vy: number;
+  phase: number;
+  phaseSpeed: number;
+  swayAmp: number;
+  color: string;
 }
 
 interface Caustic {
@@ -62,17 +66,29 @@ export default function HoneycombBackground() {
       canvas.width = W;
       canvas.height = H;
 
-      // Sediment — tiny barely-visible particles drifting slowly
+      // Particles — natural floating matter in open water, no glow
       sediment = [];
-      const count = Math.min(120, Math.floor((W * H) / 8000));
+      const PARTICLE_COLORS = [
+        "rgba(160,195,220,1)",
+        "rgba(140,175,205,1)",
+        "rgba(170,200,225,1)",
+        "rgba(150,185,215,1)",
+        "rgba(180,205,228,1)",
+        "rgba(155,178,200,1)",
+      ];
+      const count = Math.min(160, Math.floor((W * H) / 6000));
       for (let i = 0; i < count; i++) {
         sediment.push({
           x: rand(0, W),
           y: rand(0, H),
-          radius: rand(0.4, 1.3),
-          alpha: rand(0.04, 0.13),
-          vx: rand(-0.12, 0.12),
-          vy: rand(-0.04, 0.1),
+          radius: rand(0.6, 2.2),
+          alpha: rand(0.10, 0.28),
+          vx: rand(-0.10, 0.10),
+          vy: rand(-0.03, 0.08),
+          phase: rand(0, Math.PI * 2),
+          phaseSpeed: rand(0.0005, 0.002),
+          swayAmp: rand(0.04, 0.18),
+          color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
         });
       }
 
@@ -185,7 +201,7 @@ export default function HoneycombBackground() {
       sediment.forEach((p) => {
         ctx.save();
         ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = "rgba(140,175,210,1)";
+        ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -193,14 +209,16 @@ export default function HoneycombBackground() {
       });
     }
 
-    function updateSediment() {
+    function updateSediment(t: number) {
       sediment.forEach((p) => {
-        p.x += p.vx;
+        // Gentle horizontal sway on top of base drift
+        const sway = p.swayAmp * Math.sin(t * p.phaseSpeed * 60 + p.phase);
+        p.x += p.vx + sway;
         p.y += p.vy;
-        if (p.x < -2)  p.x = W + 2;
-        if (p.x > W + 2) p.x = -2;
-        if (p.y < -2)  p.y = H + 2;
-        if (p.y > H + 2) p.y = -2;
+        if (p.x < -4)    p.x = W + 4;
+        if (p.x > W + 4) p.x = -4;
+        if (p.y < -4)    p.y = H + 4;
+        if (p.y > H + 4) p.y = -4;
       });
     }
 
@@ -211,7 +229,7 @@ export default function HoneycombBackground() {
       drawBackground();
       drawShafts(t);
       drawCaustics(t);
-      updateSediment();
+      updateSediment(t);
       drawSediment();
 
       animationId = requestAnimationFrame(animate);
