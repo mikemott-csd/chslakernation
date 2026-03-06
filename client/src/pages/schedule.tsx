@@ -194,7 +194,7 @@ export default function Schedule() {
               data-testid="img-logo"
             />
             <h1 className="text-white text-base md:text-3xl font-bold hidden sm:block">
-              Colchester Lakers Athletics
+              CHS Lakers Athletics
             </h1>
             <h1 className="text-white text-base font-bold sm:hidden">
               Lakers

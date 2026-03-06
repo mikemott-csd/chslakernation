@@ -144,7 +144,7 @@ export default function Subscribe() {
           <div className="flex items-center gap-2 md:gap-4">
             <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-16 rounded" data-testid="img-logo" />
             <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
-              Colchester Lakers Athletics
+              CHS Lakers Athletics
             </h1>
             <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-header-mobile">
               Lakers
@@ -228,7 +228,7 @@ export default function Subscribe() {
         <div className="flex items-center gap-2 md:gap-4">
           <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-16 rounded" data-testid="img-logo" />
           <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
-            Colchester Lakers Athletics
+            CHS Lakers Athletics
           </h1>
           <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-header-mobile">
             Lakers

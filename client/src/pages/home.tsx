@@ -156,7 +156,7 @@ export default function Home() {
         <Link href="/" className="flex items-center gap-2 md:gap-4 hover:opacity-90 transition-opacity" data-testid="link-banner-home">
           <img src={logoUrl} alt="CHS Lakers" className="h-10 md:h-16 w-auto object-contain rounded" data-testid="img-logo" />
           <h1 className="text-white text-base md:text-2xl font-bold hidden sm:block" data-testid="text-header">
-            CHS Laker Nation
+            CHS Lakers Athletics
           </h1>
           <h1 className="text-white text-base font-bold sm:hidden" data-testid="text-header-mobile">
             Lakers
@@ -450,7 +450,7 @@ export default function Home() {
               <h3 className="text-2xl md:text-3xl font-bold mb-4">Never Miss a Game</h3>
               <p className="text-lg mb-6 max-w-2xl mx-auto opacity-90">
                 Subscribe to get email notifications 24 hours before each game and on game day morning.
-                Stay connected with CHS Laker Nation!
+                Stay connected with CHS Lakers Athletics!
               </p>
               <Link href="/subscribe">
                 <Button size="lg" variant="outline" className="bg-white text-[hsl(210,85%,35%)] border-white/80 font-semibold" data-testid="button-subscribe-cta">
@@ -467,7 +467,7 @@ export default function Home() {
       <footer className="bg-gradient-to-r from-[hsl(210,85%,35%)] to-[hsl(210,85%,25%)] text-white py-8 mt-12 shadow-inner">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm opacity-80">
-            © 2026 CHS Laker Nation. Go Lakers!
+            © 2026 CHS Lakers Athletics. Go Lakers!
           </p>
         </div>
       </footer>
