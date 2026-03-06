@@ -191,7 +191,7 @@ export default function Home() {
             <Button variant="ghost" size="icon" className="text-white border-white/20 bg-white/10 md:hidden" data-testid="button-get-notifications-mobile">
               <Bell className="h-5 w-5" />
             </Button>
-            <Button variant="outline" className="bg-white text-[hsl(215,85%,36%)] border-white font-semibold hidden md:flex" data-testid="button-get-notifications">
+            <Button className="bg-amber-400 text-slate-900 border-0 font-bold shadow-lg hidden md:flex" data-testid="button-get-notifications">
               <Bell className="mr-2 h-4 w-4" />
               Get Notifications
             </Button>
