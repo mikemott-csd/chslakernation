@@ -36,23 +36,24 @@ export default function HoneycombBackground() {
     let H = window.innerHeight;
     let particles: Particle[] = [];
 
+    // Blues matched to the site's hsl(210, 85%, 35%) navy palette
     const PLANKTON_COLORS = [
-      ["rgba(0,229,255,A)", "rgba(0,229,255,1)"],
-      ["rgba(0,255,200,A)", "rgba(0,255,200,1)"],
-      ["rgba(64,196,255,A)", "rgba(64,196,255,1)"],
-      ["rgba(0,200,230,A)", "rgba(0,200,230,1)"],
-      ["rgba(100,240,255,A)", "rgba(100,240,255,1)"],
+      ["rgba(100,160,255,A)", "rgba(100,160,255,1)"],
+      ["rgba(130,180,255,A)", "rgba(130,180,255,1)"],
+      ["rgba(80,140,230,A)",  "rgba(80,140,230,1)"],
+      ["rgba(150,195,255,A)", "rgba(150,195,255,1)"],
+      ["rgba(110,165,245,A)", "rgba(110,165,245,1)"],
     ];
     const ORB_COLORS = [
-      ["rgba(0,229,255,A)", "rgba(0,229,255,1)"],
-      ["rgba(0,180,255,A)", "rgba(0,180,255,1)"],
-      ["rgba(0,255,180,A)", "rgba(0,255,180,1)"],
-      ["rgba(80,220,255,A)", "rgba(80,220,255,1)"],
+      ["rgba(60,120,220,A)",  "rgba(60,120,220,1)"],
+      ["rgba(80,150,240,A)",  "rgba(80,150,240,1)"],
+      ["rgba(100,160,255,A)", "rgba(100,160,255,1)"],
+      ["rgba(50,110,200,A)",  "rgba(50,110,200,1)"],
     ];
     const BLOOM_COLORS = [
-      ["rgba(0,240,255,A)", "rgba(0,240,255,1)"],
-      ["rgba(0,200,255,A)", "rgba(0,200,255,1)"],
-      ["rgba(120,255,255,A)", "rgba(120,255,255,1)"],
+      ["rgba(40,100,200,A)",  "rgba(40,100,200,1)"],
+      ["rgba(60,130,220,A)",  "rgba(60,130,220,1)"],
+      ["rgba(80,140,230,A)",  "rgba(80,140,230,1)"],
     ];
 
     function rand(min: number, max: number) {
@@ -64,7 +65,7 @@ export default function HoneycombBackground() {
       const y = rand(0, H);
       if (type === "plankton") {
         const [fill, shadow] = PLANKTON_COLORS[Math.floor(Math.random() * PLANKTON_COLORS.length)];
-        const alpha = rand(0.12, 0.32);
+        const alpha = rand(0.10, 0.25);
         return {
           x, y, baseX: x, baseY: y,
           vx: 0, vy: 0,
@@ -83,7 +84,7 @@ export default function HoneycombBackground() {
         };
       } else if (type === "orb") {
         const [fill, shadow] = ORB_COLORS[Math.floor(Math.random() * ORB_COLORS.length)];
-        const alpha = rand(0.22, 0.45);
+        const alpha = rand(0.18, 0.38);
         return {
           x, y, baseX: x, baseY: y,
           vx: 0, vy: 0,
@@ -102,14 +103,14 @@ export default function HoneycombBackground() {
         };
       } else {
         const [fill, shadow] = BLOOM_COLORS[Math.floor(Math.random() * BLOOM_COLORS.length)];
-        const alpha = rand(0.2, 0.38);
+        const alpha = rand(0.14, 0.26);
         return {
           x, y, baseX: x, baseY: y,
           vx: 0, vy: 0,
           radius: rand(8, 15),
           color: fill.replace("A", String(alpha)),
           shadowColor: shadow,
-          shadowBlur: rand(20, 42),
+          shadowBlur: rand(18, 36),
           alpha,
           phase: rand(0, Math.PI * 2),
           phaseSpeed: rand(0.002, 0.006),
@@ -128,15 +129,14 @@ export default function HoneycombBackground() {
       canvas.width = W;
       canvas.height = H;
       particles = [];
-      for (let i = 0; i < 45; i++) particles.push(makeParticle("plankton"));
-      for (let i = 0; i < 12; i++) particles.push(makeParticle("orb"));
-      for (let i = 0; i < 5; i++) particles.push(makeParticle("bloom"));
+      for (let i = 0; i < 40; i++) particles.push(makeParticle("plankton"));
+      for (let i = 0; i < 11; i++) particles.push(makeParticle("orb"));
+      for (let i = 0; i < 4; i++)  particles.push(makeParticle("bloom"));
     }
 
     initParticles();
     window.addEventListener("resize", initParticles);
 
-    // Mouse state
     let mouseX = -9999;
     let mouseY = -9999;
     const REPULSE_RADIUS = 70;
@@ -200,17 +200,16 @@ export default function HoneycombBackground() {
     window.addEventListener("touchstart", onTouchStart, { passive: true });
 
     function drawBackground() {
-      // Deep dark lake — radial gradient from dark center to near-black edges
+      // Deep navy — radial gradient from dark navy center to near-black edges
       const grad = ctx.createRadialGradient(W * 0.5, H * 0.45, 0, W * 0.5, H * 0.45, Math.max(W, H) * 0.75);
-      grad.addColorStop(0, "#001020");
-      grad.addColorStop(0.5, "#000810");
-      grad.addColorStop(1, "#000308");
+      grad.addColorStop(0, "#001428");
+      grad.addColorStop(0.5, "#000d1e");
+      grad.addColorStop(1, "#000508");
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
     }
 
     function drawParticle(p: Particle, t: number) {
-      // Pulse alpha via sine
       const pulse = 0.85 + 0.15 * Math.sin(t * p.phaseSpeed * 60 + p.phase);
       const drawAlpha = p.alpha * pulse;
 
@@ -223,10 +222,9 @@ export default function HoneycombBackground() {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       ctx.fill();
-      // Extra inner bright core for orbs and blooms
       if (p.type !== "plankton") {
-        ctx.globalAlpha = drawAlpha * 0.5;
-        ctx.fillStyle = "rgba(220,255,255,1)";
+        ctx.globalAlpha = drawAlpha * 0.45;
+        ctx.fillStyle = "rgba(210,225,255,1)";
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius * 0.35, 0, Math.PI * 2);
         ctx.fill();
@@ -240,15 +238,12 @@ export default function HoneycombBackground() {
 
       drawBackground();
 
-      // Update and draw particles
       particles.forEach((p) => {
-        // Drift motion — smooth lissajous-like path
         const driftX = p.driftAmpX * Math.sin(t * p.driftFreqX * 60 + p.phase);
         const driftY = p.driftAmpY * Math.cos(t * p.driftFreqY * 60 + p.phase * 1.3);
         const targetX = p.baseX + driftX;
         const targetY = p.baseY + driftY;
 
-        // Mouse repulsion
         const dx = p.x - mouseX;
         const dy = p.y - mouseY;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -258,18 +253,13 @@ export default function HoneycombBackground() {
           p.vy += (dy / dist) * force;
         }
 
-        // Spring back toward drift path
         p.vx += (targetX - p.x) * 0.008;
         p.vy += (targetY - p.y) * 0.008;
-
-        // Dampen velocity
         p.vx *= VEL_DAMP;
         p.vy *= VEL_DAMP;
-
         p.x += p.vx;
         p.y += p.vy;
 
-        // Wrap at edges with margin
         const margin = 40;
         if (p.x < -margin) p.x = W + margin;
         if (p.x > W + margin) p.x = -margin;
@@ -277,7 +267,6 @@ export default function HoneycombBackground() {
         if (p.y > H + margin) p.y = -margin;
       });
 
-      // Draw in order: blooms (back) → orbs → plankton (front)
       const blooms = particles.filter((p) => p.type === "bloom");
       const orbs = particles.filter((p) => p.type === "orb");
       const plankton = particles.filter((p) => p.type === "plankton");
