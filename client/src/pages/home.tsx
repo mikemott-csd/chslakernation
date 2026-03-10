@@ -57,7 +57,7 @@ export default function Home() {
           return dateB - dateA;
         })
         .slice(0, 10);
-      return recentPhotos.map(photo => `/api/photos/${photo.googleDriveId}/thumbnail`);
+      return recentPhotos.map(photo => `/api/photos/${photo.googleDriveId}/image`);
     }
     
     return [];
