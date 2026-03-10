@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -152,30 +153,44 @@ export default function Schedule() {
   });
 
   // Filter games by selected sport
-  const filteredGames = selectedSport === "All Sports" 
-    ? games 
-    : games.filter(game => game.sport === selectedSport);
+  const filteredGames = useMemo(
+    () => selectedSport === "All Sports" ? games : games.filter(game => game.sport === selectedSport),
+    [games, selectedSport]
+  );
+
+  // Pre-build a date-keyed map for O(1) calendar lookups instead of O(n) per day
+  const gamesByDateKey = useMemo(() => {
+    const map = new Map<string, typeof games>();
+    for (const game of filteredGames) {
+      const key = game.date; // already stored as YYYY-MM-DD string
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(game);
+    }
+    return map;
+  }, [filteredGames]);
+
+  const getGamesForDay = (day: Date) => {
+    const key = format(day, "yyyy-MM-dd");
+    return gamesByDateKey.get(key) ?? [];
+  };
 
   // Get current date for filtering upcoming games
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
   // Filter games by selected date if one is selected, otherwise show only upcoming games
-  const displayedGames = selectedDate
+  const displayedGames = useMemo(() => selectedDate
     ? filteredGames.filter(game => isSameDay(parseLocalDate(game.date), selectedDate))
     : filteredGames
         .filter(game => parseLocalDate(game.date) >= now)
-        .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime());
+        .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime()),
+    [filteredGames, selectedDate]
+  );
 
   // Get days for the current month
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  // Get games for each day in the current month
-  const getGamesForDay = (day: Date) => {
-    return filteredGames.filter(game => isSameDay(parseLocalDate(game.date), day));
-  };
 
   // Calculate padding days to align with proper weekday
   const firstDayOfWeek = monthStart.getDay();
@@ -389,8 +404,23 @@ export default function Schedule() {
             
             <div className="space-y-4 lg:max-h-[700px] lg:overflow-y-auto lg:pr-2 scrollbar-thin">
               {isLoading ? (
-                <div className="text-center py-12 text-muted-foreground" data-testid="loading-games">
-                  Loading games...
+                <div className="space-y-4" data-testid="loading-games">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i} className="p-6 border-2">
+                      <div className="flex items-start justify-between mb-3">
+                        <Skeleton className="h-5 w-28 rounded-full" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </div>
+                      <Skeleton className="h-7 w-24 mb-1" />
+                      <Skeleton className="h-6 w-16 mb-3" />
+                      <Skeleton className="h-5 w-40 mb-2" />
+                      <Skeleton className="h-4 w-32 mb-4" />
+                      <div className="flex items-center justify-between pt-3 border-t">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-8 w-24 rounded-md" />
+                      </div>
+                    </Card>
+                  ))}
                 </div>
               ) : isError ? (
                 <Card className="p-8 text-center shadow-sm border-destructive/50" data-testid="error-games">

@@ -158,6 +158,7 @@ export default function Gallery() {
                     alt={photo.name}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     loading="lazy"
+                    decoding="async"
                     onError={() => handleImageError(photo.id)}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />

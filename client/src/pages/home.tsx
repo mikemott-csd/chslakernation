@@ -3,8 +3,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Calendar, Bell, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Menu, Image } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar, Bell, Clock, MapPin, Newspaper, ExternalLink, UserCheck, ChevronDown, ChevronUp, Home as HomeIcon, Image } from "lucide-react";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateUtils";
 import type { Game, NewsArticle, Photo } from "@shared/schema";
@@ -57,7 +57,7 @@ export default function Home() {
           return dateB - dateA;
         })
         .slice(0, 10);
-      return recentPhotos.map(photo => `/api/photos/${photo.googleDriveId}/image`);
+      return recentPhotos.map(photo => `/api/photos/${photo.googleDriveId}/thumbnail`);
     }
     
     return [];
@@ -201,88 +201,45 @@ export default function Home() {
 
       {/* Hero Section with Shuffling Images */}
       <section className="relative w-full overflow-hidden">
-        {/* Mobile: 4:3 aspect ratio, Desktop: 16:9 aspect ratio */}
-        <div className="block md:hidden">
-          <AspectRatio ratio={4/3}>
-            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(215,85%,42%)] to-[hsl(215,85%,25%)]">
-              {heroImages.length > 0 && heroImages.map((img, index) => {
-                const isActive = currentImageIndex === index;
-                const nextIndex = (currentImageIndex + 1) % heroImages.length;
-                const shouldRender = isActive || index === nextIndex;
-                if (!shouldRender) return null;
-                return (
-                  <div
-                    key={img}
-                    className="absolute inset-0 transition-opacity duration-1000"
-                    style={{ opacity: isActive ? 1 : 0 }}
-                  >
-                    <img
-                      src={img}
-                      alt="Lakers Athletics"
-                      className="w-full h-full object-cover object-center"
-                      loading={isActive ? "eager" : "lazy"}
-                    />
-                  </div>
-                );
-              })}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
-                <h2 className="text-3xl sm:text-4xl font-bold mb-2" data-testid="text-hero-title">
-                  Go Lakers!
-                </h2>
-                <p className="text-base sm:text-xl mb-4 max-w-2xl">
-                  Follow Colchester High School athletics and never miss a game
-                </p>
-                <Link href="/schedule">
-                  <Button size="default" className="bg-white/20 backdrop-blur-sm text-white font-bold border border-white/50" data-testid="button-view-schedule-mobile">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    View Full Schedule
-                  </Button>
-                </Link>
-              </div>
+        <div className="relative w-full" style={{ paddingBottom: "min(75%, 56.25vw)" }}>
+          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(215,85%,42%)] to-[hsl(215,85%,25%)]">
+            {heroImages.length > 0 && heroImages.map((img, index) => {
+              const isActive = currentImageIndex === index;
+              const nextIndex = (currentImageIndex + 1) % heroImages.length;
+              const shouldRender = isActive || index === nextIndex;
+              if (!shouldRender) return null;
+              return (
+                <div
+                  key={img}
+                  className="absolute inset-0 transition-opacity duration-1000"
+                  style={{ opacity: isActive ? 1 : 0 }}
+                >
+                  <img
+                    src={img}
+                    alt="Lakers Athletics"
+                    className="w-full h-full object-cover object-center"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                </div>
+              );
+            })}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
+              <h2 className="text-3xl md:text-6xl font-bold mb-2 md:mb-4" data-testid="text-hero-title">
+                Go Lakers!
+              </h2>
+              <p className="text-base md:text-2xl mb-4 md:mb-8 max-w-2xl">
+                Follow Colchester High School athletics and never miss a game
+              </p>
+              <Link href="/schedule">
+                <Button size="default" className="md:text-lg bg-white/20 backdrop-blur-sm text-white font-bold border border-white/50 md:px-6 md:py-3" data-testid="button-view-schedule">
+                  <Calendar className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                  View Full Schedule
+                </Button>
+              </Link>
             </div>
-          </AspectRatio>
-        </div>
-        <div className="hidden md:block">
-          <AspectRatio ratio={16/9}>
-            <div className="relative w-full h-full bg-gradient-to-br from-[hsl(215,85%,42%)] to-[hsl(215,85%,25%)]">
-              {heroImages.length > 0 && heroImages.map((img, index) => {
-                const isActive = currentImageIndex === index;
-                const nextIndex = (currentImageIndex + 1) % heroImages.length;
-                const shouldRender = isActive || index === nextIndex;
-                if (!shouldRender) return null;
-                return (
-                  <div
-                    key={img}
-                    className="absolute inset-0 transition-opacity duration-1000"
-                    style={{ opacity: isActive ? 1 : 0 }}
-                  >
-                    <img
-                      src={img}
-                      alt="Lakers Athletics"
-                      className="w-full h-full object-cover object-center"
-                      loading={isActive ? "eager" : "lazy"}
-                    />
-                  </div>
-                );
-              })}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
-                <h2 className="text-6xl font-bold mb-4" data-testid="text-hero-title-desktop">
-                  Go Lakers!
-                </h2>
-                <p className="text-2xl mb-8 max-w-2xl">
-                  Follow Colchester High School athletics and never miss a game
-                </p>
-                <Link href="/schedule">
-                  <Button size="lg" className="text-lg bg-white/20 backdrop-blur-sm text-white font-bold border border-white/50" data-testid="button-view-schedule">
-                    <Calendar className="mr-2 h-5 w-5" />
-                    View Full Schedule
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </AspectRatio>
+          </div>
         </div>
       </section>
 
@@ -297,11 +254,26 @@ export default function Home() {
               </h3>
             </div>
             {isLoading ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  Loading games...
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                {[...Array(2)].map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader className="pb-3">
+                      <Skeleton className="h-6 w-24 rounded-full mb-2" />
+                      <Skeleton className="h-7 w-48" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col gap-2 mb-3">
+                        <Skeleton className="h-4 w-56" />
+                        <Skeleton className="h-4 w-40" />
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-8 w-24 rounded-md" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             ) : upcomingGames.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
