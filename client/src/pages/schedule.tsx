@@ -23,7 +23,23 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
 
-const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey", "Baseball", "Boys Tennis", "Boys Lacrosse", "Girls Tennis", "Softball", "Girls Lacrosse", "Track and Field", "Ultimate Frisbee"];
+type Season = "All Seasons" | "Fall" | "Winter" | "Spring";
+
+const SEASON_SPORTS: Record<Exclude<Season, "All Seasons">, SportType[]> = {
+  Fall: ["Football", "Volleyball"],
+  Winter: ["Boys Basketball", "Girls Basketball", "Boys Hockey", "Girls Ice Hockey"],
+  Spring: ["Baseball", "Softball", "Boys Tennis", "Girls Tennis", "Boys Lacrosse", "Girls Lacrosse", "Track and Field", "Ultimate Frisbee"],
+};
+
+const SPORT_TO_SEASON: Record<string, Exclude<Season, "All Seasons">> = Object.entries(SEASON_SPORTS).reduce(
+  (acc, [season, sports]) => {
+    sports.forEach(sport => { acc[sport] = season as Exclude<Season, "All Seasons">; });
+    return acc;
+  },
+  {} as Record<string, Exclude<Season, "All Seasons">>
+);
+
+const SEASONS: Season[] = ["All Seasons", "Fall", "Winter", "Spring"];
 
 const DEFAULT_SPORT_COLOR = { 
   bg: "bg-muted", 
@@ -164,7 +180,8 @@ const SPORT_ICONS: Record<string, typeof Trophy> = {
 };
 
 export default function Schedule() {
-  const [selectedSport, setSelectedSport] = useState<SportType | "All Sports">("All Sports");
+  const [selectedSeason, setSelectedSeason] = useState<Season>("All Seasons");
+  const [selectedSport, setSelectedSport] = useState<SportType | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
@@ -208,11 +225,15 @@ export default function Schedule() {
     },
   });
 
-  // Filter games by selected sport
-  const filteredGames = useMemo(
-    () => selectedSport === "All Sports" ? games : games.filter(game => game.sport === selectedSport),
-    [games, selectedSport]
-  );
+  // Sports visible in the current season's sport-picker row
+  const visibleSports: SportType[] = selectedSeason === "All Seasons" ? [] : SEASON_SPORTS[selectedSeason];
+
+  // Filter games by selected season, then optionally by sport
+  const filteredGames = useMemo(() => {
+    if (selectedSport) return games.filter(game => game.sport === selectedSport);
+    if (selectedSeason !== "All Seasons") return games.filter(game => SPORT_TO_SEASON[game.sport] === selectedSeason);
+    return games;
+  }, [games, selectedSeason, selectedSport]);
 
   // Pre-build a date-keyed map for O(1) calendar lookups instead of O(n) per day
   const gamesByDateKey = useMemo(() => {
@@ -319,36 +340,64 @@ export default function Schedule() {
           </p>
         </div>
 
-        {/* Sport Filter Buttons - Scrollable on mobile */}
-        <div className="flex gap-2 md:gap-4 mb-4 md:mb-8 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible" role="group" aria-label="Sport filters">
-          {SPORTS.map((sport) => {
-            const isActive = selectedSport === sport;
-            const colors = getSportColors(sport);
-            
-            return (
-              <Button
-                key={sport}
-                size="sm"
-                onClick={() => {
-                  setSelectedSport(sport);
-                  setSelectedDate(null);
-                }}
-                variant={isActive ? "default" : "outline"}
-                className={`
-                  rounded-full transition-all duration-200 flex-shrink-0 text-xs md:text-sm font-semibold
-                  ${isActive 
-                    ? `${colors.bg} ${colors.text}` 
-                    : `bg-muted/50 ${colors.border} border-2 text-foreground`
-                  }
-                `}
-                data-testid={`button-filter-${sport.toLowerCase().replace(/\s+/g, '-')}`}
-                aria-pressed={isActive}
-              >
-                {sport}
-              </Button>
-            );
-          })}
+        {/* Season Filter Row */}
+        <div className="mb-3 md:mb-4" role="group" aria-label="Season filters">
+          <div className="flex gap-2 md:gap-3 flex-wrap">
+            {SEASONS.map((season) => {
+              const isActive = selectedSeason === season;
+              return (
+                <Button
+                  key={season}
+                  size="sm"
+                  onClick={() => {
+                    setSelectedSeason(season);
+                    setSelectedSport(null);
+                    setSelectedDate(null);
+                  }}
+                  variant={isActive ? "default" : "outline"}
+                  className={`rounded-full font-semibold text-xs md:text-sm flex-shrink-0 transition-all duration-200${isActive ? " bg-primary text-primary-foreground" : ""}`}
+                  data-testid={`button-season-${season.toLowerCase().replace(/\s+/g, '-')}`}
+                  aria-pressed={isActive}
+                >
+                  {season === "All Seasons" ? "All Seasons" : `${season} Sports`}
+                </Button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Sport Filter Row — only shown when a season is selected */}
+        {selectedSeason !== "All Seasons" && (
+          <div className="flex gap-2 md:gap-3 mb-4 md:mb-8 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible" role="group" aria-label="Sport filters">
+            {visibleSports.map((sport) => {
+              const isActive = selectedSport === sport;
+              const colors = getSportColors(sport);
+              return (
+                <Button
+                  key={sport}
+                  size="sm"
+                  onClick={() => {
+                    setSelectedSport(isActive ? null : sport);
+                    setSelectedDate(null);
+                  }}
+                  variant={isActive ? "default" : "outline"}
+                  className={`
+                    rounded-full transition-all duration-200 flex-shrink-0 text-xs md:text-sm font-semibold
+                    ${isActive
+                      ? `${colors.bg} ${colors.text}`
+                      : `bg-muted/50 ${colors.border} border-2 text-foreground`
+                    }
+                  `}
+                  data-testid={`button-filter-${sport.toLowerCase().replace(/\s+/g, '-')}`}
+                  aria-pressed={isActive}
+                >
+                  {sport}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+        {selectedSeason === "All Seasons" && <div className="mb-4 md:mb-8" />}
 
         {/* Two-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-8">
@@ -488,11 +537,13 @@ export default function Schedule() {
               ) : displayedGames.length === 0 ? (
                 <Card className="p-8 text-center shadow-sm" data-testid="empty-games">
                   <p className="text-muted-foreground">
-                    {selectedDate 
-                      ? "No games scheduled for this date." 
-                      : selectedSport === "All Sports"
-                      ? "No games scheduled."
-                      : `No ${selectedSport} games scheduled.`
+                    {selectedDate
+                      ? "No games scheduled for this date."
+                      : selectedSport
+                      ? `No ${selectedSport} games scheduled.`
+                      : selectedSeason !== "All Seasons"
+                      ? `No ${selectedSeason} sports games scheduled.`
+                      : "No games scheduled."
                     }
                   </p>
                 </Card>
