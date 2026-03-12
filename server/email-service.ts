@@ -109,9 +109,22 @@ export async function sendGameNotification(
           margin-bottom: 10px;
         }
         .sport-football { background-color: hsl(210, 85%, 35%); }
+        .sport-boys-basketball { background-color: hsl(25, 75%, 50%); }
+        .sport-girls-basketball { background-color: hsl(174, 60%, 40%); }
+        .sport-volleyball { background-color: hsl(340, 70%, 55%); }
+        .sport-boys-hockey { background-color: hsl(220, 60%, 45%); }
+        .sport-girls-ice-hockey { background-color: hsl(330, 80%, 60%); }
+        .sport-baseball { background-color: hsl(142, 72%, 29%); }
+        .sport-softball { background-color: hsl(48, 97%, 45%); }
+        .sport-boys-tennis { background-color: hsl(84, 65%, 35%); }
+        .sport-girls-tennis { background-color: hsl(174, 72%, 35%); }
+        .sport-boys-lacrosse { background-color: hsl(21, 90%, 48%); }
+        .sport-girls-lacrosse { background-color: hsl(271, 81%, 56%); }
+        .sport-track-and-field { background-color: hsl(0, 84%, 60%); }
+        .sport-ultimate-frisbee { background-color: hsl(199, 89%, 48%); }
         .sport-soccer { background-color: hsl(150, 60%, 45%); }
         .sport-basketball { background-color: hsl(25, 75%, 50%); }
-        .sport-volleyball { background-color: hsl(340, 70%, 55%); }
+        .sport-hockey { background-color: hsl(220, 60%, 45%); }
         .game-details {
           margin: 10px 0;
         }
@@ -144,7 +157,7 @@ export async function sendGameNotification(
         <p>${introText}</p>
         
         <div class="game-card">
-          <span class="sport-badge sport-${game.sport.toLowerCase()}">${game.sport}</span>
+          <span class="sport-badge sport-${game.sport.toLowerCase().replace(/\s+/g, '-')}">${game.sport}</span>
           
           <div class="game-details">
             <strong>Matchup:</strong> Lakers ${homeAwayText} ${game.opponent}
@@ -283,9 +296,22 @@ export async function send24HourReminder(
           margin-bottom: 10px;
         }
         .sport-football { background-color: hsl(210, 85%, 35%); }
+        .sport-boys-basketball { background-color: hsl(25, 75%, 50%); }
+        .sport-girls-basketball { background-color: hsl(174, 60%, 40%); }
+        .sport-volleyball { background-color: hsl(340, 70%, 55%); }
+        .sport-boys-hockey { background-color: hsl(220, 60%, 45%); }
+        .sport-girls-ice-hockey { background-color: hsl(330, 80%, 60%); }
+        .sport-baseball { background-color: hsl(142, 72%, 29%); }
+        .sport-softball { background-color: hsl(48, 97%, 45%); }
+        .sport-boys-tennis { background-color: hsl(84, 65%, 35%); }
+        .sport-girls-tennis { background-color: hsl(174, 72%, 35%); }
+        .sport-boys-lacrosse { background-color: hsl(21, 90%, 48%); }
+        .sport-girls-lacrosse { background-color: hsl(271, 81%, 56%); }
+        .sport-track-and-field { background-color: hsl(0, 84%, 60%); }
+        .sport-ultimate-frisbee { background-color: hsl(199, 89%, 48%); }
         .sport-soccer { background-color: hsl(150, 60%, 45%); }
         .sport-basketball { background-color: hsl(25, 75%, 50%); }
-        .sport-volleyball { background-color: hsl(340, 70%, 55%); }
+        .sport-hockey { background-color: hsl(220, 60%, 45%); }
         .game-details {
           margin: 10px 0;
         }
@@ -318,7 +344,7 @@ export async function send24HourReminder(
         <p>${introText}</p>
         
         <div class="game-card">
-          <span class="sport-badge sport-${game.sport.toLowerCase()}">${game.sport}</span>
+          <span class="sport-badge sport-${game.sport.toLowerCase().replace(/\s+/g, '-')}">${game.sport}</span>
           
           <div class="game-details">
             <strong>Matchup:</strong> Lakers ${homeAwayText} ${game.opponent}
@@ -457,9 +483,22 @@ export async function sendGameDayReminder(
           margin-bottom: 10px;
         }
         .sport-football { background-color: hsl(210, 85%, 35%); }
+        .sport-boys-basketball { background-color: hsl(25, 75%, 50%); }
+        .sport-girls-basketball { background-color: hsl(174, 60%, 40%); }
+        .sport-volleyball { background-color: hsl(340, 70%, 55%); }
+        .sport-boys-hockey { background-color: hsl(220, 60%, 45%); }
+        .sport-girls-ice-hockey { background-color: hsl(330, 80%, 60%); }
+        .sport-baseball { background-color: hsl(142, 72%, 29%); }
+        .sport-softball { background-color: hsl(48, 97%, 45%); }
+        .sport-boys-tennis { background-color: hsl(84, 65%, 35%); }
+        .sport-girls-tennis { background-color: hsl(174, 72%, 35%); }
+        .sport-boys-lacrosse { background-color: hsl(21, 90%, 48%); }
+        .sport-girls-lacrosse { background-color: hsl(271, 81%, 56%); }
+        .sport-track-and-field { background-color: hsl(0, 84%, 60%); }
+        .sport-ultimate-frisbee { background-color: hsl(199, 89%, 48%); }
         .sport-soccer { background-color: hsl(150, 60%, 45%); }
         .sport-basketball { background-color: hsl(25, 75%, 50%); }
-        .sport-volleyball { background-color: hsl(340, 70%, 55%); }
+        .sport-hockey { background-color: hsl(220, 60%, 45%); }
         .game-details {
           margin: 10px 0;
         }
@@ -492,7 +531,7 @@ export async function sendGameDayReminder(
         <p>${introText}</p>
         
         <div class="game-card">
-          <span class="sport-badge sport-${game.sport.toLowerCase()}">${game.sport}</span>
+          <span class="sport-badge sport-${game.sport.toLowerCase().replace(/\s+/g, '-')}">${game.sport}</span>
           
           <div class="game-details">
             <strong>Matchup:</strong> Lakers ${homeAwayText} ${game.opponent}
