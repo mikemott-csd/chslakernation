@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,11 @@ export default function Gallery() {
     setFailedImages(prev => new Set([...prev, photoId]));
   };
 
-  const workingPhotos = photos.filter(photo => !failedImages.has(photo.id));
+  const shuffledPhotos = useMemo(() => {
+    return [...photos].sort(() => Math.random() - 0.5);
+  }, [photos]);
+
+  const workingPhotos = shuffledPhotos.filter(photo => !failedImages.has(photo.id));
 
   const openLightbox = (index: number) => {
     setSelectedPhotoIndex(index);

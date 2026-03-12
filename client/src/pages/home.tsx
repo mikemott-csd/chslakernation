@@ -59,14 +59,8 @@ export default function Home() {
     const validPhotos = photos.filter(photo => photo.googleDriveId);
     
     if (validPhotos.length > 0) {
-      const recentPhotos = [...validPhotos]
-        .sort((a, b) => {
-          const dateA = a.syncedAt ? new Date(a.syncedAt).getTime() : (a.createdTime ? new Date(a.createdTime).getTime() : 0);
-          const dateB = b.syncedAt ? new Date(b.syncedAt).getTime() : (b.createdTime ? new Date(b.createdTime).getTime() : 0);
-          return dateB - dateA;
-        })
-        .slice(0, 10);
-      return recentPhotos.map(photo => `/api/photos/${photo.googleDriveId}/image`);
+      const shuffled = [...validPhotos].sort(() => Math.random() - 0.5).slice(0, 10);
+      return shuffled.map(photo => `/api/photos/${photo.googleDriveId}/image`);
     }
     
     return [];
