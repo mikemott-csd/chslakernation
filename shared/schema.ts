@@ -40,7 +40,7 @@ export type InsertGame = z.infer<typeof insertGameSchema>;
 export type Game = typeof games.$inferSelect;
 
 // Type for sport names
-export type SportType = "Football" | "Boys Basketball" | "Girls Basketball" | "Volleyball" | "Boys Hockey" | "Girls Ice Hockey";
+export type SportType = "Football" | "Boys Basketball" | "Girls Basketball" | "Volleyball" | "Boys Hockey" | "Girls Ice Hockey" | "Baseball" | "Softball" | "Tennis" | "Lacrosse" | "Track and Field" | "Ultimate Frisbee";
 
 // Email Subscriptions Schema
 export const subscriptions = pgTable("subscriptions", {

@@ -15,7 +15,7 @@ import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
 import { ArrowLeft, Check, Home as HomeIcon, Calendar, Bell, Image, Smartphone, BellRing } from "lucide-react";
 import { isPushSupported, requestPushPermission } from "@/lib/firebase";
 
-const SPORTS = ["Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey"] as const;
+const SPORTS = ["Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey", "Baseball", "Softball", "Tennis", "Lacrosse", "Track and Field", "Ultimate Frisbee"] as const;
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

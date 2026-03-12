@@ -23,7 +23,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
 
-const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey"];
+const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey", "Baseball", "Softball", "Tennis", "Lacrosse", "Track and Field", "Ultimate Frisbee"];
 
 const DEFAULT_SPORT_COLOR = { 
   bg: "bg-muted", 
@@ -75,6 +75,42 @@ const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; d
     border: "border-pink-500",
     dot: "bg-pink-500"
   },
+  "Baseball": { 
+    bg: "bg-green-600", 
+    text: "text-white", 
+    border: "border-green-600",
+    dot: "bg-green-600"
+  },
+  "Softball": { 
+    bg: "bg-yellow-500", 
+    text: "text-white", 
+    border: "border-yellow-500",
+    dot: "bg-yellow-500"
+  },
+  "Tennis": { 
+    bg: "bg-lime-500", 
+    text: "text-white", 
+    border: "border-lime-500",
+    dot: "bg-lime-500"
+  },
+  "Lacrosse": { 
+    bg: "bg-orange-500", 
+    text: "text-white", 
+    border: "border-orange-500",
+    dot: "bg-orange-500"
+  },
+  "Track and Field": { 
+    bg: "bg-red-500", 
+    text: "text-white", 
+    border: "border-red-500",
+    dot: "bg-red-500"
+  },
+  "Ultimate Frisbee": { 
+    bg: "bg-sky-500", 
+    text: "text-white", 
+    border: "border-sky-500",
+    dot: "bg-sky-500"
+  },
   // Legacy sport names for backward compatibility
   "Basketball": { 
     bg: "bg-chart-2", 
@@ -105,6 +141,12 @@ const SPORT_ICONS: Record<string, typeof Trophy> = {
   "Volleyball": Trophy,
   "Boys Hockey": Trophy,
   "Girls Ice Hockey": Trophy,
+  "Baseball": Trophy,
+  "Softball": Trophy,
+  "Tennis": Trophy,
+  "Lacrosse": Trophy,
+  "Track and Field": Trophy,
+  "Ultimate Frisbee": Trophy,
 };
 
 export default function Schedule() {
