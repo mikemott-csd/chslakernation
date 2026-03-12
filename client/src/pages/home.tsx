@@ -19,6 +19,14 @@ const sportColors: Record<string, string> = {
   "Volleyball": "hsl(340, 70%, 55%)",
   "Boys Hockey": "hsl(195, 80%, 40%)",
   "Girls Ice Hockey": "hsl(330, 70%, 55%)",
+  "Baseball": "hsl(140, 60%, 35%)",
+  "Softball": "hsl(45, 85%, 45%)",
+  "Boys Tennis": "hsl(80, 60%, 38%)",
+  "Girls Tennis": "hsl(175, 60%, 38%)",
+  "Boys Lacrosse": "hsl(25, 80%, 45%)",
+  "Girls Lacrosse": "hsl(275, 55%, 50%)",
+  "Track and Field": "hsl(0, 70%, 48%)",
+  "Ultimate Frisbee": "hsl(200, 75%, 42%)",
   // Legacy sport names for backward compatibility
   "Basketball": "hsl(150, 60%, 45%)",
   "Hockey": "hsl(195, 80%, 40%)",
@@ -32,6 +40,7 @@ export default function Home() {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [goingGames, setGoingGames] = useState<Set<string>>(new Set());
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
+  const [selectedSport, setSelectedSport] = useState<string>("All Sports");
   const { toast } = useToast();
 
   const { data: games = [], isLoading } = useQuery<Game[]>({
@@ -140,14 +149,31 @@ export default function Home() {
 
   const now = new Date();
   now.setHours(0, 0, 0, 0);
-  const allUpcomingGames = games
-    .filter((game) => parseLocalDate(game.date) >= now && !game.final)
-    .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime());
+  const allUpcomingGames = useMemo(() =>
+    games
+      .filter((game) => parseLocalDate(game.date) >= now && !game.final)
+      .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime()),
+    [games]
+  );
+
+  // Sports that actually have upcoming games (for filter pills)
+  const upcomingSports = useMemo(() => {
+    const sports = Array.from(new Set(allUpcomingGames.map(g => g.sport)));
+    return sports;
+  }, [allUpcomingGames]);
+
+  // Filtered by selected sport
+  const filteredUpcomingGames = useMemo(() =>
+    selectedSport === "All Sports"
+      ? allUpcomingGames
+      : allUpcomingGames.filter(g => g.sport === selectedSport),
+    [allUpcomingGames, selectedSport]
+  );
 
   // Limit upcoming games to 10 max when expanded, 2 when collapsed
-  const upcomingGames = showAllUpcoming ? allUpcomingGames.slice(0, 10) : allUpcomingGames.slice(0, 2);
+  const upcomingGames = showAllUpcoming ? filteredUpcomingGames.slice(0, 10) : filteredUpcomingGames.slice(0, 2);
   
-  const hasMoreUpcoming = allUpcomingGames.length > 2;
+  const hasMoreUpcoming = filteredUpcomingGames.length > 2;
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -247,12 +273,41 @@ export default function Home() {
         <div>
           {/* Upcoming Games */}
           <section>
-            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
               <Clock className="h-6 w-6 md:h-8 md:w-8 text-[hsl(210,85%,68%)]" />
               <h3 className="text-xl md:text-3xl font-bold text-foreground" data-testid="text-upcoming-header">
                 Upcoming Games
               </h3>
             </div>
+            {upcomingSports.length > 1 && (
+              <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mx-3 px-3 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible" role="group" aria-label="Filter by sport">
+                <button
+                  onClick={() => { setSelectedSport("All Sports"); setShowAllUpcoming(false); }}
+                  className="flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium transition-opacity whitespace-nowrap text-white"
+                  style={{
+                    backgroundColor: selectedSport === "All Sports" ? "hsl(215, 85%, 38%)" : "hsl(215, 85%, 38%, 0.35)",
+                    opacity: selectedSport === "All Sports" ? 1 : 0.6,
+                  }}
+                  data-testid="button-home-filter-all"
+                >
+                  All Sports
+                </button>
+                {upcomingSports.map(sport => (
+                  <button
+                    key={sport}
+                    onClick={() => { setSelectedSport(sport); setShowAllUpcoming(false); }}
+                    className="flex-shrink-0 px-3 py-1 rounded-full text-sm font-medium transition-opacity whitespace-nowrap text-white"
+                    style={{
+                      backgroundColor: getSportColor(sport),
+                      opacity: selectedSport === sport ? 1 : 0.45,
+                    }}
+                    data-testid={`button-home-filter-${sport.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    {sport}
+                  </button>
+                ))}
+              </div>
+            )}
             {isLoading ? (
               <div className="space-y-4">
                 {[...Array(2)].map((_, i) => (
@@ -277,7 +332,7 @@ export default function Home() {
             ) : upcomingGames.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
-                  No upcoming games scheduled
+                  {selectedSport === "All Sports" ? "No upcoming games scheduled" : `No upcoming ${selectedSport} games scheduled`}
                 </CardContent>
               </Card>
             ) : (

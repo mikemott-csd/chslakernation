@@ -67,15 +67,45 @@ function parseExcelToGames(buffer: Buffer): { games: InsertGame[], skippedRows: 
       continue;
     }
     
-    // Validate sport type using shared schema
-    const validSports: SportType[] = ['Football', 'Boys Basketball', 'Girls Basketball', 'Volleyball', 'Boys Hockey', 'Girls Ice Hockey', 'Baseball', 'Softball', 'Boys Tennis', 'Girls Tennis', 'Boys Lacrosse', 'Girls Lacrosse', 'Track and Field', 'Ultimate Frisbee'];
-    if (!validSports.includes(row.Sport as SportType)) {
+    // Normalize sport names from spreadsheet variants to canonical app names
+    const sportNormalizationMap: Record<string, SportType> = {
+      // Exact canonical names (pass-through)
+      'Football': 'Football',
+      'Boys Basketball': 'Boys Basketball',
+      'Girls Basketball': 'Girls Basketball',
+      'Volleyball': 'Volleyball',
+      'Boys Hockey': 'Boys Hockey',
+      'Girls Ice Hockey': 'Girls Ice Hockey',
+      'Baseball': 'Baseball',
+      'Softball': 'Softball',
+      'Boys Tennis': 'Boys Tennis',
+      'Girls Tennis': 'Girls Tennis',
+      'Boys Lacrosse': 'Boys Lacrosse',
+      'Girls Lacrosse': 'Girls Lacrosse',
+      'Track and Field': 'Track and Field',
+      'Ultimate Frisbee': 'Ultimate Frisbee',
+      // Apostrophe variants (Boys'/Girls')
+      "Boys' Tennis": 'Boys Tennis',
+      "Girls' Tennis": 'Girls Tennis',
+      "Boys' Lacrosse": 'Boys Lacrosse',
+      "Girls' Lacrosse": 'Girls Lacrosse',
+      // "Varsity" prefixed variants
+      'Varsity Baseball': 'Baseball',
+      'Varsity Softball': 'Softball',
+      'Varsity Football': 'Football',
+      // Legacy/alternate names
+      'Boys Basketball': 'Boys Basketball',
+      'Girls Basketball': 'Girls Basketball',
+    };
+
+    const normalizedSport = sportNormalizationMap[row.Sport];
+    if (!normalizedSport) {
       skippedRows++;
-      errors.push(`Row ${rowNum}: Invalid sport "${row.Sport}" (must be one of: ${validSports.join(', ')})`);
+      errors.push(`Row ${rowNum}: Invalid sport "${row.Sport}" (must be one of: ${Object.keys(sportNormalizationMap).join(', ')})`);
       console.warn(`Row ${rowNum}: Invalid sport "${row.Sport}"`, row);
       continue;
     }
-    const sport = row.Sport as SportType;
+    const sport = normalizedSport;
     
     // Parse date - handle Excel date serial numbers and string dates
     let gameDate: Date;

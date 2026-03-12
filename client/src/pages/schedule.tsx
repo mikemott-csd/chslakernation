@@ -323,7 +323,7 @@ export default function Schedule() {
         <div className="flex gap-2 md:gap-4 mb-4 md:mb-8 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible" role="group" aria-label="Sport filters">
           {SPORTS.map((sport) => {
             const isActive = selectedSport === sport;
-            const colors = SPORT_COLORS[sport];
+            const colors = SPORT_COLORS[sport] || DEFAULT_SPORT_COLOR;
             
             return (
               <Button
