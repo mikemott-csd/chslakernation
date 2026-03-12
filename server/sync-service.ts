@@ -68,7 +68,7 @@ function parseExcelToGames(buffer: Buffer): { games: InsertGame[], skippedRows: 
     }
     
     // Validate sport type using shared schema
-    const validSports: SportType[] = ['Football', 'Boys Basketball', 'Girls Basketball', 'Volleyball', 'Boys Hockey', 'Girls Ice Hockey', 'Baseball', 'Softball', 'Tennis', 'Lacrosse', 'Track and Field', 'Ultimate Frisbee'];
+    const validSports: SportType[] = ['Football', 'Boys Basketball', 'Girls Basketball', 'Volleyball', 'Boys Hockey', 'Girls Ice Hockey', 'Baseball', 'Softball', 'Boys Tennis', 'Girls Tennis', 'Boys Lacrosse', 'Girls Lacrosse', 'Track and Field', 'Ultimate Frisbee'];
     if (!validSports.includes(row.Sport as SportType)) {
       skippedRows++;
       errors.push(`Row ${rowNum}: Invalid sport "${row.Sport}" (must be one of: ${validSports.join(', ')})`);

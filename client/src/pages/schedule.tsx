@@ -23,7 +23,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/CHSLakerNation_1770824041645.png";
 
-const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey", "Baseball", "Softball", "Tennis", "Lacrosse", "Track and Field", "Ultimate Frisbee"];
+const SPORTS: (SportType | "All Sports")[] = ["All Sports", "Football", "Boys Basketball", "Girls Basketball", "Volleyball", "Boys Hockey", "Girls Ice Hockey", "Baseball", "Boys Tennis", "Boys Lacrosse", "Girls Tennis", "Softball", "Girls Lacrosse", "Track and Field", "Ultimate Frisbee"];
 
 const DEFAULT_SPORT_COLOR = { 
   bg: "bg-muted", 
@@ -87,17 +87,29 @@ const SPORT_COLORS: Record<string, { bg: string; text: string; border: string; d
     border: "border-yellow-500",
     dot: "bg-yellow-500"
   },
-  "Tennis": { 
+  "Boys Tennis": { 
     bg: "bg-lime-500", 
     text: "text-white", 
     border: "border-lime-500",
     dot: "bg-lime-500"
   },
-  "Lacrosse": { 
+  "Girls Tennis": { 
+    bg: "bg-teal-500", 
+    text: "text-white", 
+    border: "border-teal-500",
+    dot: "bg-teal-500"
+  },
+  "Boys Lacrosse": { 
     bg: "bg-orange-500", 
     text: "text-white", 
     border: "border-orange-500",
     dot: "bg-orange-500"
+  },
+  "Girls Lacrosse": { 
+    bg: "bg-purple-500", 
+    text: "text-white", 
+    border: "border-purple-500",
+    dot: "bg-purple-500"
   },
   "Track and Field": { 
     bg: "bg-red-500", 
@@ -143,8 +155,10 @@ const SPORT_ICONS: Record<string, typeof Trophy> = {
   "Girls Ice Hockey": Trophy,
   "Baseball": Trophy,
   "Softball": Trophy,
-  "Tennis": Trophy,
-  "Lacrosse": Trophy,
+  "Boys Tennis": Trophy,
+  "Girls Tennis": Trophy,
+  "Boys Lacrosse": Trophy,
+  "Girls Lacrosse": Trophy,
   "Track and Field": Trophy,
   "Ultimate Frisbee": Trophy,
 };
