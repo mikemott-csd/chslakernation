@@ -218,7 +218,7 @@ export default function Schedule() {
   const gamesByDateKey = useMemo(() => {
     const map = new Map<string, typeof games>();
     for (const game of filteredGames) {
-      const key = game.date; // already stored as YYYY-MM-DD string
+      const key = format(parseLocalDate(game.date), "yyyy-MM-dd");
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(game);
     }
@@ -323,7 +323,7 @@ export default function Schedule() {
         <div className="flex gap-2 md:gap-4 mb-4 md:mb-8 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible" role="group" aria-label="Sport filters">
           {SPORTS.map((sport) => {
             const isActive = selectedSport === sport;
-            const colors = SPORT_COLORS[sport] || DEFAULT_SPORT_COLOR;
+            const colors = getSportColors(sport);
             
             return (
               <Button
@@ -436,7 +436,7 @@ export default function Schedule() {
                             {Array.from(new Set(dayGames.map(g => g.sport))).map((sport) => (
                               <div
                                 key={sport}
-                                className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${SPORT_COLORS[sport]?.dot || 'bg-primary'}`}
+                                className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${getSportColors(sport).dot}`}
                                 aria-hidden="true"
                               />
                             ))}
