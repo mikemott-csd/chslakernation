@@ -24,3 +24,8 @@ photo-cache/
 .cache
 .config
 .local
+
+# Service account credentials
+attached_assets/*service-account*
+attached_assets/*private-key*
+attached_assets/*.json
