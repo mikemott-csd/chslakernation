@@ -1,31 +1,69 @@
-node_modules
-dist
-.DS_Store
-server/public
+# ─── Dependencies ────────────────────────────────────────────────────────────
+node_modules/
+dist/
+server/public/
+
+# ─── Build & Cache ───────────────────────────────────────────────────────────
+.cache/
+.config/
+.local/
 vite.config.ts.*
 *.tar.gz
+.DS_Store
+photo-cache/
 
-# Sensitive credentials and secrets
+# ─── Environment & Secrets ───────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Private Keys & Certificates ─────────────────────────────────────────────
 *.pem
 *.key
 *.p12
 *.pfx
 *.jks
-.env
-.env.*
+*.crt
+*.cert
+*.ca-bundle
+*.cer
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
 
-# Attached assets (user uploads, pasted content, generated images)
+# ─── Service Account & OAuth Credentials ─────────────────────────────────────
+*service-account*.json
+*service_account*.json
+*service-account*.txt
+*service_account*.txt
+*credentials*.json
+*credentials*.txt
+*client_secret*.json
+*client-secret*.json
+*oauth*.json
+*token*.json
+*private-key*.json
+*private_key*.json
+*private-key*.txt
+*private_key*.txt
+*keyfile*.json
+*secret*.json
+
+# ─── Google Cloud / Firebase ─────────────────────────────────────────────────
+*-firebase-adminsdk-*.json
+google-services.json
+GoogleService-Info.plist
+application_default_credentials.json
+gcloud-key.json
+
+# ─── AWS ─────────────────────────────────────────────────────────────────────
+.aws/
+*aws-credentials*
+*aws_credentials*
+
+# ─── Attached Assets (user uploads, pasted content) ──────────────────────────
 attached_assets/
 
-# Photo cache (large binary files, downloaded at runtime)
-photo-cache/
-
-# Replit internals
-.cache
-.config
-.local
-
-# Service account credentials
-attached_assets/*service-account*
-attached_assets/*private-key*
-attached_assets/*.json
+# ─── Replit Internals ────────────────────────────────────────────────────────
+.replit.nix
